@@ -3,11 +3,12 @@
 
 # inspired by https://github.com/JarenGlover/postgres-json-example
 
-import psycopg2 as psy
-import argparse
 import sys,traceback
 import datetime as dt
+import argparse
 import glob
+import psycopg2 as psy
+import simplejson
 
 # fill these in as they are on your system
 TABLE = 'nexson_jsonb'
@@ -39,12 +40,10 @@ def loadjson(connection,cursor,files):
     for filename in files:
         print filename
         f = open(filename,'r')
-        # assuming each file contains a single json object on one liine
+        # assuming each file contains a single study
         for line in f:
             # QuotedString escapes single quotes, line breaks, etc
             qline = psy.extensions.QuotedString(line.strip()).getquoted()
-            #print line[:50]
-            #print qline[:50]
             SQL="INSERT INTO %(table)s (%(column)s) VALUES (%(data)s)" % {"table":TABLE, "column":COLUMN, "data":qline}
             cursor.execute(SQL)
             connection.commit()
