@@ -8,7 +8,7 @@ import datetime as dt
 import argparse
 import glob
 import psycopg2 as psy
-import simplejson
+import simplejson as json
 
 # fill these in as they are on your system
 TABLE = 'nexson_jsonb'
@@ -39,11 +39,12 @@ def get_files():
 def loadjson(connection,cursor,files):
     for filename in files:
         print filename
-        f = open(filename,'r')
-        # assuming each file contains a single study
-        for line in f:
+        with open(filename) as data_file:
+            # round trip using simpljson for safety
+            data = json.load(data_file)
+            jsonstring = json.dumps(data)
             # QuotedString escapes single quotes, line breaks, etc
-            qline = psy.extensions.QuotedString(line.strip()).getquoted()
+            qline = psy.extensions.QuotedString(jsonstring).getquoted()
             SQL="INSERT INTO %(table)s (%(column)s) VALUES (%(data)s)" % {"table":TABLE, "column":COLUMN, "data":qline}
             cursor.execute(SQL)
             connection.commit()
