@@ -1,5 +1,8 @@
 # Imports nexson files from the OpenTree API into a postgres database
-# uses the phylesystem API via the peyotl library
+#   uses the phylesystem API via the peyotl library
+# Assumes database already set up. This happends either in initializedb.py
+#   if running pyramid app or setup_db.py for testing (both in
+#   this same directory)
 
 import datetime as dt
 import argparse
@@ -10,6 +13,7 @@ from collections import defaultdict
 # peyotl setup
 from peyotl.api.phylesystem_api import PhylesystemAPI
 from peyotl.manip import iter_trees
+from peyotl import gen_otu_dict, iter_node
 from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
 from peyotl.nexson_syntax import get_nexml_el
 
@@ -22,17 +26,33 @@ CURATORTABLE='curator'
 OTUTABLE='otu'
 CURATORSTUDYTABLE='curator_study_map'
 GININDEX='study_ix_jsondata_gin'
-tablelist = [STUDYTABLE,TREETABLE,CURATORTABLE,OTUTABLE,CURATORSTUDYTABLE]
+tablelist = [
+    CURATORSTUDYTABLE,
+    OTUTABLE,
+    CURATORTABLE,
+    TREETABLE,
+    STUDYTABLE,
+    ]
 
-def clear_tables(cursor):
-    print 'clearing tables'
-    # tree linked to study via foreign key, so cascade removes both
-    cursor.execute('TRUNCATE study CASCADE;')
-    cursor.execute('TRUNCATE curator CASCADE;')
+def check_tables_exist(cursor):
+    print "checking that tables exist"
+    for table in tablelist:
+        try:
+            sqlstring = ("SELECT EXISTS (SELECT 1 "
+                "FROM information_schema.tables "
+                "WHERE table_schema = 'public' "
+                "AND table_name = '{name}');"
+                .format(name=table)
+                )
+            cursor.execute(sqlstring)
+        except psy.ProgrammingError, ex:
+            print 'Table {name} does not exist'.format(name=table)
 
-    # also remove the index (so that re-loading is faster)
+def clear_gin_index(connection,cursor):
+    # also remove the index
     sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=GININDEX)
     cursor.execute(sqlstring)
+    connection.commit()
 
 def connect():
     try:
@@ -51,111 +71,31 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
-def create_single_table(cursor,tablename,tablestring):
-    print 'creating table',tablename
-    if (table_exists(cursor,tablename)):
-        print '{table} exists'.format(table=tablename)
-    else:
-        cursor.execute(tablestring)
-
-# check if tables exist, and if not, create them
-def create_all_tables(cursor):
-    # study table
-    tablestring = ('CREATE TABLE {tablename} '
-        '(id text PRIMARY KEY, '
-        'year integer, '
-        'data jsonb);'
-        .format(tablename=STUDYTABLE)
-        )
-    create_single_table(cursor,STUDYTABLE,tablestring)
-
-    # tree table
-    tablestring = ('CREATE TABLE {tablename} '
-        '(id serial PRIMARY KEY, '
-        'tree_id text NOT NULL, '
-        'study_id text REFERENCES study (id), '
-        'UNIQUE (tree_id,study_id));'
-        .format(tablename=TREETABLE)
-        )
-    create_single_table(cursor,TREETABLE,tablestring)
-
-    # curator table
-    tablestring = ('CREATE TABLE {tablename} '
-        '(id serial PRIMARY KEY, '
-        'name text NOT NULL);'
-        .format(tablename=CURATORTABLE)
-        )
-    create_single_table(cursor,CURATORTABLE,tablestring)
-
-    # study-curator table
-    tablestring = ('CREATE TABLE {tablename} '
-        '(curator_id int REFERENCES curator (id) ,'
-        'study_id text REFERENCES study (id));'
-        .format(tablename=CURATORSTUDYTABLE)
-        )
-    create_single_table(cursor,CURATORSTUDYTABLE,tablestring)
-
-    # OTU-tree table
-    tablestring = ('CREATE TABLE {tablename} '
-        '(id int PRIMARY KEY, '
-        'ott_name text, '
-        'tree_id int REFERENCES tree (id));'
-        .format(tablename=OTUTABLE)
-        )
-    create_single_table(cursor,OTUTABLE,tablestring)
-
-def delete_tables(cursor):
-    print 'deleting tables'
-    for table in tablelist:
-        sqlstring=('DROP TABLE IF EXISTS '
-            '{name} CASCADE;'
-            .format(name=table)
-            )
+# create the JSON GIN index
+def index_json_column(connection,cursor):
+    print "creating GIN index on JSON column"
+    try:
+        sqlstring = ('CREATE INDEX {indexname} on {tablename} '
+            'USING gin({column});'
+            .format(indexname=GININDEX,tablename=STUDYTABLE,column='data'))
         cursor.execute(sqlstring)
-
-def index_json_column(cursor):
-    sqlstring = ('CREATE INDEX {indexname} on {tablename} '
-        'USING gin({column});'
-        .format(indexname=GININDEX,tablename=STUDYTABLE,column='data'))
-    cursor.execute(sqlstring)
-
-# iterate over phylesystem nexsons and import
-def load_nexsons(connection,cursor,phy,nstudies=None):
-    counter = 0
-    for study_id, n in phy.iter_study_objs():
-        print 'STUDY ',study_id
-        # get data for INSERT statement for study
-        nexml = get_nexml_el(n)
-        year = nexml.get('^ot:studyYear')
-        jsonstring = json.dumps(nexml)
-        sqlstring = ("INSERT INTO {tablename} (id, year, data) "
-            "VALUES (%s,%s,%s);"
-            .format(tablename=STUDYTABLE)
-            )
-        data = (study_id,year,jsonstring)
-        #print sqlstring
-        cursor.execute(sqlstring,data)
         connection.commit()
+    except psy.Error as e:
+        print e.pgerror
+        print 'Error creating GIN index'
 
-        # get curator(s), noting that ot:curators might be a string
-        # or a list
-        c = nexml.get('^ot:curatorName')
-        #print ' ot:curatorName: ',c
-        curators=[]
-        if (isinstance(c,basestring)):
-            curators.append(c)
-        else:
-            curators=c
 
-        # iterate over curators, adding curators to curator table and the
-        # who-curated-what relationship to study-curator-map
+# iterate over curators, adding curators to curator table and the
+# who-curated-what relationship to study-curator-map
+def insert_curators(connection,cursor,study_id,curators):
+    try:
         for name in curators:
             sqlstring = ('INSERT INTO {tablename} (name) '
                 'VALUES (%s);'
                 .format(tablename=CURATORTABLE)
                 )
             data = (name)
-            #print '  SQL: ',cursor.mogrify(sqlstring,(data,))
+            print '  SQL: ',cursor.mogrify(sqlstring,(data,))
             cursor.execute(sqlstring,(data,))
 
             # need to get curator id for insertion into map table
@@ -164,7 +104,7 @@ def load_nexsons(connection,cursor,phy,nstudies=None):
                 .format(tablename=CURATORTABLE)
                 )
             data=(name)
-            #print '  SQL: ',cursor.mogrify(sqlstring,(data,))
+            print '  SQL: ',cursor.mogrify(sqlstring,(data,))
             cursor.execute(sqlstring,(data,))
             curator_id = cursor.fetchone()
             sqlstring = ('INSERT INTO {tablename} (curator_id,study_id) '
@@ -174,42 +114,67 @@ def load_nexsons(connection,cursor,phy,nstudies=None):
             data = (curator_id,study_id)
             print '  SQL: ',cursor.mogrify(sqlstring,data)
             cursor.execute(sqlstring,data)
+            connection.commit()
+    except psy.ProgrammingError, ex:
+        print 'Error inserting curator'
 
-        # iterate over trees and insert into tree table
-        for trees_group_id, tree_id, tree in iter_trees(n):
-            print ' tree :' ,tree_id
-            sqlstring = ("INSERT INTO {tablename} (tree_id,study_id)"
-                "VALUES (%s,%s);"
-                .format(tablename=TREETABLE)
-                )
-            data = (tree_id,study_id)
-            cursor.execute(sqlstring,data)
+# iterate over phylesystem nexsons and import
+def load_nexsons(connection,cursor,phy,nstudies=None):
+    counter = 0
+    for study_id, studyobj in phy.iter_study_objs():
+        print 'STUDY: ',study_id
+
+        # study data for study table
+        nexml = get_nexml_el(studyobj)
+        year = nexml.get('^ot:studyYear')
+        jsonstring = json.dumps(nexml)
+        sqlstring = ("INSERT INTO {tablename} (id, year, data) "
+            "VALUES (%s,%s,%s);"
+            .format(tablename=STUDYTABLE)
+            )
+        data = (study_id,year,jsonstring)
+        #print '  SQL: ',cursor.mogrify(sqlstring,data)
+        cursor.execute(sqlstring,data)
         connection.commit()
+
+        # get curator(s), noting that ot:curators might be a
+        # string or a list
+        print " inserting curator data"
+        c = nexml.get('^ot:curatorName')
+        print ' ot:curatorName: ',c
+        curators=[]
+        if (isinstance(c,basestring)):
+            curators.append(c)
+        else:
+            curators=c
+        insert_curators(connection,cursor,study_id,curators)
+
+        # iterate over trees and insert tree data
+        # note that OTU data done separately as COPY
+        # due to size of table (see script <scriptname>)
+        print ' inserting tree data'
+        try:
+            for trees_group_id, tree_id, tree in iter_trees(studyobj):
+                print ' tree :' ,tree_id
+                sqlstring = ("INSERT INTO {tablename} (tree_id,study_id)"
+                    "VALUES (%s,%s);"
+                    .format(tablename=TREETABLE)
+                    )
+                data = (tree_id,study_id)
+                print '  SQL: ',cursor.mogrify(sqlstring,data)
+                cursor.execute(sqlstring,data)
+                connection.commit()
+        except psy.ProgrammingError, ex:
+            print 'Error inserting curator'
 
         counter+=1
         if (nstudies and counter>=nstudies):
             print "inserted",nstudies,"studies"
             break
 
-def table_exists(cursor, tablename):
-    sqlstring = ("SELECT EXISTS (SELECT 1 "
-        "FROM information_schema.tables "
-        "WHERE table_schema = 'public' "
-        "AND table_name = '{0}');"
-        .format(tablename)
-        )
-    cursor.execute(sqlstring)
-    return cursor.fetchone()[0]
-
 if __name__ == "__main__":
     # get command line argument (nstudies to import)
     parser = argparse.ArgumentParser(description='load nexsons into postgres')
-    parser.add_argument('-d',
-        dest='delete_tables',
-        action='store_true',
-        default=False,
-        help='use this flag to delete tables at start'
-        )
     parser.add_argument('-n',
         dest='nstudies',
         type=int,
@@ -218,17 +183,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     connection, cursor = connect()
 
-    # optionally delete and then create the
-    # tables, if they do not already exist
-    try:
-        if (args.delete_tables):
-            delete_tables(cursor)
-            create_all_tables(cursor)
-        else:
-            create_all_tables(cursor)
-            clear_tables(cursor)
-    except psy.Error as e:
-        print e.pgerror
+    # test that tables exist
+    check_tables_exist(cursor)
+    clear_gin_index(connection,cursor)
 
     # data import
     starttime = dt.datetime.now()
@@ -239,11 +196,9 @@ if __name__ == "__main__":
             load_nexsons(connection,cursor,phy,args.nstudies)
         else:
             load_nexsons(connection,cursor)
-        index_json_column(cursor)
+        index_json_column(connection,cursor)
     except psy.Error as e:
         print e.pgerror
-    except Exception:
-        print "unspecified error"
     connection.close()
     endtime = dt.datetime.now()
     print "Load time: ",endtime - starttime
