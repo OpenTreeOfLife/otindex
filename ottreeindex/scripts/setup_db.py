@@ -3,31 +3,15 @@
 # or simply clears all tables
 
 import argparse
+import yaml
 import psycopg2 as psy
 import simplejson as json
 from collections import defaultdict
 
-# fill these in as they are for your system
-DBNAME = 'newoti'
-USER = 'pguser'
-STUDYTABLE = 'study'
-TREETABLE = 'tree'
-CURATORTABLE='curator'
-OTUTABLE='otu'
-CURATORSTUDYTABLE='curator_study_map'
-GININDEX='study_ix_jsondata_gin'
-# tablelist ordered for DROP and TRUNCATE actions
-tablelist = [
-    CURATORSTUDYTABLE,
-    OTUTABLE,
-    CURATORTABLE,
-    TREETABLE,
-    STUDYTABLE,
-    ]
-
-def clear_tables(connection,cursor):
+def clear_tables(connection,cursor,config_dict):
     print 'clearing tables'
     # tree linked to study via foreign key, so cascade removes both
+    tablelist = config_dict['tables']
     for table in tablelist:
         sqlstring=('TRUNCATE {name} CASCADE;'
             .format(name=table)
@@ -35,19 +19,25 @@ def clear_tables(connection,cursor):
         print '  SQL: ',cursor.mogrify(sqlstring)
         cursor.execute(sqlstring)
     # also remove the index
+    GININDEX = config_dict['ginindex']
     sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=GININDEX)
     cursor.execute(sqlstring)
     connection.commit()
 
-def connect():
+def connect(config_dict):
     try:
-        connectionstring="dbname={dbname} user={dbuser}".format(dbname=DBNAME,dbuser=USER)
+        DBNAME = config_dict['connection_info']['dbname']
+        USER = config_dict['connection_info']['user']
+        connectionstring=("dbname={dbname} "
+            "user={dbuser}"
+            .format(dbname=DBNAME,dbuser=USER)
+            )
         conn = psy.connect(connectionstring)
         cursor = conn.cursor()
     except KeyboardInterrupt:
         print "Shutdown requested because could not connect to DB"
-    except Exception:
-        traceback.print_exc(file=sys.stdout)
+    except psy.Error as e:
+        print e.pgerror
     return (conn,cursor)
 
 def create_phylesystem_obj():
@@ -59,18 +49,19 @@ def create_phylesystem_obj():
 def create_single_table(connection,cursor,tablename,tablestring):
     try:
         if (table_exists(cursor,tablename)):
-            print '{table} exists'.format(table=tablename)
+            print '{table} table exists'.format(table=tablename)
         else:
             print 'creating table',tablename
             cursor.execute(tablestring)
             connection.commit()
-    except psycopg2.ProgrammingError, ex:
-        fail('Error creating table {name}'.format(name=table))
+    except psy.ProgrammingError, ex:
+        print 'Error creating table {name}'.format(name=table)
 
 
 # check if tables exist, and if not, create them
-def create_all_tables(connection,cursor):
+def create_all_tables(connection,cursor,config_dict):
     # study table
+    STUDYTABLE = config_dict['tables']['studytable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id text PRIMARY KEY, '
         'year integer, '
@@ -80,9 +71,10 @@ def create_all_tables(connection,cursor):
     create_single_table(connection,cursor,STUDYTABLE,tablestring)
 
     # tree table
+    TREETABLE = config_dict['tables']['treetable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
-        'tree_id text NOT NULL, '
+        'tree_label text NOT NULL, '
         'study_id text REFERENCES study (id), '
         'UNIQUE (tree_id,study_id));'
         .format(tablename=TREETABLE)
@@ -90,6 +82,7 @@ def create_all_tables(connection,cursor):
     create_single_table(connection,cursor,TREETABLE,tablestring)
 
     # curator table
+    CURATORTABLE = config_dict['tables']['curatortable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
         'name text NOT NULL);'
@@ -98,6 +91,7 @@ def create_all_tables(connection,cursor):
     create_single_table(connection,cursor,CURATORTABLE,tablestring)
 
     # study-curator table
+    CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
     tablestring = ('CREATE TABLE {tablename} '
         '(curator_id int REFERENCES curator (id) ,'
         'study_id text REFERENCES study (id));'
@@ -106,6 +100,7 @@ def create_all_tables(connection,cursor):
     create_single_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
 
     # OTU-tree table
+    OTUTABLE = config_dict['tables']['otutable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id int PRIMARY KEY, '
         'ott_name text, '
@@ -114,30 +109,46 @@ def create_all_tables(connection,cursor):
         )
     create_single_table(connection,cursor,OTUTABLE,tablestring)
 
-def delete_tables(connection,cursor):
+def delete_tables(connection,cursor,config_dict):
     print 'deleting tables'
+    tablelist = config_dict['tables']
     try:
         for table in tablelist:
+            print "deleting table",table
             sqlstring=('DROP TABLE IF EXISTS '
                 '{name} CASCADE;'
                 .format(name=table)
                 )
-            print '  SQL: ',cursor.mogrify(sqlstring)
+            #print '  SQL: ',cursor.mogrify(sqlstring)
             cursor.execute(sqlstring)
             connection.commit()
-    except psycopg2.ProgrammingError, ex:
-        fail('Error deleteting table {name}'.format(name=table))
+            if (table_exists(cursor,table)):
+                print "whoops! table still exists: ",table
+    except psy.ProgrammingError, ex:
+        print 'Error deleteting table {name}'.format(name=table)
 
-def index_json_column(connection,cursor):
+def index_json_column(connection,cursor,config_dict):
     print "creating GIN index on JSON column"
     try:
+        GININDEX = config_dict['ginindex']
         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
             'USING gin({column});'
             .format(indexname=GININDEX,tablename=STUDYTABLE,column='data'))
         cursor.execute(sqlstring)
         connection.commit()
-    except psycopg2.ProgrammingError, ex:
-        fail('Error creating GIN index')
+    except psy.ProgrammingError, ex:
+        print 'Error creating GIN index'
+
+# Config file contains these variables
+# connection_info:
+#   dbname, user
+# tables:
+#   curatorstudytable, otutable, curatortable, treetable, studytable
+# ginindex:
+def read_config(configfile):
+    with open(configfile,'r') as f:
+        config_dict = yaml.safe_load(f)
+        return config_dict
 
 def table_exists(cursor, tablename):
     sqlstring = ("SELECT EXISTS (SELECT 1 "
@@ -152,6 +163,9 @@ def table_exists(cursor, tablename):
 if __name__ == "__main__":
     # get command line argument (option to delete tables and start over)
     parser = argparse.ArgumentParser(description='set up database tables')
+    parser.add_argument('configfile',
+        help='path to the config file'
+        )
     parser.add_argument('-d',
         dest='delete_tables',
         action='store_true',
@@ -159,17 +173,19 @@ if __name__ == "__main__":
         help='use this flag to delete tables at start'
         )
     args = parser.parse_args()
-    connection, cursor = connect()
+
+    config_dict = read_config(args.configfile)
+    connection, cursor = connect(config_dict)
 
     try:
         if (args.delete_tables):
-            delete_tables(connection,cursor)
-            create_all_tables(connection,cursor)
-            index_json_column(connection,cursor)
+            delete_tables(connection,cursor,config_dict)
+            create_all_tables(connection,cursor,config_dict)
+            #index_json_column(connection,cursor)
         else:
             create_all_tables(connection,cursor)
             clear_tables(connection,cursor)
-            index_json_column(connection,cursor)
+            #index_json_column(connection,cursor)
     except psy.Error as e:
         print e.pgerror
 

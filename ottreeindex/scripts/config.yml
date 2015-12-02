@@ -1,0 +1,12 @@
+
+---
+connection_info:
+  dbname: newoti
+  user: pguser
+tables:
+  curatorstudytable: curator_study_map
+  otutable: otu
+  curatortable: curator
+  treetable: tree
+  studytable: study
+ginindex: study_ix_jsondata_gin
