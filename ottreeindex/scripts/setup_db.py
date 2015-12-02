@@ -46,7 +46,7 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
-def create_single_table(connection,cursor,tablename,tablestring):
+def create_table(connection,cursor,tablename,tablestring):
     try:
         if (table_exists(cursor,tablename)):
             print '{table} table exists'.format(table=tablename)
@@ -56,7 +56,6 @@ def create_single_table(connection,cursor,tablename,tablestring):
             connection.commit()
     except psy.ProgrammingError, ex:
         print 'Error creating table {name}'.format(name=table)
-
 
 # check if tables exist, and if not, create them
 def create_all_tables(connection,cursor,config_dict):
@@ -68,7 +67,7 @@ def create_all_tables(connection,cursor,config_dict):
         'data jsonb);'
         .format(tablename=STUDYTABLE)
         )
-    create_single_table(connection,cursor,STUDYTABLE,tablestring)
+    create_table(connection,cursor,STUDYTABLE,tablestring)
 
     # tree table
     TREETABLE = config_dict['tables']['treetable']
@@ -79,7 +78,7 @@ def create_all_tables(connection,cursor,config_dict):
         'UNIQUE (tree_id,study_id));'
         .format(tablename=TREETABLE)
         )
-    create_single_table(connection,cursor,TREETABLE,tablestring)
+    create_table(connection,cursor,TREETABLE,tablestring)
 
     # curator table
     CURATORTABLE = config_dict['tables']['curatortable']
@@ -88,7 +87,7 @@ def create_all_tables(connection,cursor,config_dict):
         'name text NOT NULL);'
         .format(tablename=CURATORTABLE)
         )
-    create_single_table(connection,cursor,CURATORTABLE,tablestring)
+    create_table(connection,cursor,CURATORTABLE,tablestring)
 
     # study-curator table
     CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
@@ -97,7 +96,7 @@ def create_all_tables(connection,cursor,config_dict):
         'study_id text REFERENCES study (id));'
         .format(tablename=CURATORSTUDYTABLE)
         )
-    create_single_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
+    create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
 
     # OTU-tree table
     OTUTABLE = config_dict['tables']['otutable']
@@ -107,25 +106,24 @@ def create_all_tables(connection,cursor,config_dict):
         'tree_id int REFERENCES tree (id));'
         .format(tablename=OTUTABLE)
         )
-    create_single_table(connection,cursor,OTUTABLE,tablestring)
+    create_table(connection,cursor,OTUTABLE,tablestring)
 
-def delete_tables(connection,cursor,config_dict):
-    print 'deleting tables'
-    tablelist = config_dict['tables']
+def delete_table(connection,cursor,tablename):
     try:
-        for table in tablelist:
-            print "deleting table",table
-            sqlstring=('DROP TABLE IF EXISTS '
-                '{name} CASCADE;'
-                .format(name=table)
-                )
-            #print '  SQL: ',cursor.mogrify(sqlstring)
-            cursor.execute(sqlstring)
-            connection.commit()
-            if (table_exists(cursor,table)):
-                print "whoops! table still exists: ",table
+        print 'deleting table',tablename
+        sqlstring=('DROP TABLE IF EXISTS '
+            '{name} CASCADE;'
+            .format(name=tablename)
+            )
+        cursor.execute(sqlstring)
+        connection.commit()
     except psy.ProgrammingError, ex:
-        print 'Error deleteting table {name}'.format(name=table)
+        print 'Error deleting table {name}'.format(name=tablename)
+
+def delete_all_tables(connection,cursor,config_dict):
+    tablelist = config_dict['tables']
+    for table in tablelist:
+        delete_table(connection,cursor,table)
 
 def index_json_column(connection,cursor,config_dict):
     print "creating GIN index on JSON column"
@@ -179,7 +177,7 @@ if __name__ == "__main__":
 
     try:
         if (args.delete_tables):
-            delete_tables(connection,cursor,config_dict)
+            delete_all_tables(connection,cursor,config_dict)
             create_all_tables(connection,cursor,config_dict)
             #index_json_column(connection,cursor)
         else:
