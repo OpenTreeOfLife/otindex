@@ -1,6 +1,6 @@
 # Sets up the postgres database for future nexson import
-# Either deletes tables and re-creates
-# or simply clears all tables
+# Deletes existing tables and re-creates them
+# Also includes some utility functions
 
 import argparse
 import yaml
@@ -9,21 +9,23 @@ import simplejson as json
 from collections import defaultdict
 import pdb
 
-def clear_tables(connection,cursor,config_dict):
-    print 'clearing tables'
-    # tree linked to study via foreign key, so cascade removes both
-    tablelist = config_dict['tables']
-    for table in tablelist:
-        sqlstring=('TRUNCATE {name} CASCADE;'
-            .format(name=table)
-        )
-        print '  SQL: ',cursor.mogrify(sqlstring)
-        cursor.execute(sqlstring)
-    # also remove the index
-    GININDEX = config_dict['ginindex']
+def clear_gin_index(connection,cursor,config_dict):
+    GININDEX=config_dict['ginindex']
     sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=GININDEX)
     cursor.execute(sqlstring)
     connection.commit()
+
+def clear_tables(connection,cursor,config_dict):
+    print 'clearing tables'
+    # tree linked to study via foreign key, so cascade removes both
+    tabledict = config_dict['tables']
+    for table in tabledict:
+        name = tabledict[table]
+        sqlstring=('TRUNCATE {t} CASCADE;'
+            .format(t=name)
+        )
+        #print '  SQL: ',cursor.mogrify(sqlstring)
+        cursor.execute(sqlstring)
 
 def connect(config_dict):
     try:
@@ -40,12 +42,6 @@ def connect(config_dict):
     except psy.Error as e:
         print e.pgerror
     return (conn,cursor)
-
-def create_phylesystem_obj():
-    # create connection to local phylesystem
-    phylesystem_api_wrapper = PhylesystemAPI(get_from='local')
-    phylesystem = phylesystem_api_wrapper.phylesystem_obj
-    return phylesystem
 
 def create_table(connection,cursor,tablename,tablestring):
     try:
@@ -167,12 +163,6 @@ if __name__ == "__main__":
     parser.add_argument('configfile',
         help='path to the config file'
         )
-    parser.add_argument('-d',
-        dest='delete_tables',
-        action='store_true',
-        default=False,
-        help='use this flag to delete tables at start'
-        )
     args = parser.parse_args()
 
     config_dict = read_config(args.configfile)
@@ -180,14 +170,8 @@ if __name__ == "__main__":
 
     #pdb.set_trace()
     try:
-        if (args.delete_tables):
-            delete_all_tables(connection,cursor,config_dict)
-            create_all_tables(connection,cursor,config_dict)
-            #index_json_column(connection,cursor)
-        else:
-            create_all_tables(connection,cursor)
-            clear_tables(connection,cursor)
-            #index_json_column(connection,cursor)
+        delete_all_tables(connection,cursor,config_dict)
+        create_all_tables(connection,cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
 

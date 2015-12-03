@@ -20,16 +20,18 @@ from peyotl import gen_otu_dict, iter_node
 from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
 from peyotl.nexson_syntax import get_nexml_el
 
-def clear_gin_index(connection,cursor,GININDEX):
-    # also remove the index
-    sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=GININDEX)
-    cursor.execute(sqlstring)
-    connection.commit()
+def create_phylesystem_obj():
+    # create connection to local phylesystem
+    phylesystem_api_wrapper = PhylesystemAPI(get_from='local')
+    phylesystem = phylesystem_api_wrapper.phylesystem_obj
+    return phylesystem
 
 # create the JSON GIN index
-def index_json_column(connection,cursor):
+def index_json_column(connection,cursor,config_dict):
     print "creating GIN index on JSON column"
     try:
+        GININDEX=config_dict['ginindex']
+        STUDYTABLE = config_dict['tables']['studytable']
         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
             'USING gin({column});'
             .format(indexname=GININDEX,tablename=STUDYTABLE,column='data'))
@@ -41,8 +43,10 @@ def index_json_column(connection,cursor):
 
 # iterate over curators, adding curators to curator table and the
 # who-curated-what relationship to study-curator-map
-def insert_curators(connection,cursor,study_id,curators):
+def insert_curators(connection,cursor,config_dict,study_id,curators):
     try:
+        CURATORTABLE = config_dict['tables']['curatortable']
+        CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
         for name in curators:
             sqlstring = ('INSERT INTO {tablename} (name) '
                 'VALUES (%s);'
@@ -73,12 +77,13 @@ def insert_curators(connection,cursor,study_id,curators):
         print 'Error inserting curator'
 
 # iterate over phylesystem nexsons and import
-def load_nexsons(connection,cursor,phy,nstudies=None):
+def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
     counter = 0
     for study_id, studyobj in phy.iter_study_objs():
         print 'STUDY: ',study_id
 
         # study data for study table
+        STUDYTABLE = config_dict['tables']['studytable']
         nexml = get_nexml_el(studyobj)
         year = nexml.get('^ot:studyYear')
         jsonstring = json.dumps(nexml)
@@ -101,16 +106,19 @@ def load_nexsons(connection,cursor,phy,nstudies=None):
             curators.append(c)
         else:
             curators=c
-        insert_curators(connection,cursor,study_id,curators)
+        insert_curators(connection,cursor,config_dict,study_id,curators)
 
         # iterate over trees and insert tree data
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
         print ' inserting tree data'
+        TREETABLE = config_dict['tables']['treetable']
         try:
+            # note that the field called tree_id in the nexson is
+            # called tree_label in the database because it is not unique
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 print ' tree :' ,tree_id
-                sqlstring = ("INSERT INTO {tablename} (tree_id,study_id)"
+                sqlstring = ("INSERT INTO {tablename} (tree_label,study_id) "
                     "VALUES (%s,%s);"
                     .format(tablename=TREETABLE)
                     )
@@ -118,8 +126,8 @@ def load_nexsons(connection,cursor,phy,nstudies=None):
                 print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
                 connection.commit()
-        except psy.ProgrammingError, ex:
-            print 'Error inserting curator'
+        except psy.Error as e:
+            print e.pgerror
 
         counter+=1
         if (nstudies and counter>=nstudies):
@@ -147,23 +155,28 @@ if __name__ == "__main__":
     connection, cursor = setup_db.connect(config_dict)
 
     # test that tables exist
-    tabledict = config_dict['tables']
-    for table in tabledict:
-        name = tabledict[table]
-        if not setup_db.table_exists(cursor,name):
-            raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
-    clear_gin_index(connection,cursor)
+    # and clear data
+    try:
+        tabledict = config_dict['tables']
+        for table in tabledict:
+            name = tabledict[table]
+            if not setup_db.table_exists(cursor,name):
+                raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
+        setup_db.clear_tables(connection,cursor,config_dict)
+        setup_db.clear_gin_index(connection,cursor,config_dict)
+    except psy.Error as e:
+        print e.pgerror
 
     # data import
     starttime = dt.datetime.now()
     try:
         # TODO: catch peyotl-specific exceptions
-        phy = setup_db.create_phylesystem_obj()
+        phy = create_phylesystem_obj()
         if (args.nstudies):
-            load_nexsons(connection,cursor,phy,args.nstudies)
+            load_nexsons(connection,cursor,phy,config_dict,args.nstudies)
         else:
-            load_nexsons(connection,cursor)
-        index_json_column(connection,cursor,phy)
+            load_nexsons(connection,cursor,phy,config_dict)
+        index_json_column(connection,cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
     connection.close()
