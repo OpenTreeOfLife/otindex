@@ -34,5 +34,6 @@ class TestDatabaseSetup():
     def testDeleteTable(self):
         connection,cursor = self.connection_tuple
         tablename='test'
+        assert setup_db.table_exists(cursor, tablename) == True
         setup_db.delete_table(connection,cursor,tablename)
         assert setup_db.table_exists(cursor, tablename) == False

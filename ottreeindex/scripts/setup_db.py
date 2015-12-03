@@ -7,6 +7,7 @@ import yaml
 import psycopg2 as psy
 import simplejson as json
 from collections import defaultdict
+import pdb
 
 def clear_tables(connection,cursor,config_dict):
     print 'clearing tables'
@@ -54,8 +55,9 @@ def create_table(connection,cursor,tablename,tablestring):
             print 'creating table',tablename
             cursor.execute(tablestring)
             connection.commit()
-    except psy.ProgrammingError, ex:
-        print 'Error creating table {name}'.format(name=table)
+    except psy.Error as e:
+        print 'Error creating table {name}'.format(name=tablename)
+        print e.pgerror
 
 # check if tables exist, and if not, create them
 def create_all_tables(connection,cursor,config_dict):
@@ -75,7 +77,7 @@ def create_all_tables(connection,cursor,config_dict):
         '(id serial PRIMARY KEY, '
         'tree_label text NOT NULL, '
         'study_id text REFERENCES study (id), '
-        'UNIQUE (tree_id,study_id));'
+        'UNIQUE (tree_label,study_id));'
         .format(tablename=TREETABLE)
         )
     create_table(connection,cursor,TREETABLE,tablestring)
@@ -121,9 +123,10 @@ def delete_table(connection,cursor,tablename):
         print 'Error deleting table {name}'.format(name=tablename)
 
 def delete_all_tables(connection,cursor,config_dict):
-    tablelist = config_dict['tables']
-    for table in tablelist:
-        delete_table(connection,cursor,table)
+    tabledict = config_dict['tables']
+    for table in tabledict:
+        name = tabledict[table]
+        delete_table(connection,cursor,name)
 
 def index_json_column(connection,cursor,config_dict):
     print "creating GIN index on JSON column"
@@ -175,6 +178,7 @@ if __name__ == "__main__":
     config_dict = read_config(args.configfile)
     connection, cursor = connect(config_dict)
 
+    #pdb.set_trace()
     try:
         if (args.delete_tables):
             delete_all_tables(connection,cursor,config_dict)
