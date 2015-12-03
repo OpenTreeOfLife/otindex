@@ -8,7 +8,10 @@ import datetime as dt
 import argparse
 import psycopg2 as psy
 import simplejson as json
-from collections import defaultdict
+import yaml
+
+# other database functions
+import setup_db
 
 # peyotl setup
 from peyotl.api.phylesystem_api import PhylesystemAPI
@@ -17,59 +20,11 @@ from peyotl import gen_otu_dict, iter_node
 from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
 from peyotl.nexson_syntax import get_nexml_el
 
-# fill these in as they are for your system
-DBNAME = 'newoti'
-USER = 'pguser'
-STUDYTABLE = 'study'
-TREETABLE = 'tree'
-CURATORTABLE='curator'
-OTUTABLE='otu'
-CURATORSTUDYTABLE='curator_study_map'
-GININDEX='study_ix_jsondata_gin'
-tablelist = [
-    CURATORSTUDYTABLE,
-    OTUTABLE,
-    CURATORTABLE,
-    TREETABLE,
-    STUDYTABLE,
-    ]
-
-def check_tables_exist(cursor):
-    print "checking that tables exist"
-    for table in tablelist:
-        try:
-            sqlstring = ("SELECT EXISTS (SELECT 1 "
-                "FROM information_schema.tables "
-                "WHERE table_schema = 'public' "
-                "AND table_name = '{name}');"
-                .format(name=table)
-                )
-            cursor.execute(sqlstring)
-        except psy.ProgrammingError, ex:
-            print 'Table {name} does not exist'.format(name=table)
-
-def clear_gin_index(connection,cursor):
+def clear_gin_index(connection,cursor,GININDEX):
     # also remove the index
     sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=GININDEX)
     cursor.execute(sqlstring)
     connection.commit()
-
-def connect():
-    try:
-        connectionstring="dbname={dbname} user={dbuser}".format(dbname=DBNAME,dbuser=USER)
-        conn = psy.connect(connectionstring)
-        cursor = conn.cursor()
-    except KeyboardInterrupt:
-        print "Shutdown requested because could not connect to DB"
-    except Exception:
-        traceback.print_exc(file=sys.stdout)
-    return (conn,cursor)
-
-def create_phylesystem_obj():
-    # create connection to local phylesystem
-    phylesystem_api_wrapper = PhylesystemAPI(get_from='local')
-    phylesystem = phylesystem_api_wrapper.phylesystem_obj
-    return phylesystem
 
 # create the JSON GIN index
 def index_json_column(connection,cursor):
@@ -81,9 +36,8 @@ def index_json_column(connection,cursor):
         cursor.execute(sqlstring)
         connection.commit()
     except psy.Error as e:
-        print e.pgerror
         print 'Error creating GIN index'
-
+        print e.pgerror
 
 # iterate over curators, adding curators to curator table and the
 # who-curated-what relationship to study-curator-map
@@ -175,28 +129,41 @@ def load_nexsons(connection,cursor,phy,nstudies=None):
 if __name__ == "__main__":
     # get command line argument (nstudies to import)
     parser = argparse.ArgumentParser(description='load nexsons into postgres')
+    parser.add_argument('configfile',
+        help='path to the config file'
+        )
     parser.add_argument('-n',
         dest='nstudies',
         type=int,
         help='load only n studies; if absent, load all studies'
         )
     args = parser.parse_args()
-    connection, cursor = connect()
+
+    # read config variables
+    config_dict={}
+    with open(args.configfile,'r') as f:
+        config_dict = yaml.safe_load(f)
+
+    connection, cursor = setup_db.connect(config_dict)
 
     # test that tables exist
-    check_tables_exist(cursor)
+    tabledict = config_dict['tables']
+    for table in tabledict:
+        name = tabledict[table]
+        if not setup_db.table_exists(cursor,name):
+            raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
     clear_gin_index(connection,cursor)
 
     # data import
     starttime = dt.datetime.now()
     try:
         # TODO: catch peyotl-specific exceptions
-        phy = create_phylesystem_obj()
+        phy = setup_db.create_phylesystem_obj()
         if (args.nstudies):
             load_nexsons(connection,cursor,phy,args.nstudies)
         else:
             load_nexsons(connection,cursor)
-        index_json_column(connection,cursor)
+        index_json_column(connection,cursor,phy)
     except psy.Error as e:
         print e.pgerror
     connection.close()
