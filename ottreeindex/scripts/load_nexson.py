@@ -48,31 +48,35 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
         CURATORTABLE = config_dict['tables']['curatortable']
         CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
         for name in curators:
-            sqlstring = ('INSERT INTO {tablename} (name) '
-                'VALUES (%s);'
-                .format(tablename=CURATORTABLE)
-                )
-            data = (name)
-            print '  SQL: ',cursor.mogrify(sqlstring,(data,))
-            cursor.execute(sqlstring,(data,))
-
-            # need to get curator id for insertion into map table
+            # check to make sure this curator name doesn't exist already
             sqlstring = ('SELECT id FROM {tablename} '
                 'WHERE name=%s;'
                 .format(tablename=CURATORTABLE)
                 )
             data=(name)
-            print '  SQL: ',cursor.mogrify(sqlstring,(data,))
             cursor.execute(sqlstring,(data,))
             curator_id = cursor.fetchone()
+            if curator_id is None:
+                # insert the curator, returning the serial id, which
+                # we will need shortly
+                sqlstring = ('INSERT INTO {tablename} (name) '
+                    'VALUES (%s) RETURNING id;'
+                    .format(tablename=CURATORTABLE)
+                    )
+                data = (name)
+                #print '  SQL: ',cursor.mogrify(sqlstring,(data,))
+                cursor.execute(sqlstring,(data,))
+                curator_id = cursor.fetchone()
+
+            # now insert the curator - study mapping
             sqlstring = ('INSERT INTO {tablename} (curator_id,study_id) '
                 'VALUES (%s,%s);'
                 .format(tablename=CURATORSTUDYTABLE)
                 )
             data = (curator_id,study_id)
-            print '  SQL: ',cursor.mogrify(sqlstring,data)
+            #print '  SQL: ',cursor.mogrify(sqlstring,data)
             cursor.execute(sqlstring,data)
-            connection.commit()
+        connection.commit()
     except psy.ProgrammingError, ex:
         print 'Error inserting curator'
 
@@ -98,7 +102,6 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
 
         # get curator(s), noting that ot:curators might be a
         # string or a list
-        print " inserting curator data"
         c = nexml.get('^ot:curatorName')
         print ' ot:curatorName: ',c
         curators=[]
@@ -123,7 +126,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
                     .format(tablename=TREETABLE)
                     )
                 data = (tree_id,study_id)
-                print '  SQL: ',cursor.mogrify(sqlstring,data)
+                #print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
                 connection.commit()
         except psy.Error as e:

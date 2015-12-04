@@ -6,7 +6,7 @@ import argparse
 import yaml
 import psycopg2 as psy
 import simplejson as json
-from collections import defaultdict
+import logging
 import pdb
 
 def clear_gin_index(connection,cursor,config_dict):
@@ -82,7 +82,7 @@ def create_all_tables(connection,cursor,config_dict):
     CURATORTABLE = config_dict['tables']['curatortable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
-        'name text NOT NULL);'
+        'name text UNIQUE);'
         .format(tablename=CURATORTABLE)
         )
     create_table(connection,cursor,CURATORTABLE,tablestring)
@@ -156,6 +156,11 @@ def table_exists(cursor, tablename):
         )
     cursor.execute(sqlstring)
     return cursor.fetchone()[0]
+
+# TODO: need to hook this in, probably through config file
+def get_logger(name='ottreeindex'):
+    logger = logging.getLogger(name)
+    logger.basicConfig(filename='setup_db.log',level=logging.INFO)
 
 if __name__ == "__main__":
     # get command line argument (option to delete tables and start over)
