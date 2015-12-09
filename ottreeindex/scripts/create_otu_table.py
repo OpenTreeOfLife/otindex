@@ -30,7 +30,7 @@ def getTreeID(cursor,study_id,tree_label):
     return cursor.fetchone()[0]
 
 def print_otu_file(connection,cursor,phy,nstudies=None):
-    filename = "tree_otu.csv"
+    filename = "tree_otu_mapping.csv"
     with open (filename,'w') as f:
         # datafile format is 'ottid'\t'treeid' where treeid is not
         # the treeid (string) in the nexson, but the treeid (int) from
