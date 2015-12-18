@@ -84,7 +84,7 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
 def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
     counter = 0
     for study_id, studyobj in phy.iter_study_objs():
-        print 'STUDY: ',study_id
+        #print 'STUDY: ',study_id
 
         # study data for study table
         STUDYTABLE = config_dict['tables']['studytable']
@@ -103,7 +103,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         # get curator(s), noting that ot:curators might be a
         # string or a list
         c = nexml.get('^ot:curatorName')
-        print ' ot:curatorName: ',c
+        #print ' ot:curatorName: ',c
         curators=[]
         if (isinstance(c,basestring)):
             curators.append(c)
@@ -114,13 +114,13 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         # iterate over trees and insert tree data
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
-        print ' inserting tree data'
+        #print ' inserting tree data'
         TREETABLE = config_dict['tables']['treetable']
         try:
             # note that the field called tree_id in the nexson is
             # called tree_label in the database because it is not unique
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
-                print ' tree :' ,tree_id
+                #print ' tree :' ,tree_id
                 sqlstring = ("INSERT INTO {tablename} (tree_label,study_id) "
                     "VALUES (%s,%s);"
                     .format(tablename=TREETABLE)

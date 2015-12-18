@@ -99,9 +99,8 @@ def create_all_tables(connection,cursor,config_dict):
     # OTU-tree table
     OTUTABLE = config_dict['tables']['otutable']
     tablestring = ('CREATE TABLE {tablename} '
-        '(id int PRIMARY KEY, '
-        'ott_name text, '
-        'tree_id int REFERENCES tree (id));'
+        '(tree_id int REFERENCES tree (id), '
+        'ott_id int);'
         .format(tablename=OTUTABLE)
         )
     create_table(connection,cursor,OTUTABLE,tablestring)

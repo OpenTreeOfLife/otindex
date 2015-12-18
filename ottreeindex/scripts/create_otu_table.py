@@ -25,9 +25,23 @@ def getTreeID(cursor,study_id,tree_label):
         .format(tablename='tree')
         )
     data = (study_id,tree_label)
-    print '  SQL: ',cursor.mogrify(sqlstring,data)
+    #print '  SQL: ',cursor.mogrify(sqlstring,data)
     cursor.execute(sqlstring,data)
-    return cursor.fetchone()[0]
+    result = cursor.fetchone()
+    if result is not None:
+        treeid = result[0]
+        return treeid
+    else:
+        raise LookupError('study {s}, tree {t}'
+            ' not found'.format(s=study_id,t=tree_label))
+
+# use the bulk copy method to upload from the file into the table
+def import_csv_file(connection,cursor,table,filename):
+    print "copying {f} into {t} table".format(f=filename,t=table)
+    with open (filename,'r') as f:
+        copystring="COPY {t} FROM STDIN WITH CSV HEADER".format(t=table)
+        cursor.copy_expert(copystring,f)
+        connection.commit()
 
 def print_otu_file(connection,cursor,phy,nstudies=None):
     filename = "tree_otu_mapping.csv"
@@ -36,6 +50,7 @@ def print_otu_file(connection,cursor,phy,nstudies=None):
         # the treeid (string) in the nexson, but the treeid (int) from
         # the database for faster indexing
         counter = 0
+        f.write('{t},{o}\n'.format(t='tree_id',o='ottID'))
         for study_id, n in phy.iter_study_objs():
             print study_id
             otu_dict = gen_otu_dict(n)
@@ -49,15 +64,12 @@ def print_otu_file(connection,cursor,phy,nstudies=None):
                     ottID = o.get('^ot:ottId')
                     otu_props = [ottname,ottID]
                     mapped_otus[oid]=otu_props
-                    print oid,ottID,label,ottname
+                    #print oid,ottID,label,ottname
 
             # now iterate over trees and collect OTUs used in
             # each tree
             for trees_group_id, tree_label, tree in iter_trees(n):
                 tree_id = getTreeID(cursor,study_id,tree_label)
-                if (tree_id is None):
-                    raise LookupError('tree_id for study {s}, tree {t}'
-                        ' not found'.format(s=study_id,t=tree_label))
                 for node_id, node in iter_node(tree):
                     oid = node.get('@otu')
                     # no @otu property on internal nodes
@@ -66,7 +78,7 @@ def print_otu_file(connection,cursor,phy,nstudies=None):
                         if otu_props is not None:
                             ottname = otu_props[0]
                             ottID = otu_props[1]
-                            print tree_label,oid,ottID,ottname
+                            #print tree_label,oid,ottID,ottname
                             f.write('{t},{o}\n'.format(t=tree_id,o=ottID))
 
             counter+=1
@@ -94,4 +106,9 @@ if __name__ == "__main__":
 
     connection, cursor = setup_db.connect(config_dict)
     phy = create_phylesystem_obj()
-    print_otu_file(connection,cursor,phy,args.nstudies)
+    try:
+        filename = print_otu_file(connection,cursor,phy,args.nstudies)
+        OTUTABLE = config_dict['tables']['otutable']
+        import_csv_file(connection,cursor,OTUTABLE,filename)
+    except psy.Error as e:
+        print e.pgerror
