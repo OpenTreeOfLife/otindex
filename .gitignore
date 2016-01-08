@@ -1,3 +1,5 @@
 development.ini
 ottreeindex.egg_info
 *.pyc
+*.csv
+config.yml
