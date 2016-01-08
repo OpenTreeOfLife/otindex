@@ -1,5 +1,6 @@
 from pyramid.response import Response
 from pyramid.view import view_config
+from pyramid.url import route_url
 
 from sqlalchemy.exc import DBAPIError
 
@@ -8,28 +9,44 @@ from .models import (
     MyModel,
     )
 
+@view_config(route_name='find_studies', renderer='json', request_method='GET')
+def find_studies(request):
+    # payload should contain some number of parameter=value pairs
+    # valid parameters are 'exact', 'verbose' and 'p'
+    # where p = (a valid study property)
+    payload = request.params
+    result_json = {}
+    return result_json
 
-@view_config(route_name='home', renderer='templates/mytemplate.pt')
-def my_view(request):
-    try:
-        one = DBSession.query(MyModel).filter(MyModel.name == 'one').first()
-    except DBAPIError:
-        return Response(conn_err_msg, content_type='text/plain', status_int=500)
-    return {'one': one, 'project': 'ottreeindex'}
+@view_config(route_name='find_trees', renderer='json', request_method='GET')
+def find_trees(request):
+    payload = request.params
+    result_json = {}
+    return result_json
 
+@view_config(route_name='properties', renderer='json', request_method='GET')
+def properties(request):
+    # no parameters for this method, simply returns list of tree and
+    # study properties
+    # junk data for now
+    tree_props= [
+        "ot:treebaseOTUId", "ot:nodeLabelMode",
+        "ot:originalLabel", "oti_tree_id",
+        "ot:ottTaxonName", "ot:inferenceMethod",
+        "ot:tag", "ot:treebaseTreeId",
+        ]
+    study_props = [
+        "ot:studyModified", "ot:focalClade",
+        "ot:focalCladeOTTTaxonName", "ot:focalCladeOTTId",
+        "ot:studyPublication", "ot:studyLastEditor",
+        "ot:tag", "ot:focalCladeTaxonName",
+    ]
+    result_json = {
+        "tree_properties" : tree_props,
+        "study_properties" : study_props
+        }
+    return result_json
 
-conn_err_msg = """\
-Pyramid is having a problem using your postgres database.  The problem
-might be caused by one of the following things:
-
-1.  You may need to run the "initialize_ottreeindex_db" script
-    to initialize your database tables.  Check your virtual
-    environment's "bin" directory for this script and try to run it.
-
-2.  Your database server may not be running.  Check that the
-    database server referred to by the "sqlalchemy.url" setting in
-    your "development.ini" file is running.
-
-After you fix the problem, please restart the Pyramid application to
-try it again.
-"""
+@view_config(route_name='update_studies', rendered='json', request_method='POST')
+def update_studies(request):
+    payload = request.params
