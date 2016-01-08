@@ -10,7 +10,7 @@ class TestMyViewSuccessCondition(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
         from sqlalchemy import create_engine
-        engine = create_engine('postgres+psqcopg2://')
+        engine = create_engine('postgresql+psycopg2://')
         from .models import (
             Base,
             MyModel,
@@ -37,7 +37,7 @@ class TestMyViewFailureCondition(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
         from sqlalchemy import create_engine
-        engine = create_engine('postgres+psqcopg2://')
+        engine = create_engine('postgresql+psycopg2://')
         from .models import (
             Base,
             MyModel,
