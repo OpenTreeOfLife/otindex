@@ -9,12 +9,12 @@ TREETABLE = 'tree'
 DBNAME = 'newoti'
 USER = 'pguser'
 
-def iterate_all_studies(cursor):
+def find_all_studies(cursor):
     sqlstring = ("SELECT studyid,year FROM study;")
     cursor.execute(sqlstring)
     print "returned ",cursor.rowcount,"studies"
 
-def iterate_all_trees(cursor):
+def find_all_trees(cursor):
     sqlstring = "SELECT * FROM tree;"
     cursor.execute(sqlstring)
     print "returned ",cursor.rowcount,"trees"
@@ -34,8 +34,8 @@ if __name__ == "__main__":
     connection, cursor = connect()
     starttime = dt.datetime.now()
     try:
-        iterate_all_studies(cursor)
-        iterate_all_trees(cursor)
+        find_all_studies(cursor)
+        find_all_trees(cursor)
     except psy.Error as e:
         print e.pgerror
     connection.close()

@@ -55,7 +55,6 @@ def create_table(connection,cursor,tablename,tablestring):
         print 'Error creating table {name}'.format(name=tablename)
         print e.pgerror
 
-# check if tables exist, and if not, create them
 def create_all_tables(connection,cursor,config_dict):
     # study table
     STUDYTABLE = config_dict['tables']['studytable']
