@@ -47,6 +47,10 @@ def properties(request):
         }
     return result_json
 
-@view_config(route_name='update_studies', rendered='json', request_method='POST')
-def update_studies(request):
+@view_config(route_name='add_update_studies', rendered='json', request_method='POST')
+def add_update_studies(request):
+    payload = request.params
+
+@view_config(route_name='remove_studies', rendered='json', request_method='POST')
+def remove_studies(request):
     payload = request.params
