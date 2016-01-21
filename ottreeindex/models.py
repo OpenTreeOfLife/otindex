@@ -6,12 +6,10 @@ from sqlalchemy import (
     String,
     Text,
     ForeignKey,
-    UniqueConstraint,
-    PrimaryKeyConstraint,
     )
 
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, back_populates
 from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.orm import (
@@ -29,37 +27,45 @@ Base = declarative_base()
 ########
 
 # define association between studies and curators
+# this directive replaces direct creation of a class for the
+# association table
 curator_study_table = Table('curator_study_map', Base.metadata,
-    Column('studyid', Integer, ForeignKey('study.id')),
-    Column('curatorid', Integer, ForeignKey('curator.id')))
+    Column('study_id', Integer, ForeignKey('study.id'), primary_key=True),
+    Column('curator_id', Integer, ForeignKey('curator.id'), primary_key=True)
+    )
 
 # study table
 # The studyID is of the form prefix_id.
 # Class defines and one-to-many relationships with trees
 # and a many-to-many relationship with curators
-# sqlstring for this is 'CREATE TABLE {tablename} '
-    # '(id text PRIMARY KEY, '
-    # 'year integer, '
-    # 'data jsonb);'
-    # .format(tablename=STUDYTABLE)
+# SQL string:
+    # tablestring = ('CREATE TABLE {tablename} '
+    #     '(id text PRIMARY KEY, '
+    #     'year integer, '
+    #     'data jsonb);'
+    #     .format(tablename=STUDYTABLE)
+    #     )
 class Study(Base):
     __tablename__ = 'study'
     id = Column(String, primary_key=True, index=True)
     year = Column(Integer)
     data = Column(JSONB)
     trees = relationship('Tree',backref='study')
+    # many-to-many study<-->curator relationship
     curators = relationship('Curator',
         secondary=curator_study_table,
-        backref='studies')
+        back_populates='studies')
 
 # tree table
-# Primary key is the combination of treeid + studyid
-# sqlstring for this table is 'CREATE TABLE {tablename} '
-    # '(id serial PRIMARY KEY, '
-    # 'tree_label text NOT NULL, '
-    # 'study_id text REFERENCES study (id), '
-    # 'UNIQUE (tree_label,study_id));'
-    # .format(tablename=TREETABLE)
+# treeid is a auto-incremented integer
+# SQL string:
+    # tablestring = ('CREATE TABLE {tablename} '
+    #     '(id serial PRIMARY KEY, '
+    #     'tree_label text NOT NULL, '
+    #     'study_id text REFERENCES study (id), '
+    #     'UNIQUE (tree_label,study_id));'
+    #     .format(tablename=TREETABLE)
+    #     )
 class Tree(Base):
     __tablename__ = 'tree'
     __table_args__ = (
@@ -73,34 +79,30 @@ class Tree(Base):
 # Currently only store curator name in nexsons, which give
 # no guarantee about uniqueness or stability
 # Therefore use auto-incremented id - could later add github username
-# sqlstring for this table is 'CREATE TABLE {tablename} '
-    # '(id serial PRIMARY KEY, '
-    # 'name text UNIQUE);'
-    # .format(tablename=CURATORTABLE)
+# SQL string:
+    # tablestring = ('CREATE TABLE {tablename} '
+    #     '(id serial PRIMARY KEY, '
+    #     'name text UNIQUE);'
+    #     .format(tablename=CURATORTABLE)
+    #     )
 class Curator(Base):
     __tablename__ = 'curator'
     id = Column(Integer,primary_key=True)
     name = Column(String,nullable=False,unique=True)
+    # many-to-many study<-->curator relationship
+    studies = relationship('Study',
+        secondary=curator_study_table,
+        back_populates='curators')
 
-# # curator-study relationship table ('who curated what?')
-# # sqlstring for this table is 'CREATE TABLE {tablename} '
-#     # '(curator_id int REFERENCES curator (id) ,'
-#     # 'study_id text REFERENCES study (id));'
-#     # .format(tablename=CURATORSTUDYTABLE)
-# class CuratorStudy(Base):
-#     __tablename__='curator_study_map'
-#     curator_id = Column(Integer,ForeignKey("curator.id"), nullable=False)
-#     study_id = Column(String, ForeignKey("study.id"), nullable=False)
 
 # otu-tree table ('what otus are in which trees?')
-# sqlstring for this table is 'CREATE TABLE {tablename} '
-    # '(tree_id int REFERENCES tree (id), '
-    # 'ott_id int);'
-    # .format(tablename=OTUTABLE)
+# SQL string:
+    # tablestring = ('CREATE TABLE {tablename} '
+    #     '(tree_id int REFERENCES tree (id), '
+    #     'ott_id int);'
+    #     .format(tablename=OTUTABLE)
+    #     )
 class Otu(Base):
     __tablename__='otu'
-    __table_args__ = (
-        PrimaryKeyConstraint('tree_id','ott_id'),
-    )
     tree_id = Column(Integer, ForeignKey("tree.id"), nullable=False)
-    ott_id = Column(Integer, ForeignKey("curator.id"), nullable=False)
+    ott_id = Column(Integer, nullable=False)
