@@ -1,5 +1,5 @@
 development.ini
-/ottreeindex.egg_info
+ottreeindex.egg-info/
 *.pyc
 *.csv
 config.yml
