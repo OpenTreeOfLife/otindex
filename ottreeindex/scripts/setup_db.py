@@ -95,11 +95,20 @@ def create_all_tables(connection,cursor,config_dict):
         )
     create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
 
-    # OTU-tree table
+    # otu-tree table
+    OTUTREETABLE = config_dict['tables']['treeotutable']
+    tablestring = ('CREATE TABLE {tablename} '
+        '(id int PRIMARY KEY, '
+        'name text NOT NULL);'
+        .format(tablename=OTUTREETABLE)
+        )
+    create_table(connection,cursor,OTUTREETABLE,tablestring)
+
+    # otu table
     OTUTABLE = config_dict['tables']['otutable']
     tablestring = ('CREATE TABLE {tablename} '
         '(tree_id int REFERENCES tree (id), '
-        'ott_id int);'
+        'id int PRIMARY KEY);'
         .format(tablename=OTUTABLE)
         )
     create_table(connection,cursor,OTUTABLE,tablestring)
@@ -166,6 +175,14 @@ if __name__ == "__main__":
     parser.add_argument('configfile',
         help='path to the config file'
         )
+
+    parser.add_argument('-d',
+        dest='delete_tables',
+        action='store_true',
+        default=False,
+        help='use this flag to delete tables at start'
+        )
+
     args = parser.parse_args()
 
     config_dict = read_config(args.configfile)
@@ -173,8 +190,12 @@ if __name__ == "__main__":
 
     #pdb.set_trace()
     try:
-        delete_all_tables(connection,cursor,config_dict)
-        create_all_tables(connection,cursor,config_dict)
+        if (args.delete_tables):
+            delete_all_tables(connection,cursor,config_dict)
+            create_all_tables(connection,cursor,config_dict)
+        else:
+            create_all_tables(connection,cursor)
+            clear_tables(connection,cursor)
     except psy.Error as e:
         print e.pgerror
 
