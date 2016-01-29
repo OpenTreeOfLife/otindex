@@ -2,12 +2,27 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.url import route_url
 
+from pyramid.httpexceptions import (
+    HTTPNotFound,
+    HTTPBadRequest,
+    )
+
 from sqlalchemy.exc import DBAPIError
 
 from .models import (
     DBSession,
-    MyModel,
+    Study,
+    Tree,
+    Curator,
+    Otu,
     )
+
+@view_config(route_name='home', renderer='json')
+def index(request):
+    return {
+        "description": "The Open Tree of Life Phylesystem Index",
+        "source_url": "https://github.com/kcranston/ottreeindex/",
+    }
 
 @view_config(route_name='find_studies', renderer='json', request_method='GET')
 def find_studies(request):
@@ -15,8 +30,24 @@ def find_studies(request):
     # valid parameters are 'exact', 'verbose' and 'p'
     # where p = (a valid study property)
     payload = request.params
-    result_json = {}
-    return result_json
+    resultlist = []
+    # set defaults
+    exact = False
+    verbose = False
+    if 'exact' in payload:
+        exact = payload['exact']
+    if 'verbose' in payload:
+        verbose = payload['verbose']
+    if verbose is True:
+        # return data about studies
+        for id in DBSession.query(Study.id):
+            resultlist.append({"ot:studyId" : id})
+    else:
+        # return only study IDs
+        for id in DBSession.query(Study.id):
+            resultlist.append({"ot:studyId" : id})
+    resultdict = { "matched_studies" : resultlist}
+    return resultdict
 
 @view_config(route_name='find_trees', renderer='json', request_method='GET')
 def find_trees(request):
@@ -47,10 +78,12 @@ def properties(request):
         }
     return result_json
 
-@view_config(route_name='add_update_studies', rendered='json', request_method='POST')
+@view_config(route_name='add_update_studies', renderer='json', request_method='POST')
 def add_update_studies(request):
     payload = request.params
 
-@view_config(route_name='remove_studies', rendered='json', request_method='POST')
+@view_config(route_name='remove_studies', renderer='json', request_method='POST')
 def remove_studies(request):
     payload = request.params
+    # delete studies & trees listed in payload
+    # also delete otus only used in these studies

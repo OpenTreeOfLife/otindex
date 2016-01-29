@@ -21,6 +21,6 @@ def main(global_config, **settings):
     config.add_route('find_trees','/v1/find_trees')
     config.add_route('properties','/v1/properties')
     config.add_route('add_update_studies','v1/add_update_studies')
-    config.add_route('remove_studies','v1/remove_studies')
+    config.add_route('remove_studies','/v1/remove_studies')
     config.scan()
     return config.make_wsgi_app()
