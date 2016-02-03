@@ -6,10 +6,11 @@ from sqlalchemy import (
     String,
     Text,
     ForeignKey,
+    UniqueConstraint,
     )
 
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship, back_populates
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.orm import (
@@ -30,8 +31,14 @@ Base = declarative_base()
 # this directive replaces direct creation of a class for the
 # association table
 curator_study_table = Table('curator_study_map', Base.metadata,
-    Column('study_id', Integer, ForeignKey('study.id'), primary_key=True),
+    Column('study_id', String, ForeignKey('study.id'), primary_key=True),
     Column('curator_id', Integer, ForeignKey('curator.id'), primary_key=True)
+    )
+
+# association between trees and otus
+tree_otu_table = Table('tree_otu_map', Base.metadata,
+    Column('otu_id', Integer, ForeignKey('otu.id'), primary_key=True),
+    Column('tree_id', Integer, ForeignKey('tree.id'), primary_key=True)
     )
 
 # study table
@@ -58,6 +65,7 @@ class Study(Base):
 
 # tree table
 # treeid is a auto-incremented integer
+# also defines a many-to-many relationship with otus
 # SQL string:
     # tablestring = ('CREATE TABLE {tablename} '
     #     '(id serial PRIMARY KEY, '
@@ -74,6 +82,10 @@ class Tree(Base):
     id = Column(Integer,primary_key=True)
     tree_label = Column(String, nullable=False)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    # many-to-many tree<-->otu relationship
+    otus = relationship('Otu',
+        secondary=tree_otu_table,
+        back_populates='trees')
 
 # curator table
 # Currently only store curator name in nexsons, which give
@@ -94,15 +106,18 @@ class Curator(Base):
         secondary=curator_study_table,
         back_populates='curators')
 
-
-# otu-tree table ('what otus are in which trees?')
+# otu table
+# also defines a many-to-many relationship with trees
 # SQL string:
     # tablestring = ('CREATE TABLE {tablename} '
-    #     '(tree_id int REFERENCES tree (id), '
-    #     'ott_id int);'
-    #     .format(tablename=OTUTABLE)
+    #     '(id int PRIMARY KEY, '
+    #     'name text NOT NULL);'
+    #     .format(tablename=OTUTREETABLE)
     #     )
 class Otu(Base):
     __tablename__='otu'
-    tree_id = Column(Integer, ForeignKey("tree.id"), nullable=False)
-    ott_id = Column(Integer, nullable=False)
+    id = Column(Integer, primary_key=True)
+    ott_name = Column(String,nullable=False)
+    trees = relationship('Tree',
+        secondary=tree_otu_table,
+        back_populates='otus')
