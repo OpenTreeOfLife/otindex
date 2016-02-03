@@ -5,6 +5,7 @@ connection_info:
   user: pguser
 tables:
   curatorstudytable: curator_study_map
+  treeotutable: tree_otu_map
   otutable: otu
   curatortable: curator
   treetable: tree
