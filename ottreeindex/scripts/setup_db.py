@@ -95,23 +95,24 @@ def create_all_tables(connection,cursor,config_dict):
         )
     create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
 
-    # otu-tree table
-    OTUTREETABLE = config_dict['tables']['treeotutable']
-    tablestring = ('CREATE TABLE {tablename} '
-        '(id int PRIMARY KEY, '
-        'name text NOT NULL);'
-        .format(tablename=OTUTREETABLE)
-        )
-    create_table(connection,cursor,OTUTREETABLE,tablestring)
-
     # otu table
     OTUTABLE = config_dict['tables']['otutable']
     tablestring = ('CREATE TABLE {tablename} '
-        '(tree_id int REFERENCES tree (id), '
-        'id int PRIMARY KEY);'
+        '(id int PRIMARY KEY, '
+        'name text NOT NULL);'
         .format(tablename=OTUTABLE)
         )
     create_table(connection,cursor,OTUTABLE,tablestring)
+
+    # otu-tree table
+    TREEOTUTABLE = config_dict['tables']['treeotutable']
+    tablestring = ('CREATE TABLE {tablename} '
+        '(tree_id int REFERENCES tree (id), '
+        'ott_id int REFERENCES otu (id));'
+        .format(tablename=TREEOTUTABLE)
+        )
+    create_table(connection,cursor,TREEOTUTABLE,tablestring)
+
 
 def delete_table(connection,cursor,tablename):
     try:
