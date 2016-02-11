@@ -7,7 +7,7 @@ For command-line setup (for testing not from within pyramid):
 * config.yml: YAML file with database settings, including table names.
 * setup_db.py: creates DB tables if do not already exist; optionally deleting them all first
 * load_nexson.py: loads the nexson files into the database and creates the JSON index
-* create_otu_table.py: generates a csv file of otu-tree relationships and then loads this using the COPY command
+* create\_otu\_table.py: generates a csv file of otu-tree relationships and then loads this using the COPY command
 * initializedb.py: the pyramid file for initializing the database
 
 
@@ -54,7 +54,9 @@ Then adjust the new file for your local settings:
 
 * If Open Tree uses a database other than 'newoti', set this in config.yml.
 * If Open Tree runs as a user other than 'pguser', set this in config.yml.
-* (NOT YET) Set location of OTT (the directory containing taxonomy.tsv and so on).
+* Set location of taxonomy (usually a directory called 'ott' from an OTT distribution;
+  the directory containing taxonomy.tsv and so on).  The setup code
+  can be run without a taxonomy; just put None.
 
 
 ## Initialize and load the database
