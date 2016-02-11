@@ -13,6 +13,8 @@ import psycopg2 as psy
 import argparse
 import yaml
 
+import peyotl.ott as ott
+
 def create_phylesystem_obj():
     # create connection to local phylesystem
     phylesystem_api_wrapper = PhylesystemAPI(get_from='local')
@@ -43,7 +45,7 @@ def import_csv_file(connection,cursor,table,filename):
         cursor.copy_expert(copystring,f)
         connection.commit()
 
-def print_otu_file(connection,cursor,phy,nstudies=None):
+def print_otu_file(connection,cursor,phy,ott,nstudies=None):
     filename = "tree_otu_mapping.csv"
     with open (filename,'w') as f:
         # datafile format is 'ottid'\t'treeid' where treeid is not
@@ -70,6 +72,7 @@ def print_otu_file(connection,cursor,phy,nstudies=None):
             # each tree
             for trees_group_id, tree_label, tree in iter_trees(n):
                 tree_id = getTreeID(cursor,study_id,tree_label)
+                ottIDs = {}
                 for node_id, node in iter_node(tree):
                     oid = node.get('@otu')
                     # no @otu property on internal nodes
@@ -78,14 +81,30 @@ def print_otu_file(connection,cursor,phy,nstudies=None):
                         if otu_props is not None:
                             ottname = otu_props[0]
                             ottID = otu_props[1]
+                            ottIDs[ottID] = True
                             #print tree_label,oid,ottID,ottname
                             f.write('{t},{o}\n'.format(t=tree_id,o=ottID))
+                # ottIDs = parent_closure(ottIDs,ott)
+                for ottID in ottIDs:
+                    f.write('{t},{o}\n'.format(t=tree_id,o=ottID))
 
             counter+=1
             if (nstudies and counter>=nstudies):
                 f.close()
                 break
     return filename
+
+def parent_closure(ottIDs,ott):
+    newids = {}
+    for ottID in ottIDs:
+        nextid = ottID
+        while True:
+            newids[nextid] = True
+            if ott == None: break
+            nextid = ott.ott_id2par_ott_id[nextid]
+            if nextid == None:
+                break
+    return newids
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='create otu-tree table')
@@ -104,10 +123,17 @@ if __name__ == "__main__":
     with open(args.configfile,'r') as f:
         config_dict = yaml.safe_load(f)
 
+    ott_loc = config_dict['taxonomy']
+    if ott_loc == 'None':
+        print 'No taxonomy'
+        OTT = None
+    else:
+        OTT = ott.OTT(ott_loc)
+
     connection, cursor = setup_db.connect(config_dict)
     phy = create_phylesystem_obj()
     try:
-        filename = print_otu_file(connection,cursor,phy,args.nstudies)
+        filename = print_otu_file(connection,cursor,phy,ott,args.nstudies)
         OTUTABLE = config_dict['tables']['otutable']
         import_csv_file(connection,cursor,OTUTABLE,filename)
     except psy.Error as e:

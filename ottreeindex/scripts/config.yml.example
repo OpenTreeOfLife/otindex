@@ -11,3 +11,4 @@ tables:
   treetable: tree
   studytable: study
 ginindex: study_ix_jsondata_gin
+taxonomy: None
