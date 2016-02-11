@@ -28,6 +28,7 @@ def clear_tables(connection,cursor,config_dict):
         cursor.execute(sqlstring)
 
 def connect(config_dict):
+    conn = cursor = None  # not sure of exception intent
     try:
         DBNAME = config_dict['connection_info']['dbname']
         USER = config_dict['connection_info']['user']
@@ -40,7 +41,8 @@ def connect(config_dict):
     except KeyboardInterrupt:
         print "Shutdown requested because could not connect to DB"
     except psy.Error as e:
-        print e.pgerror
+        print e
+        # print e.pgerror
     return (conn,cursor)
 
 def create_table(connection,cursor,tablename,tablestring):
@@ -189,15 +191,17 @@ if __name__ == "__main__":
     config_dict = read_config(args.configfile)
     connection, cursor = connect(config_dict)
 
-    #pdb.set_trace()
-    try:
-        if (args.delete_tables):
-            delete_all_tables(connection,cursor,config_dict)
-            create_all_tables(connection,cursor,config_dict)
-        else:
-            create_all_tables(connection,cursor)
-            clear_tables(connection,cursor)
-    except psy.Error as e:
-        print e.pgerror
+    if connection != None:
 
-    connection.close()
+        #pdb.set_trace()
+        try:
+            if (args.delete_tables):
+                delete_all_tables(connection,cursor,config_dict)
+                create_all_tables(connection,cursor,config_dict)
+            else:
+                create_all_tables(connection,cursor,config_dict)
+                clear_tables(connection,cursor,config_dict)
+        except psy.Error as e:
+            print e.pgerror
+
+        connection.close()
