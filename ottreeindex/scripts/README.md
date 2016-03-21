@@ -8,6 +8,9 @@ For command-line setup (for testing not from within pyramid):
 * setup_db.py: creates DB tables if do not already exist; optionally deleting them all first
 * load_nexson.py: loads the nexson files into the database and creates the JSON index
 * create\_otu\_table.py: generates a csv file of otu-tree relationships and then loads this using the COPY command
+
+For use with pyramid:
+
 * initializedb.py: the pyramid file for initializing the database
 
 
@@ -39,7 +42,7 @@ This was tested on OS X 10.9.
     `$ launchctl load ~/Library/LaunchAgents/homebrew.mxcl.postgresql.plist`
 
 1. Create database for use by Open Tree.  If username, given here as 'pguser',
-   does not exist on your system, either create it or specify a username that 
+   does not exist on your system, either create it or specify a username that
    does exist (e.g. you).
 
     `$ createdb -Opguser -Eutf8 newoti`
@@ -72,4 +75,3 @@ Then adjust the new file for your local settings:
 You'll want this for debugging.
 
     psql -U pguser newoti
-
