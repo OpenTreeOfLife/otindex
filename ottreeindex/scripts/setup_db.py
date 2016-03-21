@@ -6,10 +6,11 @@ import argparse
 import yaml
 import psycopg2 as psy
 import simplejson as json
-import logging
+#import logging
 import pdb
 
 def clear_gin_index(connection,cursor,config_dict):
+    print 'clearing GIN index'
     GININDEX=config_dict['ginindex']
     sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=GININDEX)
     cursor.execute(sqlstring)
@@ -55,6 +56,9 @@ def create_table(connection,cursor,tablename,tablestring):
         print 'Error creating table {name}'.format(name=tablename)
         print e.pgerror
 
+# Function to create all database tables
+# Any changes made to the tablestring should also be reflected in
+# ottreeindex/models.py
 def create_all_tables(connection,cursor,config_dict):
     # study table
     STUDYTABLE = config_dict['tables']['studytable']
@@ -166,9 +170,9 @@ def table_exists(cursor, tablename):
     return cursor.fetchone()[0]
 
 # TODO: need to hook this in, probably through config file
-def get_logger(name='ottreeindex'):
-    logger = logging.getLogger(name)
-    logger.basicConfig(filename='setup_db.log',level=logging.INFO)
+# def get_logger(name='ottreeindex'):
+#     logger = logging.getLogger(name)
+#     logger.basicConfig(filename='setup_db.log',level=logging.INFO)
 
 if __name__ == "__main__":
     # get command line argument (option to delete tables and start over)
@@ -195,8 +199,8 @@ if __name__ == "__main__":
             delete_all_tables(connection,cursor,config_dict)
             create_all_tables(connection,cursor,config_dict)
         else:
-            create_all_tables(connection,cursor)
-            clear_tables(connection,cursor)
+            create_all_tables(connection,cursor,config_dict)
+            clear_tables(connection,cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
 
