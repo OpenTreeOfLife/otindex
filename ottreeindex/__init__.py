@@ -19,15 +19,15 @@ def main(global_config, **settings):
     config.add_route('home', '/')
 
     # v2 methods (oti behaviour)
-    config.add_route('find_studies_v2','/v2/find_studies')
-    config.add_route('find_trees_v2','/v2/find_trees')
-    config.add_route('properties_v2','/v2/properties')
-    config.add_route('add_update_studies_v2','/v2/add_update_studies')
-    config.add_route('remove_studies_v2','/v2/remove_studies')
+    config.add_route('find_studies_v3','/v3/find_studies')
+    config.add_route('find_trees_v2','/v3/find_trees')
+    config.add_route('properties_v2','/v3/properties')
+    config.add_route('add_update_studies_v3','/v3/add_update_studies')
+    config.add_route('remove_studies_v3','/v3/remove_studies')
 
     # v3 methods
-    config.add_route('find_studies','/v3/find_studies')
-    config.add_route('find_trees','/v3/find_trees')
-    config.add_route('properties','/v3/properties')
+    config.add_route('find_studies','/v4/find_studies')
+    config.add_route('find_trees','/v4/find_trees')
+    config.add_route('properties','/v4/properties')
     config.scan()
     return config.make_wsgi_app()
