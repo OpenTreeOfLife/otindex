@@ -1,6 +1,8 @@
+.DS_Store
 development.ini
 ottreeindex.egg-info/
 *.pyc
 *.csv
 config.yml
 .coverage
+.out*

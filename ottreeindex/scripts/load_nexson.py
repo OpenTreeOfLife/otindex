@@ -28,7 +28,6 @@ def create_phylesystem_obj():
 
 # create the JSON GIN index
 def index_json_column(connection,cursor,config_dict):
-    print "creating GIN index on JSON column"
     try:
         GININDEX=config_dict['ginindex']
         STUDYTABLE = config_dict['tables']['studytable']
@@ -167,6 +166,7 @@ if __name__ == "__main__":
                 raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
         setup_db.clear_tables(connection,cursor,config_dict)
         setup_db.clear_gin_index(connection,cursor,config_dict)
+        print "done clearing tables and index"
     except psy.Error as e:
         print e.pgerror
 
@@ -175,10 +175,12 @@ if __name__ == "__main__":
     try:
         # TODO: catch peyotl-specific exceptions
         phy = create_phylesystem_obj()
+        print "loading nexsons"
         if (args.nstudies):
             load_nexsons(connection,cursor,phy,config_dict,args.nstudies)
         else:
             load_nexsons(connection,cursor,phy,config_dict)
+        print "creating GIN index on JSON column"
         index_json_column(connection,cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
