@@ -42,9 +42,9 @@ tree_otu_table = Table('tree_otu_map', Base.metadata,
     )
 
 # study table
-# The studyID is of the form prefix_id.
 # Class defines and one-to-many relationships with trees
-# and a many-to-many relationship with curators
+# and a many-to-many relationship with curators.
+# Changes here should also be reflects in ottreeindex/scripts/setup_db.py
 # SQL string:
     # tablestring = ('CREATE TABLE {tablename} '
     #     '(id text PRIMARY KEY, '
@@ -54,6 +54,7 @@ tree_otu_table = Table('tree_otu_map', Base.metadata,
     #     )
 class Study(Base):
     __tablename__ = 'study'
+    # The studyID is of the form prefix_id, so String, not Int.
     id = Column(String, primary_key=True, index=True)
     year = Column(Integer)
     data = Column(JSONB)

@@ -87,51 +87,49 @@ def find_studies_v3(request):
                 return exception_response(400)
 
     # query time!
-    resultlist = query_studies()
-    # return only study IDs
-    # resultlist = []
-    # for study in DBSession.query(Study.id):
-    #     item = {}
-    #     item["ot:studyId"]=study.id
-    #     resultlist.append(item)
-
-    # else:
-    #     # if no property specified, returning all studies
-    #     if verbose:
-    #         # return data about studies
-    #         for study in DBSession.query(Study.id):
-    #             item = {}
-    #             item["ot:studyId"]=study.id
-    #             item["curator"]="name"
-    #             item["verbose"]=verbose
-    #             resultlist.append(item)
-    #     else:
-    #         # return only study IDs
-    #         for study in DBSession.query(Study.id):
-    #             item = {}
-    #             item["ot:studyId"]=study.id
-    #             item["verbose"]=verbose
-    #             resultlist.append(item)
-    #
+    if (property_type is None):
+        resultlist = get_all_studies(verbose)
+    else:
+        resultlist = query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
     return resultdict
 
 def query_studies(verbose=False,property=None,value=None):
     resultlist = []
-    fieldlist = ["id"]
+    return resultlist
+
+def get_all_studies(verbose=False):
+    resultlist = []
     if verbose:
-         fieldlist.append(
-            "ot:studyPublicationReference","ot:curatorName",
-            "ot:studyYear","ot:focalClade","ot:focalCladeOTTTaxonName",
-            "ot:dataDeposit","ot:studyPublication")
-    for study in DBSession.query(Study.id):
-        item = {}
-         # always return studyid
-        item["ot:studyId"]=study.id
-         # then other optional fields
-         #for field in fieldlist:
-        #     item[field]=study.field
-        resultlist.append(item)
+        clist =[
+            "^ot:studyPublicationReference","^ot:curatorName",
+            "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
+            "^ot:dataDeposit","^ot:studyPublication"
+            ]
+        for id,pubRef,curators,year,fcladeId,fclade,dataPub,pub in DBSession.query(
+            Study.id,
+            Study.data[(clist[0])],
+            Study.data[(clist[1])],
+            Study.data[(clist[2])],
+            Study.data[(clist[3])],
+            Study.data[(clist[4])],
+            Study.data[(clist[5])],
+            Study.data[(clist[6])],
+            ):
+            item = {}
+            item["ot:studyId"]=id
+            item["ot:studyPublicationReference"]=pubRef
+            item["ot:curators"]=curators
+            item["ot:studyYear"]=year
+            item["ot:focalClade"]=fcladeId
+            item["ot:focalCladeOTTTaxonName"]=fclade
+            item["ot:dataDeposit"]=dataPub
+            item["ot:studyPublication"]=pub
+            # then other optional fields
+            resultlist.append(item)
+    else:
+        for id in DBSession.query(Study.id):
+            resultlist.append({"ot:studyId":id})
     return resultlist
 
 # the v4 method for find_studies
