@@ -10,10 +10,17 @@ import simplejson as json
 import pdb
 
 def clear_gin_index(connection,cursor,config_dict):
-    print 'clearing GIN index'
-    GININDEX=config_dict['ginindex']
-    sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=GININDEX)
+    print 'clearing GIN indexes'
+
+    # study table
+    STUDYGININDEX=config_dict['studyginindex']
+    sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=STUDYGININDEX)
     cursor.execute(sqlstring)
+    # tree table
+    TREEGININDEX=config_dict['treeginindex']
+    sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=TREEGININDEX)
+    cursor.execute(sqlstring)
+
     connection.commit()
 
 def clear_tables(connection,cursor,config_dict):
@@ -139,13 +146,23 @@ def delete_all_tables(connection,cursor,config_dict):
         name = tabledict[table]
         delete_table(connection,cursor,name)
 
-def index_json_column(connection,cursor,config_dict):
-    print "creating GIN index on JSON column"
+def index_json_columns(connection,cursor,config_dict):
+    #print "creating GIN index on JSONB columns in TREE and STUDY tables"
     try:
-        GININDEX = config_dict['ginindex']
+        # STUDY INDEX
+        STUDYGININDEX=config_dict['studyginindex']
+        STUDYTABLE = config_dict['tables']['studytable']
         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
             'USING gin({column});'
-            .format(indexname=GININDEX,tablename=STUDYTABLE,column='data'))
+            .format(indexname=STUDYGININDEX,tablename=STUDYTABLE,column='data'))
+        cursor.execute(sqlstring)
+        connection.commit()
+        # TREE INDEX
+        TREEGININDEX=config_dict['treeginindex']
+        TREETABLE = config_dict['tables']['treetable']
+        sqlstring = ('CREATE INDEX {indexname} on {tablename} '
+            'USING gin({column});'
+            .format(indexname=TREEGININDEX,tablename=TREETABLE,column='data'))
         cursor.execute(sqlstring)
         connection.commit()
     except psy.ProgrammingError, ex:

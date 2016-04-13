@@ -26,19 +26,28 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
-# create the JSON GIN index
-def index_json_column(connection,cursor,config_dict):
-    try:
-        GININDEX=config_dict['ginindex']
-        STUDYTABLE = config_dict['tables']['studytable']
-        sqlstring = ('CREATE INDEX {indexname} on {tablename} '
-            'USING gin({column});'
-            .format(indexname=GININDEX,tablename=STUDYTABLE,column='data'))
-        cursor.execute(sqlstring)
-        connection.commit()
-    except psy.Error as e:
-        print 'Error creating GIN index'
-        print e.pgerror
+# create the JSON GIN indexes
+# def index_json_columns(connection,cursor,config_dict):
+#     try:
+#         # STUDY INDEX
+#         STUDYGININDEX=config_dict['studyginindex']
+#         STUDYTABLE = config_dict['tables']['studytable']
+#         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
+#             'USING gin({column});'
+#             .format(indexname=STUDYGININDEX,tablename=STUDYTABLE,column='data'))
+#         cursor.execute(sqlstring)
+#         connection.commit()
+#         # TREE INDEX
+#         TREEGININDEX=config_dict['treeginindex']
+#         TREETABLE = config_dict['tables']['treetable']
+#         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
+#             'USING gin({column});'
+#             .format(indexname=TREEGININDEX,tablename=TREETABLE,column='data'))
+#         cursor.execute(sqlstring)
+#         connection.commit()
+#     except psy.Error as e:
+#         print 'Error creating GIN index'
+#         print e.pgerror
 
 # iterate over curators, adding curators to curator table and the
 # who-curated-what relationship to study-curator-map
@@ -122,7 +131,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
                 #print ' tree :' ,tree_id
                 jsonstring = json.dumps(tree)
                 sqlstring = ("INSERT INTO {tablename} (tree_label,study_id,data) "
-                    "VALUES (%s,%s);"
+                    "VALUES (%s,%s,%s);"
                     .format(tablename=TREETABLE)
                     )
                 data = (tree_id,study_id,jsonstring)
@@ -133,8 +142,10 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             print e.pgerror
 
         counter+=1
+        if (counter%100 == 0):
+            print "loaded {n} studies".format(n=counter)
         if (nstudies and counter>=nstudies):
-            print "inserted",nstudies,"studies"
+            print "finished inserting",nstudies,"studies"
             break
 
 if __name__ == "__main__":
@@ -181,10 +192,12 @@ if __name__ == "__main__":
             load_nexsons(connection,cursor,phy,config_dict,args.nstudies)
         else:
             load_nexsons(connection,cursor,phy,config_dict)
-        print "creating GIN index on JSON column"
-        index_json_column(connection,cursor,config_dict)
+        endtime = dt.datetime.now()
+        print "Load time: ",endtime - starttime
+        print "creating GIN index on JSONB columns in tree and study table"
+        setup_db.index_json_columns(connection,cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
     connection.close()
     endtime = dt.datetime.now()
-    print "Load time: ",endtime - starttime
+    print "Total load + index time: ",endtime - starttime

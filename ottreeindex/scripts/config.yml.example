@@ -10,5 +10,6 @@ tables:
   curatortable: curator
   treetable: tree
   studytable: study
-ginindex: study_ix_jsondata_gin
+treeginindex: tree_ix_jsondata_gin
+studyginindex: study_ix_jsondata_gin
 taxonomy: None
