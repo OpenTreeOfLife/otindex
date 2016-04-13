@@ -92,19 +92,24 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
 def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
     counter = 0
     for study_id, studyobj in phy.iter_study_objs():
+        nexml = get_nexml_el(studyobj)
         #print 'STUDY: ',study_id
 
         # study data for study table
         STUDYTABLE = config_dict['tables']['studytable']
-        nexml = get_nexml_el(studyobj)
         year = nexml.get('^ot:studyYear')
-        jsonstring = json.dumps(nexml)
-        sqlstring = ("INSERT INTO {tablename} (id, year, data) "
-            "VALUES (%s,%s,%s);"
+        # remove the tree data from the study dict because
+        # this stored in trees table
+        #del nexml['treesById']
+        #studyjson = json.dumps(nexml)
+        # delete the tree info from the study json because
+        # this will get stored in the trees table
+        sqlstring = ("INSERT INTO {tablename} (id, year) "
+            "VALUES (%s,%s);"
             .format(tablename=STUDYTABLE)
             )
-        data = (study_id,year,jsonstring)
-        #print '  SQL: ',cursor.mogrify(sqlstring,data)
+        data = (study_id,year)
+        #print '  SQL: ',cursor.mogrify(sqlstring)
         cursor.execute(sqlstring,data)
         connection.commit()
 
@@ -122,24 +127,36 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         # iterate over trees and insert tree data
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
-        #print ' inserting tree data'
         TREETABLE = config_dict['tables']['treetable']
         try:
             # note that the field called tree_id in the nexson is
             # called tree_label in the database because it is not unique
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
-                jsonstring = json.dumps(tree)
+                treejson = json.dumps(tree)
                 sqlstring = ("INSERT INTO {tablename} (tree_label,study_id,data) "
                     "VALUES (%s,%s,%s);"
                     .format(tablename=TREETABLE)
                     )
-                data = (tree_id,study_id,jsonstring)
+                data = (tree_id,study_id,treejson)
                 #print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
                 connection.commit()
         except psy.Error as e:
             print e.pgerror
+
+        # now that we have added the tree info, update the study record
+        # with the json data (minus the tree info)
+        del nexml['treesById']
+        studyjson = json.dumps(nexml)
+        sqlstring = ("UPDATE {tablename} "
+            "SET data=%s "
+            "WHERE id=%s;"
+            .format(tablename=STUDYTABLE)
+        )
+        data = (studyjson,study_id)
+        cursor.execute(sqlstring,data)
+        connection.commit()
 
         counter+=1
         if (counter%100 == 0):
