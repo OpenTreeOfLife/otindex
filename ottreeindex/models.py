@@ -82,6 +82,7 @@ class Tree(Base):
         )
     id = Column(Integer,primary_key=True)
     tree_label = Column(String, nullable=False)
+    data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     # many-to-many tree<-->otu relationship
     otus = relationship('Otu',

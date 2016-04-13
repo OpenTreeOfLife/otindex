@@ -78,6 +78,7 @@ def create_all_tables(connection,cursor,config_dict):
         '(id serial PRIMARY KEY, '
         'tree_label text NOT NULL, '
         'study_id text REFERENCES study (id), '
+        'data jsonb, '
         'UNIQUE (tree_label,study_id));'
         .format(tablename=TREETABLE)
         )
