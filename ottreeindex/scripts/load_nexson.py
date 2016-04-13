@@ -120,11 +120,12 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             # called tree_label in the database because it is not unique
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
-                sqlstring = ("INSERT INTO {tablename} (tree_label,study_id) "
+                jsonstring = json.dumps(tree)
+                sqlstring = ("INSERT INTO {tablename} (tree_label,study_id,data) "
                     "VALUES (%s,%s);"
                     .format(tablename=TREETABLE)
                     )
-                data = (tree_id,study_id)
+                data = (tree_id,study_id,jsonstring)
                 #print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
                 connection.commit()
