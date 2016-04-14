@@ -52,7 +52,6 @@ def about(request):
 @view_config(route_name="find_studies_v3", renderer='json',request_method="POST")
 def find_studies_v3(request):
     # set defaults
-    default_json = {"verbose":False,"exact":False}
     verbose = False
     exact = False
     property_type = None
@@ -60,7 +59,6 @@ def find_studies_v3(request):
 
     if (request.body):
         payload = request.json_body
-        print type(payload)
         # check that we only have valid parameters
         valid_parameters = ['verbose','property','value','exact']
         parameters = payload.keys()
@@ -80,7 +78,6 @@ def find_studies_v3(request):
                 study_properties = searchable_properties['study_properties']
                 if property_type not in study_properties:
                     return exception_response(400)
-                # ok, now search for studies with this property : value combo
 
             else:
                 # no value for property
@@ -88,49 +85,11 @@ def find_studies_v3(request):
 
     # query time!
     if (property_type is None):
-        resultlist = get_all_studies(verbose)
+        resultlist = hp.get_all_studies(verbose)
     else:
-        resultlist = query_studies(verbose,property_type,property_value)
+        resultlist = hp.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
     return resultdict
-
-def query_studies(verbose=False,property=None,value=None):
-    resultlist = []
-    return resultlist
-
-def get_all_studies(verbose=False):
-    resultlist = []
-    if verbose:
-        clist =[
-            "^ot:studyPublicationReference","^ot:curatorName",
-            "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
-            "^ot:dataDeposit","^ot:studyPublication"
-            ]
-        for id,pubRef,curators,year,fcladeId,fclade,dataPub,pub in DBSession.query(
-            Study.id,
-            Study.data[(clist[0])],
-            Study.data[(clist[1])],
-            Study.data[(clist[2])],
-            Study.data[(clist[3])],
-            Study.data[(clist[4])],
-            Study.data[(clist[5])],
-            Study.data[(clist[6])],
-            ):
-            item = {}
-            item["ot:studyId"]=id
-            item["ot:studyPublicationReference"]=pubRef
-            item["ot:curators"]=curators
-            item["ot:studyYear"]=year
-            item["ot:focalClade"]=fcladeId
-            item["ot:focalCladeOTTTaxonName"]=fclade
-            item["ot:dataDeposit"]=dataPub
-            item["ot:studyPublication"]=pub
-            # then other optional fields
-            resultlist.append(item)
-    else:
-        for id in DBSession.query(Study.id):
-            resultlist.append({"ot:studyId":id})
-    return resultlist
 
 # the v4 method for find_studies
 @view_config(route_name='find_studies', renderer='json', request_method='GET')

@@ -92,13 +92,27 @@ def query_studies_by_curator(query_obj,property_value):
     else:
         return exception_response(400)
 
+# find studies in cases where the property_value is an int
+def query_studies_by_integer_values(query_obj,property_type,property_value):
+    property_type = '^'+property_type
+    if isinstance(property_value,int):
+        filtered = query_obj.filter(
+            Study.data[
+                (property_type)
+            ].cast(sqlalchemy.Integer) == property_value
+            )
+        return filtered
+    else:
+        return exception_response(400)
+
 # filter query to return only studies that match property_type and
 # property_value
 def query_studies(verbose,property_type,property_value):
     resultlist = []
+
+    # get the base (unfiltered) query object
     query_obj = get_study_query_object(verbose)
     filtered = None
-    # vastly different queries for different property types
 
     # study id is straightforward
     if property_type == "ot:studyId":
@@ -110,12 +124,15 @@ def query_studies(verbose,property_type,property_value):
 
     # year and focal clade are in json, need to cast value to int
     elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
-        # need to cast these value to Integer
+        filtered = query_studies_by_integer_values(query_obj,property_type,property_value)
+
+    # value of ot:studyPublication is a dict with key '@href'
+    elif property_type == "ot:studyPublication":
         property_type = '^'+property_type
         filtered = query_obj.filter(
             Study.data[
-                (property_type)
-            ].cast(sqlalchemy.Integer) == property_value
+                (property_type,'@href')
+            ].astext == property_value
             )
 
     # all other property types are strings contained in json
@@ -124,7 +141,7 @@ def query_studies(verbose,property_type,property_value):
         filtered = query_obj.filter(
             Study.data[
                 (property_type)
-            ] == property_value
+            ].astext == property_value
             )
 
     # get results as dict, where keys are the labels set in
