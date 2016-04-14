@@ -93,16 +93,12 @@ def query_studies_by_curator(query_obj,property_value):
 # find studies in cases where the property_value is an int
 def query_studies_by_integer_values(query_obj,property_type,property_value):
     property_type = '^'+property_type
-    if isinstance(property_value,int):
-        filtered = query_obj.filter(
-            Study.data[
-                (property_type)
-            ].cast(sqlalchemy.Integer) == property_value
-            )
-        return filtered
-    else:
-        msg = 'expecting property_value {v} as integer'.format(v=property_type)
-        raise HTTPBadRequest(body=json.dumps({'error': 1, 'description': msg}))
+    filtered = query_obj.filter(
+        Study.data[
+            (property_type)
+        ].cast(sqlalchemy.Integer) == property_value
+        )
+    return filtered
 
 # filter query to return only studies that match property_type and
 # property_value
