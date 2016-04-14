@@ -9,10 +9,13 @@ from .models import (
     Otu,
     )
 
+import simplejson as json
+
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
-from pyramid.httpexceptions import exception_response
+from sqlalchemy.exc import ProgrammingError
+from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
 # get all studies, no filtering
 def get_all_studies(verbose):
@@ -80,17 +83,12 @@ def get_study_query_object(verbose):
         query_obj = DBSession.query(Study.id.label('ot:studyId'))
     return query_obj
 
-# find studies curated by a particular user
+# find curators; uses Study-Curator association table
 def query_studies_by_curator(query_obj,property_value):
-    curatorName = property_value
-    # check this is a string
-    if isinstance(s, str):
-        filtered = query_obj.filter(
-            Study.curators.any(name=curatorName)
-            )
-        return filtered
-    else:
-        return exception_response(400)
+    filtered = query_obj.filter(
+        Study.curators.any(name=property_value)
+        )
+    return filtered
 
 # find studies in cases where the property_value is an int
 def query_studies_by_integer_values(query_obj,property_type,property_value):
@@ -103,7 +101,8 @@ def query_studies_by_integer_values(query_obj,property_type,property_value):
             )
         return filtered
     else:
-        return exception_response(400)
+        msg = 'expecting property_value {v} as integer'.format(v=property_type)
+        raise HTTPBadRequest(body=json.dumps({'error': 1, 'description': msg}))
 
 # filter query to return only studies that match property_type and
 # property_value
@@ -119,7 +118,7 @@ def query_studies(verbose,property_type,property_value):
         filtered = query_obj.filter(Study.id == property_value)
 
     # curator uses study-curator association table
-    elif property_type == "ot:curator":
+    elif property_type == "ot:curatorName":
         filtered = query_studies_by_curator(query_obj,property_value)
 
     # year and focal clade are in json, need to cast value to int
@@ -146,9 +145,12 @@ def query_studies(verbose,property_type,property_value):
 
     # get results as dict, where keys are the labels set in
     # get_study_query_object
-    for row in filtered.all():
-        item = {}
-        for k,v in row._asdict().items():
-            item[k]=v
-        resultlist.append(item)
-    return resultlist
+    try:
+        for row in filtered.all():
+            item = {}
+            for k,v in row._asdict().items():
+                item[k]=v
+            resultlist.append(item)
+        return resultlist
+    except ProgrammingError as e:
+        raise HTTPBadRequest()

@@ -11,7 +11,7 @@ from pyramid.url import route_url
 import simplejson as json
 import helper_functions as hp
 
-from pyramid.httpexceptions import exception_response
+from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import func
@@ -64,7 +64,7 @@ def find_studies_v3(request):
         parameters = payload.keys()
         extra_params = set(parameters).difference(valid_parameters)
         if len(extra_params) > 0:
-            return exception_response(400)
+            return HTTPBadRequest()
 
         if 'verbose' in payload:
             verbose = payload['verbose']
@@ -77,11 +77,11 @@ def find_studies_v3(request):
                 searchable_properties = hp.get_property_list(3)
                 study_properties = searchable_properties['study_properties']
                 if property_type not in study_properties:
-                    return exception_response(400)
+                    return HTTPBadRequest()
 
             else:
                 # no value for property
-                return exception_response(400)
+                return HTTPBadRequest()
 
     # query time!
     if (property_type is None):

@@ -6,11 +6,11 @@ CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/find_studies'
 
 ################################################
-# find study matching DOI, using verbose = False
+# find study curated by user, using verbose = False
+# study can have multiple curators
 p = {'verbose': False,
-     'property': 'ot:studyPublication',
-     'value': 'http://dx.doi.org/10.1600/036364408785679851'}
-# DOI was formerly 10.3732/ajb.94.11.1860
+     'property': 'ot:curatorName',
+     'value': 'Romina Gazis'}
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,
@@ -20,32 +20,24 @@ r = test_http_json_method(SUBMIT_URI,
 #structure of r is (true/false,json-results,true/false)
 assert r[0] is True
 json_result = r[1]
+print json_result
 assert len(json_result) > 0
 
-# should return only study_Id for a single study
+# should return only study_Id
 top_level_key = json_result.keys()[0]
 assert top_level_key == 'matched_studies'
-assert len(json_result[top_level_key])==1
 assert json_result[top_level_key][0].keys() == ['ot:studyId']
 
 ################################################
-# repeat test for verbose = True
-p = {'verbose': True,
-     'property': 'ot:studyPublication',
-     'value': 'http://dx.doi.org/10.1600/036364408785679851'}
-# DOI was formerly 10.3732/ajb.94.11.1860
+# test error when value != string
+p = {'verbose': False,
+     'property': 'ot:curatorName',
+     'value': 100}
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,
-                          expected_status=200,
-                          return_bool_data=True)
+                          expected_status=400,
+                          return_bool_data=False)
 
-assert r[0] is True
-json_result = r[1]
-assert len(json_result) > 0
-
-# should return several properties for a single study
-top_level_key = json_result.keys()[0]
-assert top_level_key == 'matched_studies'
-assert len(json_result[top_level_key])==1
-assert len(json_result[top_level_key][0].keys()) >0
+#structure of r is (true/false,json-results,true/false)
+assert r is True
