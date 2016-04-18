@@ -121,8 +121,9 @@ def query_studies(verbose,property_type,property_value):
     elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
         filtered = query_studies_by_integer_values(query_obj,property_type,property_value)
 
-    # value of ot:studyPublication is a dict with key '@href'
-    elif property_type == "ot:studyPublication":
+    # value of ot:studyPublication and ot:dataDeposit
+    # is a dict with key '@href'
+    elif property_type == "ot:studyPublication" or property_type == "ot:dataDeposit":
         property_type = '^'+property_type
         filtered = query_obj.filter(
             Study.data[
