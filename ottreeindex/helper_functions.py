@@ -83,11 +83,19 @@ def get_study_query_object(verbose):
         query_obj = DBSession.query(Study.id.label('ot:studyId'))
     return query_obj
 
-# find curators; uses Study-Curator association table
+# find studies by curators; uses Study-Curator association table
 def query_studies_by_curator(query_obj,property_value):
     filtered = query_obj.filter(
         Study.curators.any(name=property_value)
         )
+    return filtered
+
+# looking for a value in a list, e.g. ot:tag
+def query_by_tag(query_obj,property_value):
+    property_type = '^ot:tag'
+    filtered = query_obj.filter(
+        Study.data.contains({property_type:[property_value]})
+    )
     return filtered
 
 # find studies in cases where the property_value is an int
@@ -119,7 +127,10 @@ def query_studies(verbose,property_type,property_value):
 
     # year and focal clade are in json, need to cast value to int
     elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
-        filtered = query_studies_by_integer_values(query_obj,property_type,property_value)
+        filtered = query_studies_by_integer_values(
+            query_obj,
+            property_type,
+            property_value)
 
     # value of ot:studyPublication and ot:dataDeposit
     # is a dict with key '@href'
@@ -130,6 +141,9 @@ def query_studies(verbose,property_type,property_value):
                 (property_type,'@href')
             ].astext == property_value
             )
+
+    elif property_type == "ot:tag":
+        filtered = query_by_tag(query_obj,property_value)
 
     # all other property types are strings contained in json
     else:
