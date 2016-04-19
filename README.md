@@ -8,7 +8,7 @@ In progress; not production ready. Currently set up to use a local postgresql da
 
 **Setting up the database**
 The ottreeindex/scripts directory contains scripts for setting up the database
-(creating tables, loading phylesystem studies, etc). See the [README]() file in that directory for setup information.
+(creating tables, loading phylesystem studies, etc). See the [README](https://github.com/OpenTreeOfLife/ottreeindex/blob/master/ottreeindex/scripts/README.md) file in that directory for setup information.
 
 **Running the application**
 
