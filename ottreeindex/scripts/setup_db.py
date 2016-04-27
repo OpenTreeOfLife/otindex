@@ -2,6 +2,8 @@
 # Deletes existing tables and re-creates them
 # Also includes some utility functions
 
+# Changes to table structure must be replicated in ../models.py
+
 import argparse
 import yaml
 import psycopg2 as psy
