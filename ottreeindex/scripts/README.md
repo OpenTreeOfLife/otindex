@@ -4,11 +4,13 @@ This directory contains scripts for setting up the database from the command lin
 
 For command-line setup (for testing the database from outside pyramid):
 
-* config.yml: YAML file with database settings, including table names.
-* setup_db.py: creates DB tables if do not already exist; optionally deleting them all first
-* load_nexson.py: loads the nexson files into the database and creates the JSON index
-* create\_otu\_table.py: generates a csv file of otu-tree relationships and then loads this using the COPY command
-
+* `config.yml`: YAML file with database settings, including table names.
+* `run_setup_scripts.sh`: bash scripts that runs the following python files:
+  * `setup_db.py`: creates DB tables if do not already exist; optionally deleting them all first
+  * `load_nexson.py`: loads the nexson files into the database and creates the JSON index
+  * `create\_otu\_table.py`: generates a csv file of otu-tree relationships and then loads this using the COPY command
+  * `test_db_selects.py`: does a few simple selects on study and tree table
+  
 For use with pyramid:
 
 * initializedb.py: the pyramid file for initializing the database

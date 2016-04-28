@@ -124,7 +124,7 @@ def create_all_tables(connection,cursor,config_dict):
 
 def delete_table(connection,cursor,tablename):
     try:
-        print 'deleting table',tablename
+        #print 'deleting table',tablename
         sqlstring=('DROP TABLE IF EXISTS '
             '{name} CASCADE;'
             .format(name=tablename)
@@ -135,6 +135,7 @@ def delete_table(connection,cursor,tablename):
         print 'Error deleting table {name}'.format(name=tablename)
 
 def delete_all_tables(connection,cursor,config_dict):
+    print 'deleting tables'
     tabledict = config_dict['tables']
     for table in tabledict:
         name = tabledict[table]

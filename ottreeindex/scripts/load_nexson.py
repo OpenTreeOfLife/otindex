@@ -132,6 +132,8 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             print e.pgerror
 
         counter+=1
+        if (counter%500 == 0):
+            print " inserted",counter,"studies"
         if (nstudies and counter>=nstudies):
             print "inserted",nstudies,"studies"
             break
