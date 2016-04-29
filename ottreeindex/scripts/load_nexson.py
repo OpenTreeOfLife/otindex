@@ -99,7 +99,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         STUDYTABLE = config_dict['tables']['studytable']
         year = nexml.get('^ot:studyYear')
         # remove the tree data from the study dict because
-        # this stored in trees table
+        # will be stored in trees table
         #del nexml['treesById']
         #studyjson = json.dumps(nexml)
         # delete the tree info from the study json because
@@ -161,7 +161,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         counter+=1
         if (counter%500 == 0):
             print "loaded {n} studies".format(n=counter)
-            
+
         if (nstudies and counter>=nstudies):
             print "finished inserting",nstudies,"studies"
             break

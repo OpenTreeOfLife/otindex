@@ -74,6 +74,7 @@ class Study(Base):
     # tablestring = ('CREATE TABLE {tablename} '
     #     '(id serial PRIMARY KEY, '
     #     'tree_label text NOT NULL, '
+    #     'data jsonb, '    
     #     'study_id text REFERENCES study (id), '
     #     'UNIQUE (tree_label,study_id));'
     #     .format(tablename=TREETABLE)
