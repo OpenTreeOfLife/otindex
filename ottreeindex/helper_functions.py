@@ -1,5 +1,5 @@
-# miscellaneous helper functions for views
-# includes query functions
+# helper functions for views
+# includes query functions:
 
 from .models import (
     DBSession,
@@ -32,22 +32,20 @@ def get_all_studies(verbose):
     return resultlist
 
 # get the list of searchable properties
-# currently returns the v3 list only
+# currently returns the v3 list only, pruning properties not implemented
 def get_property_list(version=3):
     tree_props= [
         "ot:treebaseOTUId", "ot:nodeLabelMode", "ot:originalLabel",
-        "oti_tree_id", "ot:ottTaxonName", "ot:inferenceMethod", "ot:tag",
+        "ot:ottTaxonName", "ot:inferenceMethod", "ot:tag",
         "ot:comment", "ot:treebaseTreeId", "ot:branchLengthDescription",
         "ot:treeModified", "ot:studyId", "ot:branchLengthTimeUnits",
         "ot:ottId", "ot:branchLengthMode", "ot:treeLastEdited",
         "ot:nodeLabelDescription"
         ]
     study_props = [
-        "ot:studyModified", "ot:focalClade", "ot:focalCladeOTTTaxonName",
-        "ot:focalCladeOTTId", "ot:studyPublication", "ot:studyLastEditor",
-        "ot:tag", "ot:focalCladeTaxonName", "ot:comment", "ot:studyLabel",
-        "ot:authorContributed", "ot:studyPublicationReference", "ot:studyId",
-        "ot:curatorName", "ot:studyYear", "ot:studyUploaded", "ot:dataDeposit"
+        "ot:focalClade", "ot:focalCladeOTTTaxonName", "ot:studyPublication",
+        "ot:tag", "ot:comment", "ot:studyPublicationReference", "ot:studyId",
+        "ot:curatorName", "ot:studyYear", "ot:dataDeposit"
         ]
     results = {
         "tree_properties" : tree_props,
@@ -98,6 +96,17 @@ def query_by_tag(query_obj,property_value):
     )
     return filtered
 
+def query_fulltext(query_obj,property_type,property_value):
+    property_type = '^'+property_type
+    # add wildcards to the property_value
+    property_value = '%'+property_value+'%'
+    filtered = query_obj.filter(
+        Study.data[
+            property_type
+        ].astext.ilike(property_value)
+    )
+    return filtered
+
 # find studies in cases where the property_value is an int
 def query_studies_by_integer_values(query_obj,property_type,property_value):
     property_type = '^'+property_type
@@ -142,6 +151,10 @@ def query_studies(verbose,property_type,property_value):
             ].astext == property_value
             )
 
+    elif property_type == "ot:studyPublicationReference" or property_type == "ot:comment":
+        filtered = query_fulltext(query_obj,property_type,property_value)
+
+    # tag is a list
     elif property_type == "ot:tag":
         filtered = query_by_tag(query_obj,property_value)
 

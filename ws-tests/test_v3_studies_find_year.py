@@ -21,9 +21,7 @@ assert r[0] is True
 json_result = r[1]
 assert len(json_result) > 0
 
-# should return only study_Id for a single study
 top_level_key = json_result.keys()[0]
-print 'top key: ',top_level_key
 assert top_level_key == 'matched_studies'
 assert json_result[top_level_key][0].keys() == ['ot:studyId']
 
