@@ -60,7 +60,6 @@ def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
         counter = 0
         fwriter.writerow(('id','name'))
         for study_id, n in phy.iter_study_objs():
-            print study_id
             otu_dict = gen_otu_dict(n)
             # iterate over the OTUs in the study, collecting
             # the mapped ones
@@ -101,6 +100,8 @@ def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
                     gwriter.writerow((tree_id,ottID))
 
             counter+=1
+            if (counter%500 == 0):
+                print " prepared",counter,"studies"
             if (nstudies and counter>=nstudies):
                 f.close()
                 g.close()
@@ -129,7 +130,6 @@ def print_tree_otu_file(connection,cursor,phy,taxonomy,nstudies=None):
         counter = 0
         f.write('{t},{o}\n'.format(t='tree_id',o='ottID'))
         for study_id, n in phy.iter_study_objs():
-            print study_id
             otu_dict = gen_otu_dict(n)
             mapped_otus = {}
             # iterate over the OTUs in the study, collecting
@@ -163,6 +163,8 @@ def print_tree_otu_file(connection,cursor,phy,taxonomy,nstudies=None):
                 for ottID in ottIDs:
                     f.write('{t},{o}\n'.format(t=tree_id,o=ottID))
             counter+=1
+            if (counter%500 == 0):
+                print " printed",counter,"studies"
             if (nstudies and counter>=nstudies):
                 f.close()
                 break

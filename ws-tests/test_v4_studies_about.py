@@ -5,7 +5,6 @@ from opentreetesting import test_http_json_method, config
 DOMAIN = config('host', 'apihost')
 CONTROLLER = DOMAIN + '/v4/studies'
 SUBMIT_URI = CONTROLLER + '/about'
-print SUBMIT_URI
 r = test_http_json_method(SUBMIT_URI,
                           'GET',
                           expected_status=200,

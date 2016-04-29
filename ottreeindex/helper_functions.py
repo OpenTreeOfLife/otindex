@@ -1,5 +1,5 @@
-# miscellaneous helper functions for views
-# includes query functions
+# helper functions for views
+# includes query functions:
 
 from .models import (
     DBSession,
@@ -9,10 +9,13 @@ from .models import (
     Otu,
     )
 
+import simplejson as json
+
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
-from pyramid.httpexceptions import exception_response
+from sqlalchemy.exc import ProgrammingError
+from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
 # get all studies, no filtering
 def get_all_studies(verbose):
@@ -29,22 +32,20 @@ def get_all_studies(verbose):
     return resultlist
 
 # get the list of searchable properties
-# currently returns the v3 list only
+# currently returns the v3 list only, pruning properties not implemented
 def get_property_list(version=3):
     tree_props= [
         "ot:treebaseOTUId", "ot:nodeLabelMode", "ot:originalLabel",
-        "oti_tree_id", "ot:ottTaxonName", "ot:inferenceMethod", "ot:tag",
+        "ot:ottTaxonName", "ot:inferenceMethod", "ot:tag",
         "ot:comment", "ot:treebaseTreeId", "ot:branchLengthDescription",
         "ot:treeModified", "ot:studyId", "ot:branchLengthTimeUnits",
         "ot:ottId", "ot:branchLengthMode", "ot:treeLastEdited",
         "ot:nodeLabelDescription"
         ]
     study_props = [
-        "ot:studyModified", "ot:focalClade", "ot:focalCladeOTTTaxonName",
-        "ot:focalCladeOTTId", "ot:studyPublication", "ot:studyLastEditor",
-        "ot:tag", "ot:focalCladeTaxonName", "ot:comment", "ot:studyLabel",
-        "ot:authorContributed", "ot:studyPublicationReference", "ot:studyId",
-        "ot:curatorName", "ot:studyYear", "ot:studyUploaded", "ot:dataDeposit"
+        "ot:focalClade", "ot:focalCladeOTTTaxonName", "ot:studyPublication",
+        "ot:tag", "ot:comment", "ot:studyPublicationReference", "ot:studyId",
+        "ot:curatorName", "ot:studyYear", "ot:dataDeposit"
         ]
     results = {
         "tree_properties" : tree_props,
@@ -80,43 +81,82 @@ def get_study_query_object(verbose):
         query_obj = DBSession.query(Study.id.label('ot:studyId'))
     return query_obj
 
-# find studies curated by a particular user
+# find studies by curators; uses Study-Curator association table
 def query_studies_by_curator(query_obj,property_value):
-    curatorName = property_value
-    # check this is a string
-    if isinstance(s, str):
-        filtered = query_obj.filter(
-            Study.curators.any(name=curatorName)
-            )
-        return filtered
-    else:
-        return exception_response(400)
+    filtered = query_obj.filter(
+        Study.curators.any(name=property_value)
+        )
+    return filtered
+
+# looking for a value in a list, e.g. ot:tag
+def query_by_tag(query_obj,property_value):
+    property_type = '^ot:tag'
+    filtered = query_obj.filter(
+        Study.data.contains({property_type:[property_value]})
+    )
+    return filtered
+
+def query_fulltext(query_obj,property_type,property_value):
+    property_type = '^'+property_type
+    # add wildcards to the property_value
+    property_value = '%'+property_value+'%'
+    filtered = query_obj.filter(
+        Study.data[
+            property_type
+        ].astext.ilike(property_value)
+    )
+    return filtered
+
+# find studies in cases where the property_value is an int
+def query_studies_by_integer_values(query_obj,property_type,property_value):
+    property_type = '^'+property_type
+    filtered = query_obj.filter(
+        Study.data[
+            (property_type)
+        ].cast(sqlalchemy.Integer) == property_value
+        )
+    return filtered
 
 # filter query to return only studies that match property_type and
 # property_value
 def query_studies(verbose,property_type,property_value):
     resultlist = []
+
+    # get the base (unfiltered) query object
     query_obj = get_study_query_object(verbose)
     filtered = None
-    # vastly different queries for different property types
 
     # study id is straightforward
     if property_type == "ot:studyId":
         filtered = query_obj.filter(Study.id == property_value)
 
     # curator uses study-curator association table
-    elif property_type == "ot:curator":
+    elif property_type == "ot:curatorName":
         filtered = query_studies_by_curator(query_obj,property_value)
 
     # year and focal clade are in json, need to cast value to int
     elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
-        # need to cast these value to Integer
+        filtered = query_studies_by_integer_values(
+            query_obj,
+            property_type,
+            property_value)
+
+    # value of ot:studyPublication and ot:dataDeposit
+    # is a dict with key '@href'
+    elif property_type == "ot:studyPublication" or property_type == "ot:dataDeposit":
         property_type = '^'+property_type
         filtered = query_obj.filter(
             Study.data[
-                (property_type)
-            ].cast(sqlalchemy.Integer) == property_value
+                (property_type,'@href')
+            ].astext == property_value
             )
+
+    elif property_type == "ot:studyPublicationReference" or property_type == "ot:comment":
+        filtered = query_fulltext(query_obj,property_type,property_value)
+
+    # tag is a list
+    elif property_type == "ot:tag":
+        filtered = query_by_tag(query_obj,property_value)
 
     # all other property types are strings contained in json
     else:
@@ -124,14 +164,17 @@ def query_studies(verbose,property_type,property_value):
         filtered = query_obj.filter(
             Study.data[
                 (property_type)
-            ] == property_value
+            ].astext == property_value
             )
 
     # get results as dict, where keys are the labels set in
     # get_study_query_object
-    for row in filtered.all():
-        item = {}
-        for k,v in row._asdict().items():
-            item[k]=v
-        resultlist.append(item)
-    return resultlist
+    try:
+        for row in filtered.all():
+            item = {}
+            for k,v in row._asdict().items():
+                item[k]=v
+            resultlist.append(item)
+        return resultlist
+    except ProgrammingError as e:
+        raise HTTPBadRequest()

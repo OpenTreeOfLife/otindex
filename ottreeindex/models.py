@@ -23,9 +23,12 @@ from zope.sqlalchemy import ZopeTransactionExtension
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
-########
+################################################################
 # Defining tables
-########
+# Changes to table structure must be copied to setup scripts:
+# ../scripts/setup_db.py
+# ../scripts/load_nexson.py
+################################################################
 
 # define association between studies and curators
 # this directive replaces direct creation of a class for the

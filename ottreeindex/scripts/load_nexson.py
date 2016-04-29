@@ -159,8 +159,9 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         connection.commit()
 
         counter+=1
-        if (counter%100 == 0):
+        if (counter%500 == 0):
             print "loaded {n} studies".format(n=counter)
+            
         if (nstudies and counter>=nstudies):
             print "finished inserting",nstudies,"studies"
             break
