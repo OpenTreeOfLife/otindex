@@ -73,10 +73,10 @@ class Study(Base):
 # SQL string:
     # tablestring = ('CREATE TABLE {tablename} '
     #     '(id serial PRIMARY KEY, '
-    #     'tree_label text NOT NULL, '
-    #     'data jsonb, '    
+    #     'tree_id text NOT NULL, '
+    #     'data jsonb, '
     #     'study_id text REFERENCES study (id), '
-    #     'UNIQUE (tree_label,study_id));'
+    #     'UNIQUE (tree_id,study_id));'
     #     .format(tablename=TREETABLE)
     #     )
 class Tree(Base):
@@ -85,7 +85,7 @@ class Tree(Base):
         UniqueConstraint('id','study_id'),
         )
     id = Column(Integer,primary_key=True)
-    tree_label = Column(String, nullable=False)
+    tree_id = Column(String, nullable=False)
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     # many-to-many tree<-->otu relationship

@@ -100,7 +100,7 @@ def get_tree_query_object(verbose):
         # but can't directly access any particular item via the label,
         # i.e result.ot:studyId because of ':' in label
         query_obj = DBSession.query(
-            Tree.tree_label.label('ot:treeId'),
+            Tree.tree_id.label('ot:treeId'),
             Tree.study_id.label('ot:studyId'),
             Tree.data[('^ot:branchLengthMode')].label('ot:branchLengthMode'),
             Tree.data[('^ot:branchLengthDescription')].label('ot:branchLengthDescription')
@@ -108,7 +108,7 @@ def get_tree_query_object(verbose):
     else:
         query_obj = DBSession.query(
             Tree.study_id.label('ot:studyId'),
-            Tree.tree_label.label('ot:treeId')
+            Tree.tree_id.label('ot:treeId')
         )
     return query_obj
 

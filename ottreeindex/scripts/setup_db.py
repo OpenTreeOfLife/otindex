@@ -85,10 +85,10 @@ def create_all_tables(connection,cursor,config_dict):
     TREETABLE = config_dict['tables']['treetable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
-        'tree_label text NOT NULL, '
+        'tree_id text NOT NULL, '
         'study_id text REFERENCES study (id), '
         'data jsonb, '
-        'UNIQUE (tree_label,study_id));'
+        'UNIQUE (tree_id,study_id));'
         .format(tablename=TREETABLE)
         )
     create_table(connection,cursor,TREETABLE,tablestring)

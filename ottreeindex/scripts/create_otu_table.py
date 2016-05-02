@@ -22,12 +22,12 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
-def getTreeID(cursor,study_id,tree_label):
+def getTreeID(cursor,study_id,tree_id):
     sqlstring = ('SELECT id FROM {tablename} '
-        'WHERE study_id=%s and tree_label=%s;'
+        'WHERE study_id=%s and tree_id=%s;'
         .format(tablename='tree')
         )
-    data = (study_id,tree_label)
+    data = (study_id,tree_id)
     #print '  SQL: ',cursor.mogrify(sqlstring,data)
     cursor.execute(sqlstring,data)
     result = cursor.fetchone()
@@ -36,7 +36,7 @@ def getTreeID(cursor,study_id,tree_label):
         return treeid
     else:
         raise LookupError('study {s}, tree {t}'
-            ' not found'.format(s=study_id,t=tree_label))
+            ' not found'.format(s=study_id,t=tree_id))
 
 # use the bulk copy method to upload from the file into the table
 def import_csv_file(connection,cursor,table,filename):
@@ -79,8 +79,10 @@ def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
 
             # iterate over the trees in the study, collecting
             # tree/otu associations (including lineage)
-            for trees_group_id, tree_label, tree in iter_trees(n):
-                tree_id = getTreeID(cursor,study_id,tree_label)
+            for trees_group_id, tree_id, tree in iter_trees(n):
+                # the unique identifier in the tree table is an auto-incrementing
+                # int, not the tree_id in the nexson, which is not unique
+                tree_int_id = getTreeID(cursor,study_id,tree_id)
                 ottIDs = {}     # all ids for this tree
                 for node_id, node in iter_node(tree):
                     oid = node.get('@otu')
@@ -90,14 +92,14 @@ def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
                         if otu_props is not None:
                             ottID = otu_props[1]
                             ottIDs[ottID] = True
-                            #print tree_label,oid,ottID
+                            #print tree_id,oid,ottID
                 ottIDs = parent_closure(ottIDs,taxonomy)
                 for ottID in ottIDs:
                     if ottID not in seen_otus:
                         ottname = 'tbd'    # fix later, see peyotl issue
                         fwriter.writerow((ottID,ottname))
                         seen_otus[ottID] = ottname
-                    gwriter.writerow((tree_id,ottID))
+                    gwriter.writerow((tree_int_id,ottID))
 
             counter+=1
             if (counter%500 == 0):
@@ -128,7 +130,7 @@ def print_tree_otu_file(connection,cursor,phy,taxonomy,nstudies=None):
         # the treeid (string) in the nexson, but the treeid (int) from
         # the database for faster indexing
         counter = 0
-        f.write('{t},{o}\n'.format(t='tree_id',o='ottID'))
+        f.write('{t},{o}\n'.format(t='tree_int_id',o='ottID'))
         for study_id, n in phy.iter_study_objs():
             otu_dict = gen_otu_dict(n)
             mapped_otus = {}
@@ -146,8 +148,8 @@ def print_tree_otu_file(connection,cursor,phy,taxonomy,nstudies=None):
                     #print oid,ottID,label,ottname
             # now iterate over trees and collect OTUs used in
             # each tree
-            for trees_group_id, tree_label, tree in iter_trees(n):
-                tree_id = getTreeID(cursor,study_id,tree_label)
+            for trees_group_id, tree_id, tree in iter_trees(n):
+                tree_int_id = getTreeID(cursor,study_id,tree_id)
                 ottIDs = {}
                 for node_id, node in iter_node(tree):
                     oid = node.get('@otu')
@@ -157,11 +159,11 @@ def print_tree_otu_file(connection,cursor,phy,taxonomy,nstudies=None):
                         if otu_props is not None:
                             ottID = otu_props[1]
                             ottIDs[ottID] = True
-                            #print tree_label,oid,ottID
-                            f.write('{t},{o}\n'.format(t=tree_id,o=ottID))
+                            #print tree_id,oid,ottID
+                            f.write('{t},{o}\n'.format(t=tree_int_id,o=ottID))
                 ottIDs = parent_closure(ottIDs,taxonomy)
                 for ottID in ottIDs:
-                    f.write('{t},{o}\n'.format(t=tree_id,o=ottID))
+                    f.write('{t},{o}\n'.format(t=tree_int_id,o=ottID))
             counter+=1
             if (counter%500 == 0):
                 print " printed",counter,"studies"

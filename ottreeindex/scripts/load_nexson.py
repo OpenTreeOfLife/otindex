@@ -129,12 +129,10 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         # due to size of table (see script <scriptname>)
         TREETABLE = config_dict['tables']['treetable']
         try:
-            # note that the field called tree_id in the nexson is
-            # called tree_label in the database because it is not unique
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
                 treejson = json.dumps(tree)
-                sqlstring = ("INSERT INTO {tablename} (tree_label,study_id,data) "
+                sqlstring = ("INSERT INTO {tablename} (tree_id,study_id,data) "
                     "VALUES (%s,%s,%s);"
                     .format(tablename=TREETABLE)
                     )

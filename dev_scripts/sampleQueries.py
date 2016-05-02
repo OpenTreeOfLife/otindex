@@ -49,7 +49,7 @@ class Tree(Base):
         UniqueConstraint('id','study_id'),
         )
     id = Column(Integer,primary_key=True)
-    tree_label = Column(String, nullable=False)
+    tree_id = Column(String, nullable=False)
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     # # many-to-many tree<-->otu relationship
@@ -72,7 +72,7 @@ def query_trees(session):
     property_value = 'ITS'
 
     trees = session.query(
-        Tree.tree_label.label('ot:treeId'),
+        Tree.tree_id.label('ot:treeId'),
         Tree.study_id.label('ot:studyId'),
         Tree.data[('^ot:branchLengthMode')].label('ot:branchLengthMode'),
         Tree.data[('^ot:branchLengthDescription')].label('ot:branchLengthDescription')
