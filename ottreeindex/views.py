@@ -9,7 +9,8 @@ from pyramid.view import view_config
 from pyramid.url import route_url
 
 import simplejson as json
-import helper_functions as hp
+import query_study_helpers as qs
+import query_tree_helpers as qt
 
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
@@ -74,8 +75,7 @@ def find_studies_v3(request):
                 property_type = payload['property']
                 property_value = payload['value']
                 # is this a valid property?
-                searchable_properties = hp.get_property_list(3)
-                study_properties = searchable_properties['study_properties']
+                study_properties = qs.get_study_property_list(3)
                 if property_type not in study_properties:
                     return HTTPBadRequest()
 
@@ -85,9 +85,9 @@ def find_studies_v3(request):
 
     # query time!
     if (property_type is None):
-        resultlist = hp.get_all_studies(verbose)
+        resultlist = qs.get_all_studies(verbose)
     else:
-        resultlist = hp.query_studies(verbose,property_type,property_value)
+        resultlist = qs.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
     return resultdict
 
@@ -126,18 +126,58 @@ def find_studies(request):
      return resultdict
 
 # v3 (oti) find_trees method
-@view_config(route_name='find_trees', renderer='json', request_method="POST")
+@view_config(route_name='find_trees_v3', renderer='json', request_method="POST")
 def find_trees_v3(request):
-    payload = request.params
-    result_json = {}
-    return result_json
+    # set defaults
+    verbose = False
+    exact = False
+    property_type = None
+    property_value = None
+
+    if (request.body):
+        payload = request.json_body
+        # check that we only have valid parameters
+        valid_parameters = ['verbose','property','value','exact']
+        parameters = payload.keys()
+        extra_params = set(parameters).difference(valid_parameters)
+        if len(extra_params) > 0:
+            return HTTPBadRequest()
+
+        if 'verbose' in payload:
+            verbose = payload['verbose']
+
+        if 'property' in payload:
+            if 'value' in payload:
+                property_type = payload['property']
+                property_value = payload['value']
+                # is this a valid property?
+                tree_properties = qt.get_tree_property_list(3)
+                if property_type not in tree_properties:
+                    return HTTPBadRequest()
+
+            else:
+                # no value for property
+                return HTTPBadRequest()
+    # query time!
+    if (property_type is None):
+        resultlist = qt.get_all_trees(verbose)
+    else:
+        resultlist = qt.query_trees(verbose,property_type,property_value)
+
+    resultdict = { "matched_studies" : resultlist}
+    return resultdict
 
 # implements the v3 (oti) version of this method
 # only change is removal of the (ironically) deprecated is_deprecated property
 @view_config(route_name='properties_v3', renderer='json',request_method="POST")
 def properties_v3(request):
     version = 3
-    results = hp.get_property_list(version)
+    study_props = qs.get_study_property_list(version)
+    tree_props = qt.get_tree_property_list(version)
+    results = {
+        "tree_properties" : tree_props,
+        "study_properties" : study_props
+        }
     return results
 
 @view_config(route_name='add_update_studies_v3', renderer='json', request_method='POST')

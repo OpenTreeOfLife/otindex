@@ -1,25 +1,21 @@
-# helper functions for views
-# includes query functions:
+# helper functions for the find_studies views
 
 from .models import (
     DBSession,
     Study,
     Tree,
     Curator,
-    Otu,
     )
 
 import simplejson as json
-
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
-# get all studies, no filtering
+# get all trees, no filtering
 def get_all_studies(verbose):
-    print "get_all_studies"
     resultlist = []
     query_obj = get_study_query_object(verbose)
     # get results as dict, where keys are the labels set in
@@ -31,28 +27,18 @@ def get_all_studies(verbose):
         resultlist.append(item)
     return resultlist
 
-# get the list of searchable properties
-# currently returns the v3 list only, pruning properties not implemented
-def get_property_list(version=3):
-    tree_props= [
-        "ot:treebaseOTUId", "ot:nodeLabelMode", "ot:originalLabel",
-        "ot:ottTaxonName", "ot:inferenceMethod", "ot:tag",
-        "ot:comment", "ot:treebaseTreeId", "ot:branchLengthDescription",
-        "ot:treeModified", "ot:studyId", "ot:branchLengthTimeUnits",
-        "ot:ottId", "ot:branchLengthMode", "ot:treeLastEdited",
-        "ot:nodeLabelDescription"
-        ]
+# get the list of searchable study properties
+# v3 list pruned down to only those implemented in v3
+def get_study_property_list(version=3):
     study_props = [
         "ot:focalClade", "ot:focalCladeOTTTaxonName", "ot:studyPublication",
         "ot:tag", "ot:comment", "ot:studyPublicationReference", "ot:studyId",
         "ot:curatorName", "ot:studyYear", "ot:dataDeposit"
         ]
-    results = {
-        "tree_properties" : tree_props,
-        "study_properties" : study_props
-        }
-    return results
+    return study_props
 
+# return the query object without any filtering
+# (query not yet executed)
 # return the query object without any filtering
 # (query not yet executed)
 def get_study_query_object(verbose):
