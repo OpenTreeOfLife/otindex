@@ -1,4 +1,4 @@
-This directory contains scripts for setting up the database from the command line (or from within pyramid)
+This directory contains scripts for setting up the database from the command line (or from within pyramid). 
 
 # Files:
 
@@ -13,7 +13,7 @@ For command-line setup (for testing the database from outside pyramid):
 
 For use with pyramid:
 
-* initializedb.py: the pyramid file for initializing the database
+* initializedb.py: the pyramid file for initializing the database. You should not need to edit this.
 
 
 # Setting up the database on the command line
