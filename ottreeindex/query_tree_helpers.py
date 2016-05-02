@@ -85,9 +85,8 @@ def get_tree_property_list(version=3):
         "ot:treebaseOTUId", "ot:nodeLabelMode", "ot:originalLabel",
         "ot:ottTaxonName", "ot:inferenceMethod", "ot:tag",
         "ot:comment", "ot:treebaseTreeId", "ot:branchLengthDescription",
-        "ot:treeModified", "ot:studyId", "ot:branchLengthTimeUnits",
-        "ot:ottId", "ot:branchLengthMode", "ot:treeLastEdited",
-        "ot:nodeLabelDescription"
+        "ot:studyId", "ot:branchLengthTimeUnits",
+        "ot:ottId", "ot:branchLengthMode", "ot:nodeLabelDescription"
         ]
     return tree_props
 
@@ -102,6 +101,7 @@ def get_tree_query_object(verbose):
         query_obj = DBSession.query(
             Tree.tree_id.label('ot:treeId'),
             Tree.study_id.label('ot:studyId'),
+            Tree.data[('@label')].label('@label'),
             Tree.data[('^ot:branchLengthMode')].label('ot:branchLengthMode'),
             Tree.data[('^ot:branchLengthDescription')].label('ot:branchLengthDescription')
         )
