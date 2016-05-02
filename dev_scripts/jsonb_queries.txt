@@ -1,0 +1,33 @@
+# get list of ids,curator names
+select id, data->'^ot:curatorName' as curator from study;
+
+# get curators
+select jsonb_extract_path(data,'^ot:curatorName') from study;
+
+# search for particular value
+select id from study where data @> '{"^ot:curatorName":["bryan drew"]}';
+or
+select id from study where data @> '{"^ot:tag":["cpDNA"]}';
+
+# search for text within value
+select id from study where data->>('^ot:studyPublicationReference') ilike ('%Smith%');
+
+# get value for nexml2json for all studies
+select data->'@nexml2json' from study;
+or
+select jsonb_extract_path(data,'@nexml2json') from study;
+
+# get contributors
+select data->'^dc:contributor' as contributor from study; # NB: single quotes!!!
+
+# get each array element separately (not as list)
+select jsonb_array_elements(data->'^ot:curatorName') as c from study where id='ot_235';
+
+# get multiple json values
+select jsonb_extract_path(data,'^ot:curatorName'), jsonb_extract_path(data,'^ot:studyYear') from study;
+
+# get keys
+select jsonb_object_keys(data) from study;
+
+# not json, but join
+select curator_study_map.study_id from curator_study_map join curator on curator.id=curator_study_map.curator_id where curator.name='Karen Cranston';
