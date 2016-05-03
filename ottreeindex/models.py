@@ -5,6 +5,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    Boolean,
     ForeignKey,
     UniqueConstraint,
     )
@@ -74,6 +75,8 @@ class Study(Base):
     # tablestring = ('CREATE TABLE {tablename} '
     #     '(id serial PRIMARY KEY, '
     #     'tree_id text NOT NULL, '
+    #     'ntips Integer, '
+    #     'synthStatus Enum("proposed","included","none"), '
     #     'data jsonb, '
     #     'study_id text REFERENCES study (id), '
     #     'UNIQUE (tree_id,study_id));'
@@ -88,6 +91,8 @@ class Tree(Base):
     tree_id = Column(String, nullable=False)
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    ntips = Column(Integer)
+    proposed = Column(Boolean)
     # many-to-many tree<-->otu relationship
     otus = relationship('Otu',
         secondary=tree_otu_table,
