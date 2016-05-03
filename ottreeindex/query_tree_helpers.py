@@ -190,7 +190,11 @@ def query_trees(verbose,property_type,property_value):
         filtered = query_by_tag(query_obj,property_value)
 
     # all other property types are strings contained in json
+    # also, if property_type = ot:inferenceMethod, change to
+    # ot:curatedType
     else:
+        if property_type == "ot:inferenceMethod":
+            property_type = "ot:curatedType"
         property_type = '^'+property_type
         filtered = query_obj.filter(
             Tree.data[

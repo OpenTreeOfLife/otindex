@@ -31,3 +31,6 @@ select jsonb_object_keys(data) from study;
 
 # not json, but join
 select curator_study_map.study_id from curator_study_map join curator on curator.id=curator_study_map.curator_id where curator.name='Karen Cranston';
+
+#duplicate DOIs
+select count(*), jsonb_extract_path(data,'^ot:studyPublication','@href') from study where jsonb_extract_path(data,'^ot:studyPublication','@href') is not null group by jsonb_extract_path(data,'^ot:studyPublication','@href') having count(*)>1;
