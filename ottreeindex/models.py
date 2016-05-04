@@ -41,7 +41,7 @@ curator_study_table = Table('curator_study_map', Base.metadata,
 
 # association between trees and otus
 tree_otu_table = Table('tree_otu_map', Base.metadata,
-    Column('otu_id', Integer, ForeignKey('otu.id'), primary_key=True),
+    Column('ott_id', Integer, ForeignKey('otu.id'), primary_key=True),
     Column('tree_id', Integer, ForeignKey('tree.id'), primary_key=True)
     )
 
@@ -128,7 +128,7 @@ class Curator(Base):
 class Otu(Base):
     __tablename__='otu'
     id = Column(Integer, primary_key=True)
-    ott_name = Column(String,nullable=False)
+    name = Column(String,nullable=False)
     trees = relationship('Tree',
         secondary=tree_otu_table,
         back_populates='otus')

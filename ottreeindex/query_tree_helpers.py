@@ -44,6 +44,18 @@ def get_all_trees(verbose):
 
     return resultslist
 
+# given a taxon name, return the OTT ID, if it exists
+def get_ott_id(ottname):
+    query_obj = DBSession.query(
+        Otu.id
+    ).filter(Otu.ott_name == ottname)
+
+    # should only be one row
+    row = query_obj.first()
+    if row is not None:
+        return row.id
+    else:
+        return None
 
 # find_trees methods also return info about studies
 # this method gets the study-level fields
@@ -82,11 +94,11 @@ def get_study_properties(studyid,studydict):
 # v3 list pruned down to only those implemented in v3
 def get_tree_property_list(version=3):
     tree_props= [
-        "ot:treebaseOTUId", "ot:nodeLabelMode", "ot:originalLabel",
-        "ot:ottTaxonName", "ot:inferenceMethod", "ot:tag",
-        "ot:comment", "ot:treebaseTreeId", "ot:branchLengthDescription",
-        "ot:studyId", "ot:branchLengthTimeUnits",
-        "ot:ottId", "ot:branchLengthMode", "ot:nodeLabelDescription"
+        "ot:candidateTreeForSynthesis", "ot:branchLengthDescription",
+        "ot:branchLengthMode", "ot:branchLengthTimeUnits","ot:comment",
+        "ot:inferenceMethod", "ot:nodeLabelDescription", "ot:nodeLabelMode",
+        "ot:originalLabel", "ot:ottId", "ot:ottTaxonName", "ot:studyId",
+        "ot:tag", "ot:treebaseTreeId", "ot:treebaseOTUId"
         ]
     return tree_props
 
@@ -112,15 +124,15 @@ def get_tree_query_object(verbose):
         )
     return query_obj
 
-# # find studies by curators; uses Study-Curator association table
-# def query_studies_by_curator(query_obj,property_value):
-#     filtered = query_obj.filter(
-#         Study.curators.any(name=property_value)
-#         )
-#     return filtered
+# find trees by otu ids; uses Tree-Otu association table
+def query_trees_by_ott_id(query_obj,property_value):
+     filtered = query_obj.filter(
+         Tree.otus.any(id=property_value)
+         )
+     return filtered
 
 # looking for a value in a list, e.g. ot:tag
-def query_by_tag(query_obj,property_value):
+def query_trees_by_tag(query_obj,property_value):
     property_type = '^ot:tag'
     filtered = query_obj.filter(
         Tree.data.contains({property_type:[property_value]})
@@ -161,10 +173,23 @@ def query_trees(verbose,property_type,property_value):
     if property_type == "ot:studyId":
         filtered = query_obj.filter(Tree.study_id == property_value)
 
-    # curator uses study-curator association table
-    # elif property_type == "ot:curatorName":
-    #     filtered = query_studies_by_curator(query_obj,property_value)
-    #
+    # as is candidateForSynthesis
+    elif property_type == "ot:candidateTreeForSynthesis":
+        filtered = query_obj.filter(Tree.proposed == property_value)
+
+    # otu uses tree-otu association table
+    elif property_type == "ot:ottTaxonName":
+        # get OTT ID for this name
+        ott_id = get_ottid(property_value)
+        if ott_id is not None:
+            filtered = query_trees_by_ott_id(ott_id)
+        else:
+            # TODO: helpful error message about taxon name not found
+            raise HTTPNotFound()
+
+    elif property_type == "ot:ottId":
+        filtered = query_trees_by_ott_id(query_obj,property_value)
+
     # # year and focal clade are in json, need to cast value to int
     # elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
     #     filtered = query_studies_by_integer_values(
@@ -187,7 +212,7 @@ def query_trees(verbose,property_type,property_value):
 
     # tag is a list
     elif property_type == "ot:tag":
-        filtered = query_by_tag(query_obj,property_value)
+        filtered = query_trees_by_tag(query_obj,property_value)
 
     # all other property types are strings contained in json
     # also, if property_type = ot:inferenceMethod, change to

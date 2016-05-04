@@ -77,10 +77,12 @@ def find_studies_v3(request):
                 # is this a valid property?
                 study_properties = qs.get_study_property_list(3)
                 if property_type not in study_properties:
+                    # TODO: return helpful error about bad property
                     return HTTPBadRequest()
 
             else:
                 # no value for property
+                # TODO: return helpful error about lacking value for property
                 return HTTPBadRequest()
 
     # query time!
@@ -153,10 +155,12 @@ def find_trees_v3(request):
                 # is this a valid property?
                 tree_properties = qt.get_tree_property_list(3)
                 if property_type not in tree_properties:
+                    # TODO: return helpful error about bad property
                     return HTTPBadRequest()
 
             else:
                 # no value for property
+                # TODO: return helpful error about lacking value for property
                 return HTTPBadRequest()
     # query time!
     if (property_type is None):
