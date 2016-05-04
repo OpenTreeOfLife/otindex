@@ -51,6 +51,10 @@ def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
     otu_filename = "otu_mapping.csv"
     tree_otu_filename = "tree_otu_assoc.csv"
     seen_otus = {}
+
+    # need this to look up taxonomy names from ott_ids later
+    ott_names = taxonomy.ott_id_to_names
+
     with open(otu_filename, 'w') as f, open(tree_otu_filename, 'w') as g:
         fwriter = csv.writer(f)
         gwriter = csv.writer(g)
@@ -96,7 +100,8 @@ def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
                 ottIDs = parent_closure(ottIDs,taxonomy)
                 for ottID in ottIDs:
                     if ottID not in seen_otus:
-                        ottname = 'tbd'    # fix later, see peyotl issue
+                        # get ott name from dictionary
+                        ottname = ott_names[ottID][0]
                         fwriter.writerow((ottID,ottname))
                         seen_otus[ottID] = ottname
                     gwriter.writerow((tree_int_id,ottID))
