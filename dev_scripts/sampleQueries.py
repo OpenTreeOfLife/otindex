@@ -8,6 +8,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    Boolean,
     ForeignKey,
     UniqueConstraint,
     )
@@ -25,10 +26,18 @@ from sqlalchemy.orm import (
 
 Base = declarative_base()
 
-# define tables
+###### Table defs ###############################
+
+# association between curators and studies
 curator_study_table = Table('curator_study_map', Base.metadata,
     Column('study_id', String, ForeignKey('study.id'), primary_key=True),
     Column('curator_id', Integer, ForeignKey('curator.id'), primary_key=True)
+    )
+
+# association between trees and otus
+tree_otu_table = Table('tree_otu_map', Base.metadata,
+    Column('ott_id', Integer, ForeignKey('otu.id'), primary_key=True),
+    Column('tree_id', Integer, ForeignKey('tree.id'), primary_key=True)
     )
 
 class Study(Base):
@@ -52,10 +61,12 @@ class Tree(Base):
     tree_id = Column(String, nullable=False)
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
-    # # many-to-many tree<-->otu relationship
-    # otus = relationship('Otu',
-    #     secondary=tree_otu_table,
-    #     back_populates='trees')
+    ntips = Column(Integer)
+    proposed = Column(Boolean)
+    # many-to-many tree<-->otu relationship
+    otus = relationship('Otu',
+         secondary=tree_otu_table,
+         back_populates='trees')
 
 class Curator(Base):
     __tablename__ = 'curator'
@@ -65,6 +76,35 @@ class Curator(Base):
     studies = relationship('Study',
         secondary=curator_study_table,
         back_populates='curators')
+
+class Otu(Base):
+    __tablename__='otu'
+    id = Column(Integer, primary_key=True)
+    ott_name = Column(String,nullable=False)
+    trees = relationship('Tree',
+        secondary=tree_otu_table,
+        back_populates='otus')
+
+###### Queries ###############################
+
+def query_association_table(session):
+    # property_value = 'Karen Cranston'
+    # query_obj = session.query(
+    #     Study.id
+    # ).filter(
+    #     Study.curators.any(name=property_value)
+    #     ).all()
+    # for row in query_obj:
+    #     print row.id
+    property_value = '698424'
+    query_obj = session.query(
+        Tree.study_id,
+        Tree.tree_id
+    ).filter(
+        Tree.otus.any(id=property_value)
+        ).all()
+    for row in query_obj:
+        print row.study_id,row.tree_id
 
 # the tree queries involve joins on study table
 def query_trees(session):
@@ -139,7 +179,6 @@ def query_fulltext(session):
     )
     print "studies with Smith in reference: ",study.count()
 
-# methods
 def basic_jsonb_query(session):
     print "basic_jsonb_query"
     # one with integer
@@ -259,7 +298,7 @@ def test_joins(session):
 
 
 if __name__ == "__main__":
-    connection_string = 'postgresql://pguser@localhost/newoti'
+    connection_string = 'postgresql://postgres@localhost/otindex'
     db = sqlalchemy.create_engine(connection_string)
     engine = db.connect()
     meta = sqlalchemy.MetaData(engine)
@@ -271,6 +310,7 @@ if __name__ == "__main__":
         # value_in_array(session)
         # basic_jsonb_query(session)
         # query_fulltext(session)
-        query_trees(session)
+        # query_trees(session)
+        query_association_table(session)
     except ProgrammingError as e:
         print e.message

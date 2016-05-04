@@ -219,7 +219,7 @@ if __name__ == "__main__":
             load_nexsons(connection,cursor,phy,config_dict)
         endtime = dt.datetime.now()
         print "Load time: ",endtime - starttime
-        print "creating GIN index on JSONB columns in tree and study table"
+        print "indexing JSONB columns in tree and study table"
         setup_db.index_json_columns(connection,cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
