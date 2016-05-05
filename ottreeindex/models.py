@@ -92,6 +92,7 @@ class Tree(Base):
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     ntips = Column(Integer)
+    treebase_id = Column(String)
     proposed = Column(Boolean)
     # many-to-many tree<-->otu relationship
     otus = relationship('Otu',

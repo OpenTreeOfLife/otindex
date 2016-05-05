@@ -94,11 +94,9 @@ def get_study_properties(studyid,studydict):
 # v3 list pruned down to only those implemented in v3
 def get_tree_property_list(version=3):
     tree_props= [
-        "ot:candidateTreeForSynthesis", "ot:branchLengthDescription",
-        "ot:branchLengthMode", "ot:branchLengthTimeUnits","ot:comment",
-        "ot:inferenceMethod", "ot:nodeLabelDescription", "ot:nodeLabelMode",
-        "ot:originalLabel", "ot:ottId", "ot:ottTaxonName", "ot:studyId",
-        "ot:tag", "ot:treebaseTreeId", "ot:treebaseOTUId"
+        "ot:candidateTreeForSynthesis", "ot:branchLengthMode",
+        "ot:inferenceMethod", "ot:nodeLabelMode", "ot:ottId",
+        "ot:ottTaxonName", "ot:studyId", "ot:tag", "ot:treebaseTreeId"
         ]
     return tree_props
 
@@ -139,17 +137,17 @@ def query_trees_by_tag(query_obj,property_value):
     )
     return filtered
 
-# def query_fulltext(query_obj,property_type,property_value):
-#     property_type = '^'+property_type
-#     # add wildcards to the property_value
-#     property_value = '%'+property_value+'%'
-#     filtered = query_obj.filter(
-#         Study.data[
-#             property_type
-#         ].astext.ilike(property_value)
-#     )
-#     return filtered
-#
+def query_fulltext(query_obj,property_type,property_value):
+     property_type = '^'+property_type
+     # add wildcards to the property_value
+     property_value = '%'+property_value+'%'
+     filtered = query_obj.filter(
+         Study.data[
+             property_type
+         ].astext.ilike(property_value)
+     )
+     return filtered
+
 # # find studies in cases where the property_value is an int
 # def query_studies_by_integer_values(query_obj,property_type,property_value):
 #     property_type = '^'+property_type
@@ -190,26 +188,9 @@ def query_trees(verbose,property_type,property_value):
     elif property_type == "ot:ottId":
         filtered = query_trees_by_ott_id(query_obj,property_value)
 
-    # # year and focal clade are in json, need to cast value to int
-    # elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
-    #     filtered = query_studies_by_integer_values(
-    #         query_obj,
-    #         property_type,
-    #         property_value)
-    #
-    # # value of ot:studyPublication and ot:dataDeposit
-    # # is a dict with key '@href'
-    # elif property_type == "ot:studyPublication" or property_type == "ot:dataDeposit":
-    #     property_type = '^'+property_type
-    #     filtered = query_obj.filter(
-    #         Study.data[
-    #             (property_type,'@href')
-    #         ].astext == property_value
-    #         )
-    #
-    # elif property_type == "ot:studyPublicationReference" or property_type == "ot:comment":
-    #     filtered = query_fulltext(query_obj,property_type,property_value)
-
+    elif property_type == "ot:treebaseTreeId":
+        filtered = query_obj.filter(Tree.treebase_id == property_value)
+    
     # tag is a list
     elif property_type == "ot:tag":
         filtered = query_trees_by_tag(query_obj,property_value)

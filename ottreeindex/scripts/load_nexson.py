@@ -9,6 +9,7 @@ import argparse
 import psycopg2 as psy
 import simplejson as json
 import yaml
+import re
 
 # other database functions
 import setup_db
@@ -98,16 +99,10 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         # study data for study table
         STUDYTABLE = config_dict['tables']['studytable']
         year = nexml.get('^ot:studyYear')
-
         proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
         if proposedTrees is None:
             proposedTrees = []
-        # remove the tree data from the study dict because
-        # will be stored in trees table
-        #del nexml['treesById']
-        #studyjson = json.dumps(nexml)
-        # delete the tree info from the study json because
-        # this will get stored in the trees table
+
         sqlstring = ("INSERT INTO {tablename} (id, year) "
             "VALUES (%s,%s);"
             .format(tablename=STUDYTABLE)
@@ -148,7 +143,25 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
                 data = (tree_id,study_id,nnodes,proposedForSynth,treejson)
                 #print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
+                #connection.commit()
+                # update with treebase id, if exists
+                datadeposit = nexml.get('^ot:dataDeposit')
+                if (datadeposit):
+                    url = datadeposit['@href']
+                    pattern = re.compile(u'.+TB2:(.+)$')
+                    matchobj = re.match(pattern,url)
+                    if (matchobj):
+                        tb_id = matchobj.group(1)
+                        sqlstring = ("UPDATE {tablename} "
+                            "SET treebase_id=%s "
+                            "WHERE tree_id = %s and study_id=%s;"
+                            .format(tablename=TREETABLE)
+                            )
+                        data = (tb_id,tree_id,study_id)
+                        #print '  SQL: ',cursor.mogrify(sqlstring,data)
+                        cursor.execute(sqlstring,data)
                 connection.commit()
+
         except psy.Error as e:
             print e.pgerror
 

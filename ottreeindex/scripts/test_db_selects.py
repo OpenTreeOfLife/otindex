@@ -16,6 +16,12 @@ def find_all_trees(cursor,config_dict):
     cursor.execute(sqlstring)
     print "returned ",cursor.rowcount,"trees"
 
+def find_all_curators(cursor,config_dict):
+    CURATORTABLE = config_dict['tables']['curatortable']
+    sqlstring = "SELECT * FROM {t};".format(t=CURATORTABLE)
+    cursor.execute(sqlstring)
+    print "returned ",cursor.rowcount,"curators"
+
 def connect(config_dict):
     conn = cursor = None  # not sure of exception intent
     try:
@@ -51,6 +57,7 @@ if __name__ == "__main__":
     try:
         find_all_studies(cursor,config_dict)
         find_all_trees(cursor,config_dict)
+        find_all_curators(cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
     connection.close()
