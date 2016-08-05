@@ -96,7 +96,7 @@ def query_association_table(session):
     #     ).all()
     # for row in query_obj:
     #     print row.id
-    property_value = '698424'
+    property_value = '511967'
     query_obj = session.query(
         Tree.study_id,
         Tree.tree_id

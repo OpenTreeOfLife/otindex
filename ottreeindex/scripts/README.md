@@ -1,8 +1,8 @@
 This directory contains scripts for setting up the database from the command line (or from within pyramid).
 
-# Files:
+# Contents:
 
-For command-line setup (for testing the database from outside pyramid):
+For **command-line setup** (for testing the database from outside pyramid):
 
 * `config.yml`: YAML file with database settings, including table names.
 * `run_setup_scripts.sh`: bash script that runs the setup python files listed below. Takes as arguments a config file (required) and an integer (optional) that is the number of studies to load (default = load whole phylesystem)
@@ -11,7 +11,7 @@ For command-line setup (for testing the database from outside pyramid):
   * `create\_otu\_table.py`: generates a csv file of otu-tree relationships and then loads this using the COPY command
   * `test_db_selects.py`: does a few simple selects on study and tree table
 
-For use with pyramid:
+For **use with pyramid**:
 
 * initializedb.py: the pyramid file for initializing the database. You should not need to edit this.
 
@@ -76,4 +76,4 @@ Then adjust the new file for your local settings:
 
 You'll want this for debugging.
 
-    psql -U pguser newoti
+    `$ psql -U pguser newoti`
