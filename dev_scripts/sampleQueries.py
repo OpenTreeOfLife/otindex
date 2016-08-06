@@ -296,6 +296,33 @@ def test_joins(session):
     for row in query_obj.all():
         print row.name
 
+def all_tags(session):
+    # the jsonb query is select distinct jsonb_extract_path(data,'^ot:tag') from {table};
+    # where table = tree or study
+    # note that ot:tag is a list, so the return from the query is the distinct
+    # tag lists, not the distinct individual tags, so must process
+    tree_tags = set()
+    study_tags = set()
+    query_obj1 = session.query(Study.data['^ot:tag'].label('tag')).distinct()
+    for row in query_obj1.all():
+        if row.tag is None:
+            continue
+        study_tags.update(row.tag)
+        # if (isinstance(row.tag,basestring)):
+        #      print row.tag
+        # else:
+    print "{n} unique study tags".format(n=len(study_tags))
+    query_obj2 = session.query(Tree.data['^ot:tag'].label('tag')).distinct()
+    for row in query_obj2.all():
+        if row.tag is None:
+            continue
+        tree_tags.update(row.tag)
+        # if (isinstance(row.tag,basestring)):
+        #      print row.tag
+        # else:
+    print "{n} unique tree tags".format(n=len(tree_tags))
+
+    #return {'tree_tags':tree_tags,'study_tags':study_tags}
 
 if __name__ == "__main__":
     connection_string = 'postgresql://postgres@localhost/otindex'
@@ -311,6 +338,7 @@ if __name__ == "__main__":
         # basic_jsonb_query(session)
         # query_fulltext(session)
         # query_trees(session)
-        query_association_table(session)
+        all_tags(session)
+        #query_association_table(session)
     except ProgrammingError as e:
         print e.message
