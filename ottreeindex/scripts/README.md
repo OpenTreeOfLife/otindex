@@ -8,6 +8,7 @@ For **command-line setup** (for testing the database from outside pyramid):
 * `run_setup_scripts.sh`: bash script that runs the setup python files listed below. Takes as arguments a config file (required) and an integer (optional) that is the number of studies to load (default = load whole phylesystem)
   * `setup_db.py`: creates DB tables if do not already exist; optionally deleting them all first
   * `load_nexson.py`: loads the nexson files into the database and creates the JSON index
+  * `load_taxonomy.py`: loads the taxonomy files into the database
   * `create\_otu\_table.py`: generates a csv file of otu-tree relationships and then loads this using the COPY command
   * `test_db_selects.py`: does a few simple selects on study and tree table
 
@@ -66,10 +67,18 @@ Then adjust the new file for your local settings:
 
 ## Initialize and load the database
 
+To run all of the setup steps:
+    `$ bash run_setup_scripts.sh config.yml {n}`
+
+where n = number studies (optional; default is load all)
+
+Or, you can run the steps individually:
+
 * setup: `$ python setup_db.py config.yml`
 * load nexsons: `$ python load_nexson.py config.yml`. You can use the `-n` flag to do an initial test with a small number of files.
+* load taxonomy: `$ python load_taxonomy.py config.yml`.
 * load the otu-tree table: `$ python create_otu_table.py config.yml`. Again, you can use `-n` to test a small number of input files.
-* test setup: `$ nosetests test_db_setup.py -v`
+* test: `$ python test_db_selects.py config.yml`
 
 
 # For interactive SQL
@@ -77,3 +86,5 @@ Then adjust the new file for your local settings:
 You'll want this for debugging.
 
     `$ psql -U pguser newoti`
+
+were `pguser` is the postgres user and `newoti` is the database name.
