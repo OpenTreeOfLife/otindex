@@ -198,6 +198,15 @@ def index_json_columns(connection,cursor,config_dict):
     except psy.ProgrammingError, ex:
         print 'Error creating GIN index'
 
+# imports csv data into the database using the (faster) bulk copy method
+# used to load otu_tree_map table and taxonomy tables
+def import_csv_file(connection,cursor,table,filename):
+    print "copying {f} into {t} table".format(f=filename,t=table)
+    with open (filename,'r') as f:
+        copystring="COPY {t} FROM STDIN WITH CSV HEADER".format(t=table)
+        cursor.copy_expert(copystring,f)
+        connection.commit()
+
 # Config file contains these variables
 # connection_info:
 #   dbname, user

@@ -7,20 +7,13 @@
 import datetime as dt
 import argparse
 import psycopg2 as psy
-# import simplejson as json
+import csv
 import yaml
-# import re
 
 # other database functions
 import setup_db
 
-# # peyotl setup
-# from peyotl.api.phylesystem_api import PhylesystemAPI
-# from peyotl.manip import iter_trees
-# from peyotl import gen_otu_dict, iter_node
-# from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
-# from peyotl.nexson_syntax import get_nexml_el
-
+# peyotl functions for handling the taxonomy
 import peyotl.ott as ott
 
 def load_taxonomy(connection,cursor,otttable,syntable,path):
@@ -28,40 +21,54 @@ def load_taxonomy(connection,cursor,otttable,syntable,path):
     # get dictionary of ottids:ottnames, noting that the names can be strings
     # or tuples, e.g. (canonical name,synonym,synonym)
     ott_names = taxonomy.ott_id_to_names
-
     # dictionary of ottid:parent_ottid
     ott_parents = taxonomy.ott_id2par_ott_id
-    for ott_id in ott_names:
-        name = ott_names[ott_id]
-        synonyms=[]
-        # if names is a tuple, then the first element is the unique name
-        # and the others are synonyms
-        if (isinstance(name,tuple)):
-            synonyms = name[1:]
-            name = name[0]
-        parent_id = ott_parents[ott_id]
 
-        # insert into taxonomy table
-        sqlstring = ("INSERT INTO {t} "
-            "(ott_id,ott_name,parent) "
-            "VALUES (%s,%s,%s);"
-            .format(t=otttable)
-            )
-        data = (ott_id,name,parent_id)
-        #print '  SQL: ',cursor.mogrify(sqlstring,data)
-        cursor.execute(sqlstring,data)
+    ott_filename = "ott.csv"
+    synonym_filename = "synonyms.csv"
 
-        # insert into synonym table
-        for s in synonyms:
+    with open(ott_filename,'w') as of, open(synonym_filename,'w') as sf:
+        # header row for ott file
+        ottwriter = csv.writer(of)
+        ottwriter.writerow(('ott_id','name','parent_id'))
+        # header row for synonym file
+        synwriter = csv.writer(sf)
+        synwriter.writerow(('ott_id','synonym'))
+
+        for ott_id in ott_names:
+            name = ott_names[ott_id]
+            synonyms=[]
+            # if names is a tuple, then the first element is the unique name
+            # and the others are synonyms
+            if (isinstance(name,tuple)):
+                synonyms = name[1:]
+                name = name[0]
+            parent_id = ott_parents[ott_id]
+
+            # insert into taxonomy table
             sqlstring = ("INSERT INTO {t} "
-                "(ott_id,synonym) "
-                "VALUES (%s,%s);"
-                .format(t=syntable)
+                "(ott_id,ott_name,parent) "
+                "VALUES (%s,%s,%s);"
+                .format(t=otttable)
                 )
-            data = (ott_id,s)
+            data = (ott_id,name,parent_id)
+            ottwriter.writerow((ott_id,name,parent_id))
             #print '  SQL: ',cursor.mogrify(sqlstring,data)
             cursor.execute(sqlstring,data)
 
+            # insert into synonym table
+            for s in synonyms:
+                sqlstring = ("INSERT INTO {t} "
+                    "(ott_id,synonym) "
+                    "VALUES (%s,%s);"
+                    .format(t=syntable)
+                    )
+                data = (ott_id,s)
+                synwriter.writerow((ott_id,s))
+                #print '  SQL: ',cursor.mogrify(sqlstring,data)
+                cursor.execute(sqlstring,data)
+    ottwriter.close()
+    synwriter.close()
     connection.commit()
 
 if __name__ == "__main__":
@@ -101,8 +108,8 @@ if __name__ == "__main__":
         else:
             # data import
             starttime = dt.datetime.now()
-            load_taxonomy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
             print "Loading taxonomy"
+            load_taxonomy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
             endtime = dt.datetime.now()
             print "OTT load time: ",endtime - starttime
     except psy.Error as e:
