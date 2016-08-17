@@ -37,7 +37,7 @@ $ bash run_tests.sh
 
 ## Development notes
 
-The top-level `dev_scripts` directory contains scripts for testing. Some
-implement peyotl functions, while others allow database testing from the CLI
-without deploying pyramid. No promises that anything in that directory works
-property.
+The top-level `dev_scripts` directory contains scripts for testing out new
+features. Some implement peyotl functions, while others allow database testing
+from the CLI without deploying pyramid. No promises that anything in that
+directory works property.
