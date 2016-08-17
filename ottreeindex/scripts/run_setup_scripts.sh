@@ -13,11 +13,14 @@ fi
 config=$1
 
 if [ $nstudies ]; then
-    # delete existing table, re-create
+    # delete existing tables, re-create
     python setup_db.py -d $config
 
     # load nexson files
     python load_nexson.py $config -n $nstudies
+
+    # load taxonomy
+    python load_taxonomy.py $config
 
     # load otu table
     python create_otu_table.py $config -n $nstudies
@@ -33,6 +36,9 @@ python setup_db.py -d $config
 
 # load nexson files
 python load_nexson.py $config
+
+# load taxonomy
+python load_taxonomy.py $config
 
 # load otu table
 python create_otu_table.py $config
