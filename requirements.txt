@@ -1,3 +1,5 @@
 pyyaml
 simplejson
 psycopg2
+sqlalchemy
+pyramid
