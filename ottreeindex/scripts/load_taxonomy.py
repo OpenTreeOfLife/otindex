@@ -9,6 +9,7 @@ import argparse
 import psycopg2 as psy
 import csv
 import yaml
+import io
 
 # other database functions
 import setup_db
@@ -16,7 +17,7 @@ import setup_db
 # peyotl functions for handling the taxonomy
 import peyotl.ott as ott
 
-def load_taxonomy(connection,cursor,otttable,syntable,path):
+def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
     taxonomy = ott.OTT(ott_loc)
     # get dictionary of ottids:ottnames, noting that the names can be strings
     # or tuples, e.g. (canonical name,synonym,synonym)
@@ -27,13 +28,11 @@ def load_taxonomy(connection,cursor,otttable,syntable,path):
     ott_filename = "ott.csv"
     synonym_filename = "synonyms.csv"
 
-    with open(ott_filename,'w') as of, open(synonym_filename,'w') as sf:
+    with io.open(ott_filename,'w',encoding='utf-8') as of, io.open(synonym_filename,'w',encoding='utf-8') as sf:
         # header row for ott file
-        ottwriter = csv.writer(of)
-        ottwriter.writerow(('ott_id','name','parent_id'))
+        of.write(u'ott_id,name,parent_id')
         # header row for synonym file
-        synwriter = csv.writer(sf)
-        synwriter.writerow(('ott_id','synonym'))
+        sf.write(u'ott_id,synonym')
 
         for ott_id in ott_names:
             name = ott_names[ott_id]
@@ -45,31 +44,17 @@ def load_taxonomy(connection,cursor,otttable,syntable,path):
                 name = name[0]
             parent_id = ott_parents[ott_id]
 
-            # insert into taxonomy table
-            sqlstring = ("INSERT INTO {t} "
-                "(ott_id,ott_name,parent) "
-                "VALUES (%s,%s,%s);"
-                .format(t=otttable)
-                )
-            data = (ott_id,name,parent_id)
-            ottwriter.writerow((ott_id,name,parent_id))
-            #print '  SQL: ',cursor.mogrify(sqlstring,data)
-            cursor.execute(sqlstring,data)
+            of.write(u'{},{},{}'.format(ott_id,name,parent_id))
 
             # insert into synonym table
             for s in synonyms:
-                sqlstring = ("INSERT INTO {t} "
-                    "(ott_id,synonym) "
-                    "VALUES (%s,%s);"
-                    .format(t=syntable)
-                    )
-                data = (ott_id,s)
-                synwriter.writerow((ott_id,s))
-                #print '  SQL: ',cursor.mogrify(sqlstring,data)
-                cursor.execute(sqlstring,data)
-    ottwriter.close()
-    synwriter.close()
-    connection.commit()
+                sf.write(u'{},{}'.format(ott_id,s))
+    of.close()
+    sf.close()
+
+    # import the csv files into the tables
+    setup_db.import_csv_file(connection,cursor,otttable,ott_filename)
+    setup_db.import_csv_file(connection,cursor,syntable,synonym_filename)
 
 if __name__ == "__main__":
     # get command line argument (nstudies to import)
@@ -109,7 +94,7 @@ if __name__ == "__main__":
             # data import
             starttime = dt.datetime.now()
             print "Loading taxonomy"
-            load_taxonomy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
+            load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
             endtime = dt.datetime.now()
             print "OTT load time: ",endtime - starttime
     except psy.Error as e:
