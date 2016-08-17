@@ -25,6 +25,11 @@ def clear_gin_index(connection,cursor,config_dict):
 
     connection.commit()
 
+def clear_single_table(connection,cursor,tablename):
+    print 'clearing table',tablename
+    sqlstring=('TRUNCATE {t} CASCADE;').format(t=tablename)
+    cursor.execute(sqlstring)
+
 def clear_tables(connection,cursor,config_dict):
     print 'clearing tables'
     # tree linked to study via foreign key, so cascade removes both
@@ -86,7 +91,7 @@ def create_all_tables(connection,cursor,config_dict):
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
         'tree_id text NOT NULL, '
-        'study_id text REFERENCES study (id), '
+        'study_id text REFERENCES study (id) ON DELETE CASCADE, '
         'treebase_id text, '
         'ntips Integer, '
         'proposed boolean, '
@@ -108,8 +113,8 @@ def create_all_tables(connection,cursor,config_dict):
     # study-curator table
     CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
     tablestring = ('CREATE TABLE {tablename} '
-        '(curator_id int REFERENCES curator (id) ,'
-        'study_id text REFERENCES study (id));'
+        '(curator_id int REFERENCES curator (id) ON DELETE CASCADE,'
+        'study_id text REFERENCES study (id) ON DELETE CASCADE);'
         .format(tablename=CURATORSTUDYTABLE)
         )
     create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
@@ -126,12 +131,31 @@ def create_all_tables(connection,cursor,config_dict):
     # otu-tree table
     TREEOTUTABLE = config_dict['tables']['treeotutable']
     tablestring = ('CREATE TABLE {tablename} '
-        '(tree_id int REFERENCES tree (id), '
-        'ott_id int REFERENCES otu (id));'
+        '(tree_id int REFERENCES tree (id) ON DELETE CASCADE, '
+        'ott_id int REFERENCES otu (id) ON DELETE CASCADE);'
         .format(tablename=TREEOTUTABLE)
         )
     create_table(connection,cursor,TREEOTUTABLE,tablestring)
 
+    # taxonomy table
+    TAXONOMYTABLE = config_dict['tables']['otttable']
+    tablestring = ('CREATE TABLE {tablename} '
+        '(ott_id int PRIMARY KEY, '
+        'ott_name text, '
+        'rank text, '
+        'parent int);'
+        .format(tablename=TAXONOMYTABLE)
+    )
+    create_table(connection,cursor,TAXONOMYTABLE,tablestring)
+
+    # taxonomy table
+    SYNONYMTABLE = config_dict['tables']['synonymtable']
+    tablestring = ('CREATE TABLE {tablename} '
+        '(ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE, '
+        'synonym text);'
+        .format(tablename=SYNONYMTABLE)
+    )
+    create_table(connection,cursor,SYNONYMTABLE,tablestring)
 
 def delete_table(connection,cursor,tablename):
     try:
