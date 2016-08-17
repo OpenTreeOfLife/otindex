@@ -24,6 +24,8 @@ line to point to your local copy of the postgres database. Then, in the top-leve
 directory, run:
 
 ```
+$ pip install -r requirements.txt
+$ python setup.py develop
 $ pserve development.ini --reload
 ```
 
