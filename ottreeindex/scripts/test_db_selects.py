@@ -8,19 +8,31 @@ def find_all_studies(cursor,config_dict):
     STUDYTABLE = config_dict['tables']['studytable']
     sqlstring = "SELECT id,year FROM {t};".format(t=STUDYTABLE)
     cursor.execute(sqlstring)
-    print "returned ",cursor.rowcount,"studies"
+    print "returned",cursor.rowcount,"studies"
 
 def find_all_trees(cursor,config_dict):
     TREETABLE = config_dict['tables']['treetable']
     sqlstring = "SELECT * FROM {t};".format(t=TREETABLE)
     cursor.execute(sqlstring)
-    print "returned ",cursor.rowcount,"trees"
+    print "returned",cursor.rowcount,"trees"
 
 def find_all_curators(cursor,config_dict):
     CURATORTABLE = config_dict['tables']['curatortable']
     sqlstring = "SELECT * FROM {t};".format(t=CURATORTABLE)
     cursor.execute(sqlstring)
-    print "returned ",cursor.rowcount,"curators"
+    print "returned",cursor.rowcount,"curators"
+
+def find_all_taxa(cursor,config_dict):
+    TAXONOMYTABLE = config_dict['tables']['otttable']
+    sqlstring = "SELECT * FROM {t};".format(t=TAXONOMYTABLE)
+    cursor.execute(sqlstring)
+    print "returned",cursor.rowcount,"taxa"
+
+def find_all_otus(cursor,config_dict):
+    OTUTABLE = config_dict['tables']['otutable']
+    sqlstring = "SELECT * FROM {t};".format(t=OTUTABLE)
+    cursor.execute(sqlstring)
+    print "returned",cursor.rowcount,"otus"
 
 def connect(config_dict):
     conn = cursor = None  # not sure of exception intent
@@ -58,6 +70,8 @@ if __name__ == "__main__":
         find_all_studies(cursor,config_dict)
         find_all_trees(cursor,config_dict)
         find_all_curators(cursor,config_dict)
+        #find_all_otus(cursor,config_dict)
+        find_all_taxa(cursor,config_dict)
     except psy.Error as e:
         print e.pgerror
     connection.close()

@@ -120,42 +120,41 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
 
     # otu table
-    OTUTABLE = config_dict['tables']['otutable']
-    tablestring = ('CREATE TABLE {tablename} '
-        '(id int PRIMARY KEY, '
-        'name text NOT NULL);'
-        .format(tablename=OTUTABLE)
-        )
-    create_table(connection,cursor,OTUTABLE,tablestring)
-
-    # otu-tree table
-    TREEOTUTABLE = config_dict['tables']['treeotutable']
-    tablestring = ('CREATE TABLE {tablename} '
-        '(tree_id int REFERENCES tree (id) ON DELETE CASCADE, '
-        'ott_id int REFERENCES otu (id) ON DELETE CASCADE);'
-        .format(tablename=TREEOTUTABLE)
-        )
-    create_table(connection,cursor,TREEOTUTABLE,tablestring)
+    # OTUTABLE = config_dict['tables']['otutable']
+    # tablestring = ('CREATE TABLE {tablename} '
+    #     '(id int PRIMARY KEY, '
+    #     'name text NOT NULL);'
+    #     .format(tablename=OTUTABLE)
+    #     )
+    # create_table(connection,cursor,OTUTABLE,tablestring)
 
     # taxonomy table
     TAXONOMYTABLE = config_dict['tables']['otttable']
     tablestring = ('CREATE TABLE {tablename} '
         '(ott_id int PRIMARY KEY, '
         'ott_name text, '
-        'rank text, '
         'parent int);'
         .format(tablename=TAXONOMYTABLE)
     )
     create_table(connection,cursor,TAXONOMYTABLE,tablestring)
 
-    # taxonomy table
-    SYNONYMTABLE = config_dict['tables']['synonymtable']
+    # otu-tree table
+    TREEOTUTABLE = config_dict['tables']['treeotutable']
     tablestring = ('CREATE TABLE {tablename} '
-        '(ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE, '
-        'synonym text);'
-        .format(tablename=SYNONYMTABLE)
-    )
-    create_table(connection,cursor,SYNONYMTABLE,tablestring)
+        '(tree_id int REFERENCES tree (id) ON DELETE CASCADE, '
+        'ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE);'
+        .format(tablename=TREEOTUTABLE)
+        )
+    create_table(connection,cursor,TREEOTUTABLE,tablestring)
+
+    # synonym table
+    # SYNONYMTABLE = config_dict['tables']['synonymtable']
+    # tablestring = ('CREATE TABLE {tablename} '
+    #     '(ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE, '
+    #     'synonym text);'
+    #     .format(tablename=SYNONYMTABLE)
+    # )
+    # create_table(connection,cursor,SYNONYMTABLE,tablestring)
 
 def delete_table(connection,cursor,tablename):
     try:
@@ -253,8 +252,6 @@ if __name__ == "__main__":
     connection, cursor = connect(config_dict)
 
     if connection != None:
-
-        #pdb.set_trace()
         try:
             if (args.delete_tables):
                 delete_all_tables(connection,cursor,config_dict)

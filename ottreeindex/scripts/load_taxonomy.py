@@ -18,43 +18,52 @@ import setup_db
 import peyotl.ott as ott
 
 def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
+    print "Preparing taxonomy files"
     taxonomy = ott.OTT(ott_loc)
     # get dictionary of ottids:ottnames, noting that the names can be strings
     # or tuples, e.g. (canonical name,synonym,synonym)
     ott_names = taxonomy.ott_id_to_names
     # dictionary of ottid:parent_ottid
     ott_parents = taxonomy.ott_id2par_ott_id
-
+    print "loading {t} names and {p} parents".format(
+        t=len(ott_names),
+        p=len(ott_parents)
+    )
     ott_filename = "ott.csv"
     synonym_filename = "synonyms.csv"
+    try:
+        with io.open(ott_filename,'w',encoding='utf-8') as of, io.open(synonym_filename,'w',encoding='utf-8') as sf:
+            # header row for ott file
+            of.write(u'ott_id,name,parent_id\n')
+            # header row for synonym file
+            sf.write(u'ott_id,synonym\n')
 
-    with io.open(ott_filename,'w',encoding='utf-8') as of, io.open(synonym_filename,'w',encoding='utf-8') as sf:
-        # header row for ott file
-        of.write(u'ott_id,name,parent_id')
-        # header row for synonym file
-        sf.write(u'ott_id,synonym')
+            for ott_id in ott_names:
+                name = ott_names[ott_id]
+                #synonyms=[]
+                # if names is a tuple, then the first element is the unique name
+                # and the others are synonyms
+                if (isinstance(name,tuple)):
+                    #synonyms = name[1:]
+                    name = name[0]
+                parent_id = ott_parents[ott_id]
+                # if this is the root, use -1 as the parent
+                if parent_id == None:
+                    parent_id = -1
+                of.write(u'{},"{}",{}\n'.format(ott_id,name,parent_id))
 
-        for ott_id in ott_names:
-            name = ott_names[ott_id]
-            synonyms=[]
-            # if names is a tuple, then the first element is the unique name
-            # and the others are synonyms
-            if (isinstance(name,tuple)):
-                synonyms = name[1:]
-                name = name[0]
-            parent_id = ott_parents[ott_id]
-
-            of.write(u'{},{},{}'.format(ott_id,name,parent_id))
-
-            # insert into synonym table
-            for s in synonyms:
-                sf.write(u'{},{}'.format(ott_id,s))
-    of.close()
-    sf.close()
+                # print synonym data
+                # for s in synonyms:
+                #     sf.write(u'{},"{}"\n'.format(ott_id,s))
+        of.close()
+        # sf.close()
+    except IOError as (errno,strerror):
+        print "I/O error({0}): {1}".format(errno, strerror)
 
     # import the csv files into the tables
+    print "Importing taxonomy files"
     setup_db.import_csv_file(connection,cursor,otttable,ott_filename)
-    setup_db.import_csv_file(connection,cursor,syntable,synonym_filename)
+    # setup_db.import_csv_file(connection,cursor,syntable,synonym_filename)
 
 if __name__ == "__main__":
     # get command line argument (nstudies to import)
@@ -93,7 +102,6 @@ if __name__ == "__main__":
         else:
             # data import
             starttime = dt.datetime.now()
-            print "Loading taxonomy"
             load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
             endtime = dt.datetime.now()
             print "OTT load time: ",endtime - starttime
