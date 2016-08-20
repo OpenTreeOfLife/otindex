@@ -18,7 +18,7 @@ import setup_db
 import peyotl.ott as ott
 
 def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
-    print "Preparing taxonomy files"
+    print "Loading taxonomy into memory"
     taxonomy = ott.OTT(ott_loc)
     # get dictionary of ottids:ottnames, noting that the names can be strings
     # or tuples, e.g. (canonical name,synonym,synonym)
@@ -32,38 +32,45 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
     ott_filename = "ott.csv"
     synonym_filename = "synonyms.csv"
     try:
-        with io.open(ott_filename,'w',encoding='utf-8') as of, io.open(synonym_filename,'w',encoding='utf-8') as sf:
+        #with codecs.open(ott_filename,'w','utf-8') as of:
+        # with io.open(ott_filename,'w',encoding='utf-8') as of, io.open(synonym_filename,'w',encoding='utf-8') as sf:
+        with open(ott_filename,'w') as of, open(synonym_filename,'w') as sf:
+            ofwriter = csv.writer(of)
+            sfwriter = csv.writer(sf)
             # header row for ott file
-            of.write(u'ott_id,name,parent_id\n')
+            #of.write(u'ott_id,name,parent_id\n')
+            ofwriter.writerow(('id','name','parent_id'))
             # header row for synonym file
-            sf.write(u'ott_id,synonym\n')
+            sfwriter.writerow(('id','name'))
 
             for ott_id in ott_names:
                 name = ott_names[ott_id]
-                #synonyms=[]
+                synonyms=[]
                 # if names is a tuple, then the first element is the unique name
                 # and the others are synonyms
                 if (isinstance(name,tuple)):
-                    #synonyms = name[1:]
+                    synonyms = name[1:]
                     name = name[0]
                 parent_id = ott_parents[ott_id]
                 # if this is the root, use -1 as the parent
                 if parent_id == None:
                     parent_id = -1
-                of.write(u'{},"{}",{}\n'.format(ott_id,name,parent_id))
+                #of.write(u'{},"{}",{}\n'.format(ott_id,name,parent_id))
+                ofwriter.writerow((ott_id,name.encode('utf-8'),parent_id))
 
                 # print synonym data
-                # for s in synonyms:
-                #     sf.write(u'{},"{}"\n'.format(ott_id,s))
+                for s in synonyms:
+                    #sf.write(u'{},"{}"\n'.format(ott_id,s))
+                    sfwriter.writerow((ott_id,s.encode('utf-8')))
         of.close()
-        # sf.close()
+        sf.close()
     except IOError as (errno,strerror):
         print "I/O error({0}): {1}".format(errno, strerror)
 
     # import the csv files into the tables
     print "Importing taxonomy files"
     setup_db.import_csv_file(connection,cursor,otttable,ott_filename)
-    # setup_db.import_csv_file(connection,cursor,syntable,synonym_filename)
+    setup_db.import_csv_file(connection,cursor,syntable,synonym_filename)
 
 if __name__ == "__main__":
     # get command line argument (nstudies to import)
@@ -83,13 +90,14 @@ if __name__ == "__main__":
     # test that table exists
     # and clear data
     try:
+        print "clearing tables"
         TAXONOMYTABLE = config_dict['tables']['otttable']
-        SYNONYMTABLE = config_dict['tables']['synonymtable']
         if not setup_db.table_exists(cursor,TAXONOMYTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=TAXONOMYTABLE))
+        setup_db.clear_single_table(connection,cursor,TAXONOMYTABLE)
+        SYNONYMTABLE = config_dict['tables']['synonymtable']
         if not setup_db.table_exists(cursor,SYNONYMTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=SYNONYMTABLE))
-        setup_db.clear_single_table(connection,cursor,TAXONOMYTABLE)
         setup_db.clear_single_table(connection,cursor,SYNONYMTABLE)
         print "done clearing tables"
     except psy.Error as e:

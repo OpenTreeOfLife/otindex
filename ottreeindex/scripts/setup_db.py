@@ -148,13 +148,13 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,TREEOTUTABLE,tablestring)
 
     # synonym table
-    # SYNONYMTABLE = config_dict['tables']['synonymtable']
-    # tablestring = ('CREATE TABLE {tablename} '
-    #     '(ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE, '
-    #     'synonym text);'
-    #     .format(tablename=SYNONYMTABLE)
-    # )
-    # create_table(connection,cursor,SYNONYMTABLE,tablestring)
+    SYNONYMTABLE = config_dict['tables']['synonymtable']
+    tablestring = ('CREATE TABLE {tablename} '
+        '(ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE, '
+        'synonym text);'
+        .format(tablename=SYNONYMTABLE)
+    )
+    create_table(connection,cursor,SYNONYMTABLE,tablestring)
 
 def delete_table(connection,cursor,tablename):
     try:

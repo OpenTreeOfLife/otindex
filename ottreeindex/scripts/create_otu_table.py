@@ -1,7 +1,6 @@
 # Collects the OTU - tree relationships across phylesystem
 # Prints to file which is then inserted into postgres with COPY
 # This is much faster than many inserts
-# Assumes taxonomy already loaded, so only need to load associations
 
 from peyotl.api.phylesystem_api import PhylesystemAPI
 from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
@@ -122,6 +121,9 @@ def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
 def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
     tree_otu_filename = "tree_otu_assoc.csv"
 
+    #ott_names = taxonomy.ott_id_to_names
+    skipped_otus = set()
+
     with open(tree_otu_filename, 'w') as g:
         gwriter = csv.writer(g)
         # datafile format is 'ottid'\t'treeid' where treeid is not
@@ -151,7 +153,13 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
                     if oid is not None:
                         #ottID = mapped_otus[oid]
                         if oid in mapped_otus:
-                            ottIDs.add(mapped_otus[oid])
+                            ottID = mapped_otus[oid]
+                            # check that this exists in the taxonomy
+                            # (it might not, if the ID has been deprecated)
+                            if taxonomy.ott_id_to_names.get(ottID):
+                                ottIDs.add(ottID)
+                            else:
+                                skipped_otus.add(ottID)
                 ottIDs = parent_closure(ottIDs,taxonomy)
                 for ottID in ottIDs:
                     gwriter.writerow((tree_int_id,ottID))
@@ -162,6 +170,7 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
             if (nstudies and counter>=nstudies):
                 g.close()
                 break
+    print "skipped {s} mapped OTUs not in OTT".format(s=len(skipped_otus))
     return tree_otu_filename
 
 def parent_closure(ottIDs,taxonomy):
