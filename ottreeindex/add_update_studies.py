@@ -148,11 +148,19 @@ def delete_study(study_id):
         # check for to-be-orphaned curators
         # if the curator(s) associated with this study are only associated with
         # this study, delete the curator
-        deleteOrphanedCurators(DBSession,study_id)
+        deleteOrphanedCurators(study_id)
         #deleteOrphanedOtus(DBSession,study_id)
         DBSession.delete(study)
     else:
         print "study id {s} not found".format(s=study_id)
+
+def remove_study(url):
+    pattern = re.compile(u'.+([a-z][a-z]_\d+).json$')
+    matchobj = re.match(pattern,url)
+    study_id=""
+    if (matchobj):
+        study_id = matchobj.group(1)
+    delete_study(study_id)
 
 # URL is a raw github URL to a study
 # e.g. https://github.com/OpenTreeOfLife/phylesystem-1/blob/master/study/ot_02/ot_302/ot_302.json

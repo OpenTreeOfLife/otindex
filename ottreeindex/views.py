@@ -196,6 +196,10 @@ def add_update_studies_v3(request):
 
 @view_config(route_name='remove_studies_v3', renderer='json', request_method='POST')
 def remove_studies_v3(request):
-    payload = request.params
-    # delete studies & trees listed in payload
-    # also delete otus only used in these studies
+    if (request.body):
+        payload = request.json_body
+        for url in payload:
+            aus.remove_study(url)
+    else:
+        # TODO: return helpful error message about requiring at least one URL
+        return HTTPBadRequest()
