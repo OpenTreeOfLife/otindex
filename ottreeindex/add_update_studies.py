@@ -28,7 +28,6 @@ def add_study(study_id):
     # create a new Study object
     new_study = Study(id=study_id,year=year)
     DBSession.add(new_study)
-    #DBSession.commit()
 
     # get curator(s), noting that ot:curators might be a
     # string or a list
@@ -115,7 +114,6 @@ def add_study(study_id):
     del nexml['treesById']
     studyjson = json.dumps(nexml)
     new_study.data=studyjson
-    # DBSession.commit()
 
 def create_phylesystem_obj():
     # create connection to local phylesystem
@@ -140,7 +138,6 @@ def deleteOrphanedCurators(study_id):
                     Curator.id==curator_id
                 ).one()
             )
-            #DBSession.commit()
 
 def delete_study(study_id):
     study = DBSession.query(Study).filter(
@@ -154,7 +151,6 @@ def delete_study(study_id):
         deleteOrphanedCurators(DBSession,study_id)
         #deleteOrphanedOtus(DBSession,study_id)
         DBSession.delete(study)
-        # DBSession.commit()
     else:
         print "study id {s} not found".format(s=study_id)
 
