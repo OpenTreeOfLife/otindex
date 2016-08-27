@@ -25,9 +25,8 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
     ott_names = taxonomy.ott_id_to_names
     # dictionary of ottid:parent_ottid
     ott_parents = taxonomy.ott_id2par_ott_id
-    print "loading {t} names and {p} parents".format(
+    print "loading {t} names".format(
         t=len(ott_names),
-        p=len(ott_parents)
     )
     ott_filename = "ott.csv"
     synonym_filename = "synonyms.csv"
@@ -39,9 +38,9 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
             sfwriter = csv.writer(sf)
             # header row for ott file
             #of.write(u'ott_id,name,parent_id\n')
-            ofwriter.writerow(('id','name','parent_id'))
+            ofwriter.writerow(('id','name','parent'))
             # header row for synonym file
-            sfwriter.writerow(('id','name'))
+            sfwriter.writerow(('id','synonym'))
 
             for ott_id in ott_names:
                 name = ott_names[ott_id]

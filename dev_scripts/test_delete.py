@@ -36,6 +36,7 @@ from dev_models import (
 # replicates the logic in load_nexsons for loading all studies
 def addStudy(session,study_id):
     # get latest version of nexson
+    print "adding study {s}".format(s=study_id)
     phy = PhylesystemAPI(get_from='local')
     studyobj = phy.get_study(study_id)['data']
     nexml = get_nexml_el(studyobj)
@@ -82,7 +83,6 @@ def addStudy(session,study_id):
     # iterate over trees and insert tree data
     for trees_group_id, tree_id, tree in iter_trees(studyobj):
         print ' tree :' ,tree_id
-        nnodes = len(tree.get('nodeById', {}).items())
         proposedForSynth = False
         if (tree_id in proposedTrees):
             proposedForSynth = True
@@ -91,7 +91,6 @@ def addStudy(session,study_id):
         new_tree = Tree(
             tree_id=tree_id,
             study_id=study_id,
-            ntips=nnodes,
             proposed=proposedForSynth,
             data=treejson
             )
@@ -115,9 +114,10 @@ def addStudy(session,study_id):
                     if taxon:
                         new_tree.otus.append(taxon)
                         ottIDs.add(ottID)
+        new_tree.ntips = ntips
         # need to write function for recursive query of Taxonomy table
         #ottIDs = parent_closure(ottIDs,taxonomy)
-        print "nnodes = {n}, ntips = {t}".format(n=nnodes,t=ntips)
+
         # update with treebase id, if exists
         datadeposit = nexml.get('^ot:dataDeposit')
         if (datadeposit):
@@ -186,7 +186,6 @@ def deleteOrphanedCurators(session,study_id):
             session.commit()
 
 def deleteStudy(session,study_id):
-    print "deleting study",study_id
     study = session.query(Study).filter(
         Study.id == study_id
     ).one()
@@ -250,9 +249,10 @@ if __name__ == "__main__":
     try:
         (s,t,c) = count_all(session)
         print s,t,c
-        #study_id = getOneStudy(session)
-        #deleteStudy(session,study_id)
-        study_id = 'ot_236'
+        study_id = getOneStudy(session)
+        deleteStudy(session,study_id)
+        (s,t,c) = count_all(session)
+        print s,t,c
         addStudy(session,study_id)
         (s,t,c) = count_all(session)
         print s,t,c
