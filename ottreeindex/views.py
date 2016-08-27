@@ -1,28 +1,29 @@
 ##################################################
 # views.py: All methods directly implement routes
 # defined in __init__.py.
-# All other functions in helper_functions.py
 ##################################################
 
 from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.url import route_url
-
-import simplejson as json
-import query_study_helpers as qs
-import query_tree_helpers as qt
-
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import func
 
-from .models import (
+import simplejson as json
+import requests
+
+from ottreeindex import query_study_helpers as qs
+from ottreeindex import query_tree_helpers as qt
+from ottreeindex import add_update_studies as aus
+from ottreeindex.models import (
     DBSession,
     Study,
     Tree,
     Curator,
     Otu,
+    Taxonomy,
     )
 
 @view_config(route_name='home', renderer='json')
@@ -49,7 +50,6 @@ def about(request):
         }
 
 # the v2/v3 (oti equivalent) method for find_studies
-# currently implemented: the findall behaviour (returns all studies)
 @view_config(route_name="find_studies_v3", renderer='json',request_method="POST")
 def find_studies_v3(request):
     # set defaults
@@ -184,9 +184,17 @@ def properties_v3(request):
         }
     return results
 
+
+# updates one or more studies
 @view_config(route_name='add_update_studies_v3', renderer='json', request_method='POST')
 def add_update_studies_v3(request):
-    payload = request.params
+    if (request.body):
+        payload = request.json_body
+        for url in payload:
+            aus.update_study(url)
+    else:
+        # TODO: return helpful error message about requiring at least one URL
+        return HTTPBadRequest()
 
 @view_config(route_name='remove_studies_v3', renderer='json', request_method='POST')
 def remove_studies_v3(request):
