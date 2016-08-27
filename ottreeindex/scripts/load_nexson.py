@@ -130,17 +130,23 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
-                nnodes = len(tree.get('nodeById', {}).items())
                 proposedForSynth = False
                 if (tree_id in proposedTrees):
                     proposedForSynth = True
                 treejson = json.dumps(tree)
+                ntips = 0
+                for node_id, node in iter_node(tree):
+                    oid = node.get('@otu')
+                    # no @otu property on internal nodes
+                    if oid is not None:
+                        ntips+=1
+
                 sqlstring = ("INSERT INTO {tablename} "
                     "(tree_id,study_id,ntips,proposed,data) "
                     "VALUES (%s,%s,%s,%s,%s);"
                     .format(tablename=TREETABLE)
                     )
-                data = (tree_id,study_id,nnodes,proposedForSynth,treejson)
+                data = (tree_id,study_id,ntips,proposedForSynth,treejson)
                 #print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
                 #connection.commit()
