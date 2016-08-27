@@ -39,84 +39,84 @@ def getTreeID(cursor,study_id,tree_id):
             ' not found'.format(s=study_id,t=tree_id))
 
 # Get association between trees and mapped OTUs in all studies
-def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
-    otu_filename = "otu_mapping.csv"
-    tree_otu_filename = "tree_otu_assoc.csv"
-    seen_otus = {}
-
-    # need this to look up taxonomy names from ott_ids later
-    ott_names = taxonomy.ott_id_to_names
-
-    with open(otu_filename, 'w') as f, open(tree_otu_filename, 'w') as g:
-        fwriter = csv.writer(f)
-        gwriter = csv.writer(g)
-        # datafile format is 'ottid'\t'treeid' where treeid is not
-        # the treeid (string) in the nexson, but the treeid (int) from
-        # the database for faster indexing
-        counter = 0
-        fwriter.writerow(('id','name'))
-        for study_id, n in phy.iter_study_objs():
-            otu_dict = gen_otu_dict(n)
-            # iterate over the OTUs in the study, collecting the mapped
-            # ones (oid to ott_id mapping held at the study level)
-            mapped_otus = {}
-            for oid, o in otu_dict.items():
-                ottID = o.get('^ot:ottId')
-                if ottID is not None:
-                    label = o['^ot:originalLabel']
-                    ottname = o.get('^ot:ottTaxonName')
-                    if ottname is None:
-                        ottname = 'unnamed'
-                    if ottID not in seen_otus:
-                        # print ottID,ottname
-                        fwriter.writerow((ottID,ottname))
-                        seen_otus[ottID] = ottname
-                    otu_props = (ottname,ottID)
-                    mapped_otus[oid] = otu_props
-
-            # iterate over the trees in the study, collecting
-            # tree/otu associations (including lineage)
-            print "collecting tree / otu associations"
-            for trees_group_id, tree_id, tree in iter_trees(n):
-                # the unique identifier in the tree table is an auto-incrementing
-                # int, not the tree_id in the nexson, which is not unique
-                tree_int_id = getTreeID(cursor,study_id,tree_id)
-                ottIDs = {}     # all ids for this tree
-                # the tree nodes have node_ids, otu ids (if tips), and ott_ids
-                # (if mapped to OTT taxa)
-                for node_id, node in iter_node(tree):
-                    oid = node.get('@otu')
-                    # no @otu property on internal nodes
-                    if oid is not None:
-                        # see if there is an ott_id associated with this oid
-                        otu_props = mapped_otus.get(oid)
-                        if otu_props is not None:
-                            ottID = otu_props[1]
-                            print study_id,tree_id,ottID
-                            ottIDs[ottID] = True
-                            #print tree_id,oid,ottID
-                print "starting ottids: {l}".format(l=len(ottIDs))
-                ottIDs = parent_closure(ottIDs,taxonomy)
-                print "ending ottids: {l}".format(l=len(ottIDs))
-                for ottID in ottIDs:
-                    if ottID not in seen_otus:
-                        # get ott name from dictionary, value might be string
-                        # or might be list
-                        ottname = ott_names[ottID]
-                        if (isinstance(ottname,tuple)):
-                            ottname = ottname[0]
-                        fwriter.writerow((ottID,ottname))
-                        seen_otus[ottID] = ottname
-                    gwriter.writerow((tree_int_id,ottID))
-
-            counter+=1
-            if (counter%500 == 0):
-                print " prepared",counter,"studies"
-            if (nstudies and counter>=nstudies):
-                f.close()
-                g.close()
-                break
-    return (otu_filename, tree_otu_filename)
+# def prepare_csv_files(connection,cursor,phy,taxonomy,nstudies=None):
+#     otu_filename = "otu_mapping.csv"
+#     tree_otu_filename = "tree_otu_assoc.csv"
+#     seen_otus = {}
+#
+#     # need this to look up taxonomy names from ott_ids later
+#     ott_names = taxonomy.ott_id_to_names
+#
+#     with open(otu_filename, 'w') as f, open(tree_otu_filename, 'w') as g:
+#         fwriter = csv.writer(f)
+#         gwriter = csv.writer(g)
+#         # datafile format is 'ottid'\t'treeid' where treeid is not
+#         # the treeid (string) in the nexson, but the treeid (int) from
+#         # the database for faster indexing
+#         counter = 0
+#         fwriter.writerow(('id','name'))
+#         for study_id, n in phy.iter_study_objs():
+#             otu_dict = gen_otu_dict(n)
+#             # iterate over the OTUs in the study, collecting the mapped
+#             # ones (oid to ott_id mapping held at the study level)
+#             mapped_otus = {}
+#             for oid, o in otu_dict.items():
+#                 ottID = o.get('^ot:ottId')
+#                 if ottID is not None:
+#                     label = o['^ot:originalLabel']
+#                     ottname = o.get('^ot:ottTaxonName')
+#                     if ottname is None:
+#                         ottname = 'unnamed'
+#                     if ottID not in seen_otus:
+#                         # print ottID,ottname
+#                         fwriter.writerow((ottID,ottname))
+#                         seen_otus[ottID] = ottname
+#                     otu_props = (ottname,ottID)
+#                     mapped_otus[oid] = otu_props
+#
+#             # iterate over the trees in the study, collecting
+#             # tree/otu associations (including lineage)
+#             print "collecting tree / otu associations"
+#             for trees_group_id, tree_id, tree in iter_trees(n):
+#                 # the unique identifier in the tree table is an auto-incrementing
+#                 # int, not the tree_id in the nexson, which is not unique
+#                 tree_int_id = getTreeID(cursor,study_id,tree_id)
+#                 ottIDs = {}     # all ids for this tree
+#                 # the tree nodes have node_ids, otu ids (if tips), and ott_ids
+#                 # (if mapped to OTT taxa)
+#                 for node_id, node in iter_node(tree):
+#                     oid = node.get('@otu')
+#                     # no @otu property on internal nodes
+#                     if oid is not None:
+#                         # see if there is an ott_id associated with this oid
+#                         otu_props = mapped_otus.get(oid)
+#                         if otu_props is not None:
+#                             ottID = otu_props[1]
+#                             print study_id,tree_id,ottID
+#                             ottIDs[ottID] = True
+#                             #print tree_id,oid,ottID
+#                 print "starting ottids: {l}".format(l=len(ottIDs))
+#                 ottIDs = parent_closure(ottIDs,taxonomy)
+#                 print "ending ottids: {l}".format(l=len(ottIDs))
+#                 for ottID in ottIDs:
+#                     if ottID not in seen_otus:
+#                         # get ott name from dictionary, value might be string
+#                         # or might be list
+#                         ottname = ott_names[ottID]
+#                         if (isinstance(ottname,tuple)):
+#                             ottname = ottname[0]
+#                         fwriter.writerow((ottID,ottname))
+#                         seen_otus[ottID] = ottname
+#                     gwriter.writerow((tree_int_id,ottID))
+#
+#             counter+=1
+#             if (counter%500 == 0):
+#                 print " prepared",counter,"studies"
+#             if (nstudies and counter>=nstudies):
+#                 f.close()
+#                 g.close()
+#                 break
+#     return (otu_filename, tree_otu_filename)
 
 def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
     tree_otu_filename = "tree_otu_assoc.csv"
