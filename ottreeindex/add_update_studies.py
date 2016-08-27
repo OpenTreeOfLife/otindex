@@ -1,7 +1,10 @@
-import re
+import re, json
 
-from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
+from peyotl.api import PhylesystemAPI
 from peyotl.nexson_syntax import get_nexml_el
+from peyotl.nexson_proxy import NexsonProxy
+from peyotl.manip import iter_trees
+from peyotl import gen_otu_dict, iter_node
 
 from .models import (
     DBSession,
@@ -11,7 +14,7 @@ from .models import (
     Taxonomy,
     )
 
-def addStudy(study_id):
+def add_study(study_id):
     # get latest version of nexson
     print "adding study {s}".format(s=study_id)
     phy = create_phylesystem_obj()
@@ -112,13 +115,12 @@ def addStudy(study_id):
     del nexml['treesById']
     studyjson = json.dumps(nexml)
     new_study.data=studyjson
-    DBSession.commit()
+    # DBSession.commit()
 
 def create_phylesystem_obj():
     # create connection to local phylesystem
-    phylesystem_api_wrapper = PhylesystemAPI(get_from='local')
-    phylesystem = phylesystem_api_wrapper.phylesystem_obj
-    return phylesystem
+    phy = PhylesystemAPI()
+    return phy
 
 def deleteOrphanedCurators(study_id):
     # get curators that edited this study
@@ -138,7 +140,7 @@ def deleteOrphanedCurators(study_id):
                     Curator.id==curator_id
                 ).one()
             )
-            DBSession.commit()
+            #DBSession.commit()
 
 def delete_study(study_id):
     study = DBSession.query(Study).filter(
@@ -152,7 +154,7 @@ def delete_study(study_id):
         deleteOrphanedCurators(DBSession,study_id)
         #deleteOrphanedOtus(DBSession,study_id)
         DBSession.delete(study)
-        DBSession.commit()
+        # DBSession.commit()
     else:
         print "study id {s} not found".format(s=study_id)
 

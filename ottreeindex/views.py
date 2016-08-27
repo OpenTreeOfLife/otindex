@@ -22,7 +22,6 @@ from ottreeindex.models import (
     Study,
     Tree,
     Curator,
-    Otu,
     Taxonomy,
     )
 
@@ -183,7 +182,6 @@ def properties_v3(request):
         "study_properties" : study_props
         }
     return results
-
 
 # updates one or more studies
 @view_config(route_name='add_update_studies_v3', renderer='json', request_method='POST')

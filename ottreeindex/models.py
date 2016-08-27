@@ -41,7 +41,7 @@ curator_study_table = Table('curator_study_map', Base.metadata,
 
 # association between trees and otus
 tree_otu_table = Table('tree_otu_map', Base.metadata,
-    Column('ott_id', Integer, ForeignKey('otu.id'), primary_key=True),
+    Column('ott_id', Integer, ForeignKey('taxonomy.id'), primary_key=True),
     Column('tree_id', Integer, ForeignKey('tree.id'), primary_key=True)
     )
 
@@ -62,7 +62,7 @@ class Study(Base):
     id = Column(String, primary_key=True, index=True)
     year = Column(Integer)
     data = Column(JSONB)
-    trees = relationship('Tree',backref='study')
+    #trees = relationship('Tree',backref='study')
     # many-to-many study<-->curator relationship
     curators = relationship('Curator',
         secondary=curator_study_table,
@@ -92,10 +92,10 @@ class Tree(Base):
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     ntips = Column(Integer)
-    treebase_id = Column(String)
     proposed = Column(Boolean)
+    treebase_id = Column(String)
     # many-to-many tree<-->otu relationship
-    otus = relationship('Otu',
+    otus = relationship('Taxonomy',
         secondary=tree_otu_table,
         back_populates='trees')
 
@@ -118,18 +118,30 @@ class Curator(Base):
         secondary=curator_study_table,
         back_populates='curators')
 
-# otu table
-# also defines a many-to-many relationship with trees
+# taxonomy table; will replace otu table
+# also defines many-to-many relationships with trees
 # SQL string:
-    # tablestring = ('CREATE TABLE {tablename} '
-    #     '(id int PRIMARY KEY, '
-    #     'name text NOT NULL);'
-    #     .format(tablename=OTUTREETABLE)
-    #     )
-class Otu(Base):
-    __tablename__='otu'
+# tablestring = 'CREATE TABLE {tablename} '
+#     '(ott_id int PRIMARY KEY, '
+#     'ott_name text, '
+#     'rank text, '
+#     'parent int);
+class Taxonomy(Base):
+    __tablename__ = 'taxonomy'
     id = Column(Integer, primary_key=True)
     name = Column(String,nullable=False)
+    parent = Column(Integer)
     trees = relationship('Tree',
         secondary=tree_otu_table,
         back_populates='otus')
+
+# synonym table
+# tablestring = ('CREATE TABLE {tablename} '
+#     '(ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE, '
+#     'synonym text);'
+#     .format(tablename=SYNONYMTABLE)
+# )
+class Synonym(Base):
+    __tablename__='synonym'
+    id = Column(Integer,ForeignKey("taxonomy.id"),primary_key=True)
+    synonym = Column(String)
