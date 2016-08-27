@@ -22,6 +22,7 @@ from peyotl.api import PhylesystemAPI
 from peyotl.nexson_syntax import get_nexml_el
 from peyotl.nexson_proxy import NexsonProxy
 from peyotl.manip import iter_trees
+from peyotl import gen_otu_dict, iter_node
 
 from dev_models import (
     Study,
@@ -29,6 +30,111 @@ from dev_models import (
     Taxonomy,
     Curator,
 )
+
+# in the API, this takes a raw github URL to a study as argument,
+# e.g. https://raw.github.com/OpenTreeOfLife/phylesystem/master/study/10/10.json
+# replicates the logic in load_nexsons for loading all studies
+def addStudy(session,study_id):
+    # get latest version of nexson
+    phy = PhylesystemAPI(get_from='local')
+    studyobj = phy.get_study(study_id)['data']
+    nexml = get_nexml_el(studyobj)
+    year = nexml.get('^ot:studyYear')
+    proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
+    if proposedTrees is None:
+        proposedTrees = []
+
+    # create a new Study object
+    new_study = Study(id=study_id,year=year)
+    session.add(new_study)
+    #session.commit()
+
+    # get curator(s), noting that ot:curators might be a
+    # string or a list
+    c = nexml.get('^ot:curatorName')
+    print ' ot:curatorName: ',c
+    # create list of curator objects
+    curator_list=[]
+    if (isinstance(c,basestring)):
+        curator_list.append(c)
+    else:
+        curator_list = c
+    for curator in curator_list:
+        test_c = session.query(Curator).filter(Curator.name==curator).first()
+        if test_c:
+            print "curator {c} already exists".format(c=curator)
+            #session.add(curator)
+            new_study.curators.append(test_c)
+        else:
+            print "curator {c} does no exist".format(c=curator)
+            new_study.curators.append(Curator(name=curator))
+
+    # mapped otus in this study
+    otu_dict = gen_otu_dict(studyobj)
+    # iterate over the OTUs in the study, collecting the mapped
+    # ones (oid to ott_id mapping held at the study level)
+    mapped_otus = {}
+    for oid, o in otu_dict.items():
+        ottID = o.get('^ot:ottId')
+        if ottID is not None:
+            mapped_otus[oid]=ottID
+
+    # iterate over trees and insert tree data
+    for trees_group_id, tree_id, tree in iter_trees(studyobj):
+        print ' tree :' ,tree_id
+        nnodes = len(tree.get('nodeById', {}).items())
+        proposedForSynth = False
+        if (tree_id in proposedTrees):
+            proposedForSynth = True
+
+        treejson = json.dumps(tree)
+        new_tree = Tree(
+            tree_id=tree_id,
+            study_id=study_id,
+            ntips=nnodes,
+            proposed=proposedForSynth,
+            data=treejson
+            )
+
+        # get otus
+        ottIDs = set()     # ott ids for this tree
+        ntips=0
+        for node_id, node in iter_node(tree):
+            oid = node.get('@otu')
+            # no @otu property on internal nodes
+            if oid is not None:
+                ntips+=1
+                #ottID = mapped_otus[oid]
+                if oid in mapped_otus:
+                    ottID = mapped_otus[oid]
+                    # check that this exists in the taxonomy
+                    # (it might not, if the ID has been deprecated)
+                    taxon = session.query(Taxonomy).filter(
+                        Taxonomy.id==ottID
+                        ).first()
+                    if taxon:
+                        new_tree.otus.append(taxon)
+                        ottIDs.add(ottID)
+        # need to write function for recursive query of Taxonomy table
+        #ottIDs = parent_closure(ottIDs,taxonomy)
+        print "nnodes = {n}, ntips = {t}".format(n=nnodes,t=ntips)
+        # update with treebase id, if exists
+        datadeposit = nexml.get('^ot:dataDeposit')
+        if (datadeposit):
+            url = datadeposit['@href']
+            pattern = re.compile(u'.+TB2:(.+)$')
+            matchobj = re.match(pattern,url)
+            if (matchobj):
+                tb_id = matchobj.group(1)
+                new_tree.treebase_id=tb_id
+        session.add(new_tree)
+
+    # now that we have added the tree info, update the study record
+    # with the json data (minus the tree info)
+    del nexml['treesById']
+    studyjson = json.dumps(nexml)
+    new_study.data=studyjson
+    session.commit()
 
 # if there are OTUs only used by trees in this study, delete them
 def deleteOrphanedOtus(session,study_id):
@@ -97,33 +203,34 @@ def deleteStudy(session,study_id):
         print "study id {s} not found".format(s=study_id)
 
 def count_all(session):
-    find_all_studies(session)
-    find_all_trees(session)
-    find_all_curators(session)
+    studies = find_all_studies(session)
+    trees = find_all_trees(session)
+    curators = find_all_curators(session)
     # find_all_otus_in_trees(session)
+    return (studies,trees,curators)
 
 def find_all_studies(session):
-    query_obj = session.query(
+    study_count = session.query(
         Study.id,
-    ).all()
-    print "returned",len(query_obj),"studies"
+    ).count()
+    return study_count
 
 def find_all_trees(session):
-    query_obj = session.query(
+    tree_count = session.query(
         Tree.study_id,
         Tree.tree_id
-    ).all()
-    print "returned",len(query_obj),"trees"
+    ).count()
+    return tree_count
 
 def find_all_curators(session):
-    query_obj = session.query(
+    curator_count = session.query(
         Curator.id
-    ).all()
-    print "returned",len(query_obj),"curators"
+    ).count()
+    return curator_count
 
 # def find_all_otus_in_trees(session):
 #     # count all rows in the tree-taxonomy association table
-#     otus = session.query(Taxonomy.ott_id).filter(
+#     otus = session.query(Taxonomy.id).filter(
 #             Taxonomy.trees.any(tree_id=tid)
 #         ).all()
 #     print "returned",len(query_obj),"otus"
@@ -131,82 +238,6 @@ def find_all_curators(session):
 def getOneStudy(session):
     query_obj = session.query(Study.id).first()
     return query_obj.id
-
-# in the API, this takes a raw github URL to a study as argument,
-# e.g. https://raw.github.com/OpenTreeOfLife/phylesystem/master/study/10/10.json
-# replicates the logic in load_nexsons for loading all studies
-def addStudy(session,study_id):
-    # get latest version of nexson
-    phy = PhylesystemAPI(get_from='local')
-    studyobj = phy.get_study(study_id)['data']
-    nexml = get_nexml_el(studyobj)
-    year = nexml.get('^ot:studyYear')
-    proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
-    if proposedTrees is None:
-        proposedTrees = []
-
-    # create a new Study object
-    new_study = Study(id=study_id,year=year)
-    session.add(new_study)
-    #session.commit()
-
-    # get curator(s), noting that ot:curators might be a
-    # string or a list
-    c = nexml.get('^ot:curatorName')
-    print ' ot:curatorName: ',c
-    # create list of curator objects
-    curator_list=[]
-    if (isinstance(c,basestring)):
-        curator_list.append(Curator(name=c))
-    else:
-        for i in c:
-            curator_list.append(Curator(name=i))
-    for curator in curator_list:
-        if session.query(Curator).filter(Curator.name==curator.name).first():
-            print "curator {c} does not exist".format(c=curator.name)
-            #session.add(curator)
-            new_study.curators = curator
-        else:
-            print "curator {c} already exists".format(c=curator.name)
-            new_study.curators.append(curator)
-
-    # now add the curator - study association
-    #new_study.curators=curator_list
-    #session.commit()
-
-    # iterate over trees and insert tree data
-    for trees_group_id, tree_id, tree in iter_trees(studyobj):
-        print ' tree :' ,tree_id
-        nnodes = len(tree.get('nodeById', {}).items())
-        proposedForSynth = False
-        if (tree_id in proposedTrees):
-            proposedForSynth = True
-        treejson = json.dumps(tree)
-        new_tree = Tree(
-            tree_id=tree_id,
-            study_id=study_id,
-            ntips=nnodes,
-            proposed=proposedForSynth,
-            data=treejson
-            )
-
-        # update with treebase id, if exists
-        datadeposit = nexml.get('^ot:dataDeposit')
-        if (datadeposit):
-            url = datadeposit['@href']
-            pattern = re.compile(u'.+TB2:(.+)$')
-            matchobj = re.match(pattern,url)
-            if (matchobj):
-                tb_id = matchobj.group(1)
-                new_tree.treebase_id=tb_id
-        session.add(new_tree)
-
-    # now that we have added the tree info, update the study record
-    # with the json data (minus the tree info)
-    del nexml['treesById']
-    studyjson = json.dumps(nexml)
-    new_study.data=studyjson
-    session.commit()
 
 if __name__ == "__main__":
     connection_string = 'postgresql://postgres@localhost/otindex'
@@ -217,10 +248,13 @@ if __name__ == "__main__":
     session = SessionFactory()
 
     try:
-        count_all(session)
-        study_id = getOneStudy(session)
-        deleteStudy(session,study_id)
+        (s,t,c) = count_all(session)
+        print s,t,c
+        #study_id = getOneStudy(session)
+        #deleteStudy(session,study_id)
+        study_id = 'ot_236'
         addStudy(session,study_id)
-        count_all(session)
+        (s,t,c) = count_all(session)
+        print s,t,c
     except ProgrammingError as e:
         print e.message

@@ -34,7 +34,7 @@ curator_study_table = Table('curator_study_map', Base.metadata,
 
 # association between trees and otus
 tree_otu_table = Table('tree_otu_map', Base.metadata,
-    Column('ott_id', Integer, ForeignKey('otu.id'), primary_key=True),
+    Column('ott_id', Integer, ForeignKey('taxonomy.id'), primary_key=True),
     Column('tree_id', Integer, ForeignKey('tree.id'), primary_key=True)
     )
 
@@ -61,8 +61,9 @@ class Tree(Base):
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     ntips = Column(Integer)
     proposed = Column(Boolean)
+    treebase_id = Column(String)
     # many-to-many tree<-->otu relationship
-    otus = relationship('Otu',
+    otus = relationship('Taxonomy',
         secondary=tree_otu_table,
         back_populates='trees')
 
@@ -75,10 +76,19 @@ class Curator(Base):
         secondary=curator_study_table,
         back_populates='curators')
 
-class Otu(Base):
-    __tablename__='otu'
+# class Otu(Base):
+#     __tablename__='otu'
+#     id = Column(Integer, primary_key=True)
+#     name = Column(String,nullable=False)
+#     trees = relationship('Tree',
+#         secondary=tree_otu_table,
+#         back_populates='otus')
+#
+class Taxonomy(Base):
+    __tablename__ = 'taxonomy'
     id = Column(Integer, primary_key=True)
     name = Column(String,nullable=False)
+    parent = Column(Integer)
     trees = relationship('Tree',
         secondary=tree_otu_table,
         back_populates='otus')
