@@ -131,8 +131,8 @@ def create_all_tables(connection,cursor,config_dict):
     # taxonomy table
     TAXONOMYTABLE = config_dict['tables']['otttable']
     tablestring = ('CREATE TABLE {tablename} '
-        '(ott_id int PRIMARY KEY, '
-        'ott_name text, '
+        '(id int PRIMARY KEY, '
+        'name text, '
         'parent int);'
         .format(tablename=TAXONOMYTABLE)
     )
@@ -142,7 +142,7 @@ def create_all_tables(connection,cursor,config_dict):
     TREEOTUTABLE = config_dict['tables']['treeotutable']
     tablestring = ('CREATE TABLE {tablename} '
         '(tree_id int REFERENCES tree (id) ON DELETE CASCADE, '
-        'ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE);'
+        'ott_id int REFERENCES taxonomy (id) ON DELETE CASCADE);'
         .format(tablename=TREEOTUTABLE)
         )
     create_table(connection,cursor,TREEOTUTABLE,tablestring)
@@ -150,7 +150,7 @@ def create_all_tables(connection,cursor,config_dict):
     # synonym table
     SYNONYMTABLE = config_dict['tables']['synonymtable']
     tablestring = ('CREATE TABLE {tablename} '
-        '(ott_id int REFERENCES taxonomy (ott_id) ON DELETE CASCADE, '
+        '(id int REFERENCES taxonomy (id) ON DELETE CASCADE, '
         'synonym text);'
         .format(tablename=SYNONYMTABLE)
     )

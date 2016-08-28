@@ -4,7 +4,7 @@ from .models import (
     DBSession,
     Study,
     Tree,
-    Otu,
+    Taxonomy,
     )
 
 import simplejson as json
@@ -47,8 +47,8 @@ def get_all_trees(verbose):
 # given a taxon name, return the OTT ID, if it exists
 def get_ott_id(ottname):
     query_obj = DBSession.query(
-        Otu.id
-    ).filter(Otu.ott_name == ottname)
+        Taxonomy.id
+    ).filter(Taxonomy.name == ottname)
 
     # should only be one row
     row = query_obj.first()
@@ -122,7 +122,7 @@ def get_tree_query_object(verbose):
         )
     return query_obj
 
-# find trees by otu ids; uses Tree-Otu association table
+# find trees by otu ids; uses Tree-Taxonomy association table
 def query_trees_by_ott_id(query_obj,property_value):
      filtered = query_obj.filter(
          Tree.otus.any(id=property_value)
@@ -190,7 +190,7 @@ def query_trees(verbose,property_type,property_value):
 
     elif property_type == "ot:treebaseTreeId":
         filtered = query_obj.filter(Tree.treebase_id == property_value)
-    
+
     # tag is a list
     elif property_type == "ot:tag":
         filtered = query_trees_by_tag(query_obj,property_value)

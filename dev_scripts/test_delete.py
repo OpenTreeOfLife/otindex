@@ -136,35 +136,6 @@ def addStudy(session,study_id):
     new_study.data=studyjson
     session.commit()
 
-# if there are OTUs only used by trees in this study, delete them
-def deleteOrphanedOtus(session,study_id):
-    # get the trees for this study
-    trees = session.query(Tree.tree_id).filter(
-        Tree.study_id == study_id
-    ).all()
-    for t in trees:
-        tid = t.tree_id
-        # get the otus for this tree
-        otus = session.query(Taxonomy.id).filter(
-            Taxonomy.trees.any(tree_id=tid)
-        ).all()
-        for o in otus:
-            oid = o.id
-            treecount = session.query(Tree.id).filter(
-                Tree.otus.any(id=oid)
-            ).count()
-            if treecount==1:
-                # only used in this tree
-                #print "deleting otu {o} only used in tree {t}".format(
-                #     o=oid,t=tid
-                # )
-                session.delete(
-                    session.query(Otu).filter(
-                        Otu.id==oid
-                    ).one()
-                )
-                session.commit()
-
 def deleteOrphanedCurators(session,study_id):
     # get curators that edited this study
     curators = session.query(Curator.id).filter(
@@ -195,7 +166,6 @@ def deleteStudy(session,study_id):
         # if the curator(s) associated with this study are only associated with
         # this study, delete the curator
         deleteOrphanedCurators(session,study_id)
-        #deleteOrphanedOtus(session,study_id)
         session.delete(study)
         session.commit()
     else:
@@ -226,13 +196,6 @@ def find_all_curators(session):
         Curator.id
     ).count()
     return curator_count
-
-# def find_all_otus_in_trees(session):
-#     # count all rows in the tree-taxonomy association table
-#     otus = session.query(Taxonomy.id).filter(
-#             Taxonomy.trees.any(tree_id=tid)
-#         ).all()
-#     print "returned",len(query_obj),"otus"
 
 def getOneStudy(session):
     query_obj = session.query(Study.id).first()

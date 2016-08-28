@@ -1,3 +1,5 @@
+from pyramid.httpexceptions import HTTPNotFound
+
 import re, json
 
 from peyotl.api import PhylesystemAPI
@@ -18,7 +20,10 @@ def add_study(study_id):
     # get latest version of nexson
     print "adding study {s}".format(s=study_id)
     phy = create_phylesystem_obj()
-    studyobj = phy.get_study(study_id)['data']
+    try:
+        studyobj = phy.get_study(study_id)['data']
+    except:
+        raise HTTPNotFound("Study {s} not found in phylesystem".format(s=study_id))
     nexml = get_nexml_el(studyobj)
     year = nexml.get('^ot:studyYear')
     proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
@@ -120,8 +125,9 @@ def create_phylesystem_obj():
     phy = PhylesystemAPI()
     return phy
 
+# If the curator(s) associated with this study are *only* associated with
+# this study, delete the curator(s)
 def deleteOrphanedCurators(study_id):
-    # get curators that edited this study
     curators = DBSession.query(Curator.id).filter(
         Curator.studies.any(id=study_id)
     ).all()
@@ -146,30 +152,45 @@ def delete_study(study_id):
     if (study):
         print "deleting study {s}".format(s=study_id)
         # check for to-be-orphaned curators
-        # if the curator(s) associated with this study are only associated with
-        # this study, delete the curator
         deleteOrphanedCurators(study_id)
-        #deleteOrphanedOtus(DBSession,study_id)
         DBSession.delete(study)
     else:
-        print "study id {s} not found".format(s=study_id)
-
-def remove_study(url):
-    pattern = re.compile(u'.+([a-z][a-z]_\d+).json$')
-    matchobj = re.match(pattern,url)
-    study_id=""
-    if (matchobj):
-        study_id = matchobj.group(1)
-    delete_study(study_id)
+        raise HTTPNotFound("study id {s} not found".format(s=study_id))
 
 # URL is a raw github URL to a study
 # e.g. https://github.com/OpenTreeOfLife/phylesystem-1/blob/master/study/ot_02/ot_302/ot_302.json
-def update_study(url):
-    # get the study_id data from the URL
-    pattern = re.compile(u'.+([a-z][a-z]_\d+).json$')
+def get_study_id_from_url(url):
+    # pattern is {stuff at start of URL}/{prefix}_{numerical_id}.json
+    # where prefix is 'ot' or 'pg'
+    pattern = re.compile(u'.+/([a-z][a-z]_\d+).json$')
     matchobj = re.match(pattern,url)
-    study_id=""
     if (matchobj):
-        study_id = matchobj.group(1)
-    delete_study(study_id)
-    add_study(study_id)
+        return matchobj.group(1)
+    else:
+        raise HTTPNotFound("could not find study_id in URL {u}".format(u=url))
+
+# called directly by view add_update_studies_v3
+def remove_study(url):
+    try:
+        study_id = get_study_id_from_url(url)
+        delete_study(study_id)
+    except Exception as e:
+        raise
+
+def study_exists(study_id):
+    study = DBSession.query(Study).filter(Study.id==study_id).first()
+    if study:
+        return True
+    else:
+        return False
+
+# called directly by view remove_studies_v3
+def update_study(url):
+    try:
+        study_id = get_study_id_from_url(url)
+        print "updating",study_id
+        if (study_exists(study_id)):
+            delete_study(study_id)
+        add_study(study_id)
+    except Exception as e:
+        raise

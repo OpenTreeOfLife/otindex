@@ -14,7 +14,7 @@ from ..models import (
     Study,
     Tree,
     Curator,
-    Otu,
+    Taxonomy,
     Base,
     )
 

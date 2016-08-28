@@ -76,14 +76,6 @@ class Curator(Base):
         secondary=curator_study_table,
         back_populates='curators')
 
-# class Otu(Base):
-#     __tablename__='otu'
-#     id = Column(Integer, primary_key=True)
-#     name = Column(String,nullable=False)
-#     trees = relationship('Tree',
-#         secondary=tree_otu_table,
-#         back_populates='otus')
-#
 class Taxonomy(Base):
     __tablename__ = 'taxonomy'
     id = Column(Integer, primary_key=True)
