@@ -33,7 +33,7 @@ from .models import DBSession
 #         request = testing.DummyRequest()
 #         info = my_view(request)
 #         self.assertEqual(info['one'].name, 'one')
-#         self.assertEqual(info['project'], 'ottreeindex')
+#         self.assertEqual(info['project'], 'otindex')
 
 
 # class TestMyViewFailureCondition(unittest.TestCase):

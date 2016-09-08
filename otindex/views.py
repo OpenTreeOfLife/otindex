@@ -14,10 +14,10 @@ from sqlalchemy import func
 import simplejson as json
 import requests
 
-from ottreeindex import query_study_helpers as qs
-from ottreeindex import query_tree_helpers as qt
-from ottreeindex import add_update_studies as aus
-from ottreeindex.models import (
+from otindex import query_study_helpers as qs
+from otindex import query_tree_helpers as qt
+from otindex import add_update_studies as aus
+from otindex.models import (
     DBSession,
     Study,
     Tree,
@@ -29,7 +29,7 @@ from ottreeindex.models import (
 def index(request):
     return {
         "description": "The Open Tree of Life Phylesystem Index",
-        "source_url": "https://github.com/opentreeoflife/ottreeindex/",
+        "source_url": "https://github.com/opentreeoflife/otindex/",
     }
 
 # returns information about github repo, number studies,
@@ -39,7 +39,7 @@ def about(request):
     nstudies = DBSession.query(Study.id).count()
     ntrees = DBSession.query(Tree.id).count()
     ncurators = DBSession.query(Curator.id).count()
-    notus = DBSession.query(Otu.id).count()
+    notus = DBSession.query(Taxonomy.id).count()
     return {
         'data_store_url' : "https://github.com/opentreeoflife/phylesystem/",
         'number_studies' : nstudies,

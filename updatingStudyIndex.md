@@ -19,9 +19,9 @@ Sample call from phylesystem-api to oti:
 * Write a generic nudgeIndex method that can handle changes to studies, collections, amendments, or other data types
 * The web application will not need to change.
 * two possible approaches to triggering:
-  * the webhook stays the same, and phylesystem-api calls ottreeindex rather than oti, and the payload specifies that the changes apply to studies (new top-level `studies` key).
-  * the webhook calls ottreeindex directly, eliminating phylesystem-api from the loop
-* ottreeindex updates the database as needed
+  * the webhook stays the same, and phylesystem-api calls otindex rather than oti, and the payload specifies that the changes apply to studies (new top-level `studies` key).
+  * the webhook calls otindex directly, eliminating phylesystem-api from the loop
+* otindex updates the database as needed
   * replace json blob for study and tree
   * update curator and study-curator tables, if needed
   * update otu and tree-otu tables, if needed
