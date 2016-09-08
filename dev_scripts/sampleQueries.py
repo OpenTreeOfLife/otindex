@@ -10,16 +10,45 @@ from sqlalchemy.orm import (
     scoped_session,
     sessionmaker,
     relationship,
+    aliased,
     )
 
 from dev_models import (
     Study,
     Tree,
-    Otu,
+    Taxonomy,
     Curator,
 )
 
 ###### Queries ###############################
+
+# recursive query; see
+# http://docs.sqlalchemy.org/en/latest/orm/query.html#sqlalchemy.orm.query.Query.cte
+def recursive_ott_query(ott_id,session):
+    lineage = session.query(
+        Taxonomy.id,
+        Taxonomy.name,
+        Taxonomy.parent).filter(
+            Taxonomy.id==ott_id
+        ).cte(name="lineage",recursive=True)
+
+    ott_alias = aliased(Taxonomy,name='tid')
+    lineage_alias = aliased(lineage,name='lid')
+
+    lineage = lineage.union_all(
+        session.query(
+            ott_alias.id,
+            ott_alias.name,
+            ott_alias.parent
+        ).filter(
+            ott_alias.id==lineage_alias.c.parent
+        )
+    )
+
+    q = session.query(lineage.c.parent,lineage.c.name).all()
+
+    for row in q:
+        print row
 
 def query_association_table(session):
     # property_value = 'Karen Cranston'
@@ -273,6 +302,7 @@ if __name__ == "__main__":
         # query_fulltext(session)
         # query_trees(session)
         all_tags(session)
+        recursive_ott_query(691846,session)
         #query_association_table(session)
     except ProgrammingError as e:
         print e.message

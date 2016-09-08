@@ -121,7 +121,7 @@ def add_study(study_id):
     new_study.data=studyjson
 
 def create_phylesystem_obj():
-    # create connection to local phylesystem
+    # create connection to phylesystem
     phy = PhylesystemAPI()
     return phy
 
