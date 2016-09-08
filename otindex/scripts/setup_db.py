@@ -74,7 +74,7 @@ def create_table(connection,cursor,tablename,tablestring):
 
 # Function to create all database tables
 # Any changes made to the tablestring should also be reflected in
-# ottreeindex/models.py
+# otindex/models.py
 def create_all_tables(connection,cursor,config_dict):
     # study table
     STUDYTABLE = config_dict['tables']['studytable']
@@ -228,7 +228,7 @@ def table_exists(cursor, tablename):
     return cursor.fetchone()[0]
 
 # TODO: need to hook this in, probably through config file
-# def get_logger(name='ottreeindex'):
+# def get_logger(name='otindex'):
 #     logger = logging.getLogger(name)
 #     logger.basicConfig(filename='setup_db.log',level=logging.INFO)
 

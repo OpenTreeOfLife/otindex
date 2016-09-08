@@ -20,9 +20,9 @@ requires = [
     'db-psycopg2',
 ]
 
-setup(name='ottreeindex',
+setup(name='otindex',
       version='0.0',
-      description='ottreeindex',
+      description='otindex',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -37,12 +37,12 @@ setup(name='ottreeindex',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      test_suite='ottreeindex',
+      test_suite='otindex',
       install_requires=requires,
       entry_points="""\
       [paste.app_factory]
-      main = ottreeindex:main
+      main = otindex:main
       [console_scripts]
-      initialize_ottreeindex_db = ottreeindex.scripts.initializedb:main
+      initialize_otindex_db = otindex.scripts.initializedb:main
       """,
       )

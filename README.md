@@ -1,4 +1,4 @@
-# ottreeindex
+# otindex
 
 A pyramid implementation of a treestore (and possibly general) index for Open Tree of Life.
 
@@ -14,8 +14,8 @@ In progress; not production ready. Currently set up to simply use a local postgr
 ## Installation
 
 **Setting up the database**
-The `ottreeindex/scripts` directory contains scripts for setting up the database
-(creating tables, loading phylesystem studies, etc). See the [README](https://github.com/OpenTreeOfLife/ottreeindex/blob/master/ottreeindex/scripts/README.md) file in that directory for detailed setup information.
+The `otindex/scripts` directory contains scripts for setting up the database
+(creating tables, loading phylesystem studies, etc). See the [README](https://github.com/OpenTreeOfLife/otindex/blob/master/otindex/scripts/README.md) file in that directory for detailed setup information.
 
 **Running the application**
 

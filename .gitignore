@@ -1,6 +1,6 @@
 .DS_Store
 development.ini
-ottreeindex.egg-info/
+otindex.egg-info/
 *.pyc
 *.csv
 config.yml

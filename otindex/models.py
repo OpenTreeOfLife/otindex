@@ -48,7 +48,7 @@ tree_otu_table = Table('tree_otu_map', Base.metadata,
 # study table
 # Class defines and one-to-many relationships with trees
 # and a many-to-many relationship with curators.
-# Changes here should also be reflects in ottreeindex/scripts/setup_db.py
+# Changes here should also be reflects in otindex/scripts/setup_db.py
 # SQL string:
     # tablestring = ('CREATE TABLE {tablename} '
     #     '(id text PRIMARY KEY, '
