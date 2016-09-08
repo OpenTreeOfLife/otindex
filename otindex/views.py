@@ -39,7 +39,7 @@ def about(request):
     nstudies = DBSession.query(Study.id).count()
     ntrees = DBSession.query(Tree.id).count()
     ncurators = DBSession.query(Curator.id).count()
-    notus = DBSession.query(Otu.id).count()
+    notus = DBSession.query(Taxonomy.id).count()
     return {
         'data_store_url' : "https://github.com/opentreeoflife/phylesystem/",
         'number_studies' : nstudies,
