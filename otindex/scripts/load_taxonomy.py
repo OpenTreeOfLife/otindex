@@ -1,5 +1,5 @@
-# Imports nexson files from the OpenTree API into a postgres database
-#   uses the phylesystem API via the peyotl library
+# Imports the Open Tree Taxonomy into a postgres database
+#   taxonomy.tsv and synonyms.tsv only
 # Assumes database already set up. This happends either in initializedb.py
 #   if running pyramid app or setup_db.py for testing (both in
 #   this same directory)
