@@ -1,4 +1,5 @@
 from pyramid.httpexceptions import HTTPNotFound
+from sqlalchemy.orm import aliased
 
 import re, json
 
@@ -47,11 +48,11 @@ def add_study(study_id):
     for curator in curator_list:
         test_c = DBSession.query(Curator).filter(Curator.name==curator).first()
         if test_c:
-            print "curator {c} already exists".format(c=curator)
+            #print "curator {c} already exists".format(c=curator)
             #DBSession.add(curator)
             new_study.curators.append(test_c)
         else:
-            print "curator {c} does no exist".format(c=curator)
+            #print "curator {c} does no exist".format(c=curator)
             new_study.curators.append(Curator(name=curator))
 
     # mapped otus in this study
@@ -78,6 +79,7 @@ def add_study(study_id):
             proposed=proposedForSynth,
             data=treejson
             )
+        DBSession.add(new_tree)
 
         # get otus
         ottIDs = set()     # ott ids for this tree
@@ -96,12 +98,16 @@ def add_study(study_id):
                         Taxonomy.id==ottID
                         ).first()
                     if taxon:
-                        new_tree.otus.append(taxon)
-                        ottIDs.add(ottID)
+                        lineage = get_lineage(ottID)
+                        for t in lineage:
+                            ottIDs.add(t)
+                            #new_tree.otus.append(t)
         new_tree.ntips = ntips
-
-        # need to write function for recursive query of Taxonomy table
-        #ottIDs = parent_closure(ottIDs,taxonomy)
+        for t in ottIDs:
+            taxon = DBSession.query(Taxonomy).filter(
+                Taxonomy.id==ottID
+                ).first()
+            new_tree.otus.append(taxon)
 
         # update with treebase id, if exists
         datadeposit = nexml.get('^ot:dataDeposit')
@@ -112,7 +118,6 @@ def add_study(study_id):
             if (matchobj):
                 tb_id = matchobj.group(1)
                 new_tree.treebase_id=tb_id
-        DBSession.add(new_tree)
 
     # now that we have added the tree info, update the study record
     # with the json data (minus the tree info)
@@ -154,8 +159,39 @@ def delete_study(study_id):
         # check for to-be-orphaned curators
         deleteOrphanedCurators(study_id)
         DBSession.delete(study)
+        # need to flush here before re-adding updated study
+        DBSession.flush()
     else:
         raise HTTPNotFound("study id {s} not found".format(s=study_id))
+
+# get the lineage from this ID back to the root node
+def get_lineage(ott_id):
+    taxa_in_lineage=[]
+    lineage = DBSession.query(
+        Taxonomy.id,
+        Taxonomy.name,
+        Taxonomy.parent).filter(
+            Taxonomy.id==ott_id
+        ).cte(name="lineage",recursive=True)
+
+    ott_alias = aliased(Taxonomy,name='tid')
+    lineage_alias = aliased(lineage,name='lid')
+
+    lineage = lineage.union_all(
+        DBSession.query(
+            ott_alias.id,
+            ott_alias.name,
+            ott_alias.parent
+        ).filter(
+            ott_alias.id==lineage_alias.c.parent
+        )
+    )
+    q = DBSession.query(lineage.c.id).all()
+    for row in q:
+        taxa_in_lineage.append(row.id)
+        # t = DBSession.query(Taxonomy).filter(Taxonomy.id==row.id).first()
+        # taxa_in_lineage.append(t)
+    return taxa_in_lineage
 
 # URL is a raw github URL to a study
 # e.g. https://github.com/OpenTreeOfLife/phylesystem-1/blob/master/study/ot_02/ot_302/ot_302.json
@@ -178,7 +214,7 @@ def remove_study(url):
         raise
 
 def study_exists(study_id):
-    study = DBSession.query(Study).filter(Study.id==study_id).first()
+    study = DBSession.query(Study.id).filter(Study.id==study_id).first()
     if study:
         return True
     else:
@@ -191,6 +227,7 @@ def update_study(url):
         print "updating",study_id
         if (study_exists(study_id)):
             delete_study(study_id)
-        add_study(study_id)
+        with DBSession.no_autoflush:
+            add_study(study_id)
     except Exception as e:
         raise

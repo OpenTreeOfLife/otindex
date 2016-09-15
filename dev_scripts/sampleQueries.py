@@ -26,29 +26,44 @@ from dev_models import (
 # http://docs.sqlalchemy.org/en/latest/orm/query.html#sqlalchemy.orm.query.Query.cte
 def recursive_ott_query(ott_id,session):
     lineage = session.query(
-        Taxonomy.id,
-        Taxonomy.name,
-        Taxonomy.parent).filter(
+        Taxonomy).filter(
             Taxonomy.id==ott_id
         ).cte(name="lineage",recursive=True)
+    print "lineage1? ",type(lineage)
 
-    ott_alias = aliased(Taxonomy,name='tid')
-    lineage_alias = aliased(lineage,name='lid')
+    ott_alias = aliased(Taxonomy,name='ott_alias')
+    lineage_alias = aliased(lineage,name='lineage_alias')
+
+    # lineage = lineage.union_all(
+    #     session.query(
+    #         ott_alias.id,
+    #         ott_alias.name,
+    #         ott_alias.parent
+    #     ).filter(
+    #         ott_alias.id==lineage_alias.c.parent
+    #     )
+    # )
 
     lineage = lineage.union_all(
         session.query(
-            ott_alias.id,
-            ott_alias.name,
-            ott_alias.parent
+            ott_alias
         ).filter(
             ott_alias.id==lineage_alias.c.parent
         )
     )
+    print "lineage2? ",type(lineage)
 
-    q = session.query(lineage.c.parent,lineage.c.name).all()
-
+    #q = session.query(lineage.c.parent,lineage.c.name).all()
+    q = session.query(lineage).all()
+    print "q? ",type(q)
     for row in q:
-        print row
+        print type(row),row
+
+    taxon = session.query(Taxonomy).filter(
+        Taxonomy.id==ott_id
+        ).first()
+    print "taxon? ",type(taxon)
+
 
 def query_association_table(session):
     # property_value = 'Karen Cranston'
