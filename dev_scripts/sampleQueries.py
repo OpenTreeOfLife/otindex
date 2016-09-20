@@ -238,6 +238,19 @@ def test_filter_strings(sesion):
 #     # query.filter(User.name.like('%ed%'))
 #     curatorName = "Cranston"
 
+def query_trees_by_ott_id(session):
+    #Aves
+    ottid = 81461
+    query_obj = session.query(
+        Tree.study_id.label('ot:studyId'),
+        Tree.tree_id.label('ot:treeId')
+    )
+    filtered = query_obj.filter(
+        Tree.otus.any(id=ottid)
+    )
+    print "studies with id=81461",filtered.count()
+
+
 def value_in_array(session):
     print "testing tag query; looking for value in list"
     #tag = 'cpDNA'
@@ -317,7 +330,8 @@ if __name__ == "__main__":
         # query_fulltext(session)
         # query_trees(session)
         all_tags(session)
-        recursive_ott_query(691846,session)
+        #recursive_ott_query(691846,session)
         #query_association_table(session)
+        query_trees_by_ott_id(session)
     except ProgrammingError as e:
         print e.message
