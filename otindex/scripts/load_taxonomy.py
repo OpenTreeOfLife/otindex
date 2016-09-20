@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # test that table exists
     # and clear data
     try:
-        print "clearing tables"
+        print "clearing OTT tables"
         TAXONOMYTABLE = config_dict['tables']['otttable']
         if not setup_db.table_exists(cursor,TAXONOMYTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=TAXONOMYTABLE))

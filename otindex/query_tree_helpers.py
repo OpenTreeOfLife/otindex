@@ -111,6 +111,7 @@ def get_tree_query_object(verbose):
         query_obj = DBSession.query(
             Tree.tree_id.label('ot:treeId'),
             Tree.study_id.label('ot:studyId'),
+            Tree.proposed.label('ot:proposedForSynthesis'),
             Tree.data[('@label')].label('@label'),
             Tree.data[('^ot:branchLengthMode')].label('ot:branchLengthMode'),
             Tree.data[('^ot:branchLengthDescription')].label('ot:branchLengthDescription')

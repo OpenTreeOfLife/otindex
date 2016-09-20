@@ -13,6 +13,7 @@ from sqlalchemy import func
 
 import simplejson as json
 import requests
+import logging
 
 from otindex import query_study_helpers as qs
 from otindex import query_tree_helpers as qt
@@ -24,6 +25,8 @@ from otindex.models import (
     Curator,
     Taxonomy,
     )
+
+_LOG = logging.getLogger(__name__)
 
 @view_config(route_name='home', renderer='json')
 def index(request):
@@ -184,22 +187,26 @@ def properties_v3(request):
     return results
 
 # updates one or more studies
+# payload can be a list of URLs (oti syntax) or a list of
+# study ids
 @view_config(route_name='add_update_studies_v3', renderer='json', request_method='POST')
 def add_update_studies_v3(request):
     if (request.body):
         payload = request.json_body
-        for url in payload:
-            aus.update_study(url)
+        for study in payload:
+            aus.update_study(study)
     else:
         # TODO: return helpful error message about requiring at least one URL
         return HTTPBadRequest()
 
+# payload can be a list of URLs (oti syntax) or a list of
+# study ids
 @view_config(route_name='remove_studies_v3', renderer='json', request_method='POST')
 def remove_studies_v3(request):
     if (request.body):
         payload = request.json_body
-        for url in payload:
-            aus.remove_study(url)
+        for study in payload:
+            aus.remove_study(study)
     else:
         # TODO: return helpful error message about requiring at least one URL
         return HTTPBadRequest()

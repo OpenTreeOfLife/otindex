@@ -1,7 +1,7 @@
 from pyramid.httpexceptions import HTTPNotFound
 from sqlalchemy.orm import aliased
 
-import re, json
+import re, json, logging
 
 from peyotl.api import PhylesystemAPI
 from peyotl.nexson_syntax import get_nexml_el
@@ -17,9 +17,12 @@ from .models import (
     Taxonomy,
     )
 
+_LOG = logging.getLogger(__name__)
+
 def add_study(study_id):
+    _LOG.debug('adding study {s}'.format(s=study_id))
+
     # get latest version of nexson
-    print "adding study {s}".format(s=study_id)
     phy = create_phylesystem_obj()
     try:
         studyobj = phy.get_study(study_id)['data']
@@ -38,7 +41,6 @@ def add_study(study_id):
     # get curator(s), noting that ot:curators might be a
     # string or a list
     c = nexml.get('^ot:curatorName')
-    print ' ot:curatorName: ',c
     # create list of curator objects
     curator_list=[]
     if (isinstance(c,basestring)):
@@ -48,11 +50,11 @@ def add_study(study_id):
     for curator in curator_list:
         test_c = DBSession.query(Curator).filter(Curator.name==curator).first()
         if test_c:
-            #print "curator {c} already exists".format(c=curator)
+            _LOG.debug("curator {c} already exists".format(c=curator))
             #DBSession.add(curator)
             new_study.curators.append(test_c)
         else:
-            #print "curator {c} does no exist".format(c=curator)
+            _LOG.debug("curator {c} does not yet exist".format(c=curator))
             new_study.curators.append(Curator(name=curator))
 
     # mapped otus in this study
@@ -67,7 +69,7 @@ def add_study(study_id):
 
     # iterate over trees and insert tree data
     for trees_group_id, tree_id, tree in iter_trees(studyobj):
-        print ' tree :' ,tree_id
+        _LOG.debug(' tree : {t}'.format(t=tree_id))
         proposedForSynth = False
         if (tree_id in proposedTrees):
             proposedForSynth = True
@@ -79,7 +81,6 @@ def add_study(study_id):
             proposed=proposedForSynth,
             data=treejson
             )
-        DBSession.add(new_tree)
 
         # get otus
         ottIDs = set()     # ott ids for this tree
@@ -92,6 +93,7 @@ def add_study(study_id):
                 #ottID = mapped_otus[oid]
                 if oid in mapped_otus:
                     ottID = mapped_otus[oid]
+                    # _LOG.debug(' mapped ottID: {m}'.format(m=ottID))
                     # check that this exists in the taxonomy
                     # (it might not, if the ID has been deprecated)
                     taxon = DBSession.query(Taxonomy).filter(
@@ -99,25 +101,34 @@ def add_study(study_id):
                         ).first()
                     if taxon:
                         lineage = get_lineage(ottID)
+                        _LOG.debug(' lineage of {m} = {l}'.format(m=ottID,l=lineage))
                         for t in lineage:
                             ottIDs.add(t)
-                            #new_tree.otus.append(t)
         new_tree.ntips = ntips
         for t in ottIDs:
             taxon = DBSession.query(Taxonomy).filter(
-                Taxonomy.id==ottID
+                Taxonomy.id==t
                 ).first()
+            # _LOG.debug(' adding {t},{n} to tree {tid}'.format(
+            #     t=t,
+            #     n=taxon.name,
+            #     tid=tree_id)
+            #     )
             new_tree.otus.append(taxon)
 
         # update with treebase id, if exists
         datadeposit = nexml.get('^ot:dataDeposit')
         if (datadeposit):
             url = datadeposit['@href']
-            pattern = re.compile(u'.+TB2:(.+)$')
-            matchobj = re.match(pattern,url)
-            if (matchobj):
-                tb_id = matchobj.group(1)
-                new_tree.treebase_id=tb_id
+            if (url):
+                pattern = re.compile(u'.+TB2:(.+)$')
+                matchobj = re.match(pattern,url)
+                if (matchobj):
+                    tb_id = matchobj.group(1)
+                    new_tree.treebase_id=tb_id
+
+        # add the tree
+        DBSession.add(new_tree)
 
     # now that we have added the tree info, update the study record
     # with the json data (minus the tree info)
@@ -206,9 +217,12 @@ def get_study_id_from_url(url):
         raise HTTPNotFound("could not find study_id in URL {u}".format(u=url))
 
 # called directly by view add_update_studies_v3
-def remove_study(url):
+def remove_study(studyid):
     try:
-        study_id = get_study_id_from_url(url)
+        study_id = studyid
+        if studyid.startswith('http'):
+            study_id = get_study_id_from_url(studyid)
+        _LOG.debug("removing study {s}".format(s=study_id))
         delete_study(study_id)
     except Exception as e:
         raise
@@ -221,13 +235,15 @@ def study_exists(study_id):
         return False
 
 # called directly by view remove_studies_v3
-def update_study(url):
+def update_study(studyid):
     try:
-        study_id = get_study_id_from_url(url)
-        print "updating",study_id
+        study_id = studyid
+        if studyid.startswith('http'):
+            study_id = get_study_id_from_url(studyid)
+        _LOG.debug("adding / updating study {s}".format(s=study_id))
         if (study_exists(study_id)):
             delete_study(study_id)
-        with DBSession.no_autoflush:
-            add_study(study_id)
+        #with DBSession.no_autoflush:
+        add_study(study_id)
     except Exception as e:
         raise
