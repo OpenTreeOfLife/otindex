@@ -16,14 +16,16 @@ r = test_http_json_method(SUBMIT_URI,
 assert r[0] is True
 nstudies_start = r[1]['number_studies']
 ntrees_start = r[1]['number_trees']
-notus_start = r[1]['number_otus']
-ncurators_start = r[1]['number_curators']
+print "studies, trees: {s}, {t}".format(
+    s=nstudies_start,
+    t=ntrees_start,
+)
 
-# update a study
+# remove a study
 # study_id = 'ot_688'
 p = ["https://github.com/OpenTreeOfLife/phylesystem-1/blob/master/study/ot_88/ot_688/ot_688.json"]
 CONTROLLER = DOMAIN + '/v3'
-SUBMIT_URI = CONTROLLER + '/add_update_studies'
+SUBMIT_URI = CONTROLLER + '/remove_studies'
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,
@@ -42,9 +44,10 @@ r = test_http_json_method(SUBMIT_URI,
 assert r[0] is True
 nstudies_end = r[1]['number_studies']
 ntrees_end = r[1]['number_trees']
-notus_end = r[1]['number_otus']
-ncurators_end = r[1]['number_curators']
-assert nstudies_end == nstudies_start
-assert ntrees_end == ntrees_start
-assert notus_end == notus_start
-assert ncurators_end == ncurators_start
+print "studies, trees: {s}, {t}".format(
+    s=nstudies_end,
+    t=ntrees_end,
+)
+
+assert nstudies_end < nstudies_start
+assert ntrees_end < ntrees_start
