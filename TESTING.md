@@ -1,7 +1,7 @@
 There are a number of API tests in ws-tests. They depend on code in the
 [germinator](https://github.com/OpenTreeOfLife/germinator) repo.
 
-To run a single test:
+To run a single test from this repo:
 
   $ cd ws-tests
   $ PYTHONPATH=<germinator>/ws-tests python test_v3_studies_properties.py
