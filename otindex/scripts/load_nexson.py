@@ -92,27 +92,31 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
 # load the nexson properties into a table
 def load_properties(connection,cursor,prop_table,study_props,tree_props):
     for p in study_props:
+        prefix = None
         # remove the '^' or '@' at the start of the property
         # should be true for all properties, but check just in case
-        if p.startswith('^') || p.startswith('@'):
+        if p.startswith('^') or p.startswith('@'):
+            prefix = p[0]
             p = p[1:]
-        sqlstring = ("INSERT INTO {t} (property,type) "
-            "VALUES (%s,%s);"
+        sqlstring = ("INSERT INTO {t} (property,prefix,type) "
+            "VALUES (%s,%s,%s);"
             .format(t=prop_table)
         )
-        data = (p,'study')
+        data = (p,prefix,'study')
         #print '  SQL: ',cursor.mogrify(sqlstring)
         cursor.execute(sqlstring,data)
         connection.commit()
 
     for p in tree_props:
-        if p.startswith('^') || p.startswith('@'):
+        prefix = None
+        if p.startswith('^') or p.startswith('@'):
+            prefix = p[0]
             p = p[1:]
-        sqlstring = ("INSERT INTO {t} (property,type) "
-            "VALUES (%s,%s);"
+        sqlstring = ("INSERT INTO {t} (property,prefix,type) "
+            "VALUES (%s,%s,%s);"
             .format(t=prop_table)
         )
-        data = (p,'tree')
+        data = (p,prefix,'tree')
         #print '  SQL: ',cursor.mogrify(sqlstring)
         cursor.execute(sqlstring,data)
         connection.commit()
@@ -133,11 +137,12 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         if proposedTrees is None:
             proposedTrees = []
 
-        sqlstring = ("INSERT INTO {tablename} (id, year) "
-            "VALUES (%s,%s);"
+        # must insert study before trees
+        sqlstring = ("INSERT INTO {tablename} (id) "
+            "VALUES (%s);"
             .format(tablename=STUDYTABLE)
             )
-        data = (study_id,year)
+        data = (study_id,)
         #print '  SQL: ',cursor.mogrify(sqlstring)
         cursor.execute(sqlstring,data)
         connection.commit()
@@ -157,9 +162,11 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
         TREETABLE = config_dict['tables']['treetable']
+        ntrees = 0
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
+                ntrees += 1
                 proposedForSynth = False
                 tree_properties.update(tree.keys())
                 if (tree_id in proposedTrees):
@@ -203,15 +210,15 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             print e.pgerror
 
         # now that we have added the tree info, update the study record
-        # with the json data (minus the tree info)
+        # with the json data (minus the tree info) and ntrees
         del nexml['treesById']
         studyjson = json.dumps(nexml)
         sqlstring = ("UPDATE {tablename} "
-            "SET data=%s "
+            "SET data=%s,ntrees=%s "
             "WHERE id=%s;"
             .format(tablename=STUDYTABLE)
         )
-        data = (studyjson,study_id)
+        data = (studyjson,ntrees,study_id)
         cursor.execute(sqlstring,data)
         connection.commit()
 

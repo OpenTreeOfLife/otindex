@@ -80,7 +80,7 @@ def create_all_tables(connection,cursor,config_dict):
     STUDYTABLE = config_dict['tables']['studytable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id text PRIMARY KEY, '
-        'year integer, '
+        'ntrees integer, '
         'data jsonb);'
         .format(tablename=STUDYTABLE)
         )
@@ -119,15 +119,6 @@ def create_all_tables(connection,cursor,config_dict):
         )
     create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
 
-    # otu table
-    # OTUTABLE = config_dict['tables']['otutable']
-    # tablestring = ('CREATE TABLE {tablename} '
-    #     '(id int PRIMARY KEY, '
-    #     'name text NOT NULL);'
-    #     .format(tablename=OTUTABLE)
-    #     )
-    # create_table(connection,cursor,OTUTABLE,tablestring)
-
     # taxonomy table
     TAXONOMYTABLE = config_dict['tables']['otttable']
     tablestring = ('CREATE TABLE {tablename} '
@@ -161,6 +152,7 @@ def create_all_tables(connection,cursor,config_dict):
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
         'property text, '
+        'prefix text, '
         'type text, '
         'UNIQUE (property,type));'
         .format(tablename=PROPERTYTABLE)
