@@ -35,8 +35,8 @@ SUBMIT_URI = CONTROLLER + '/add_update_studies'
 phylesystem_api_wrapper = PhylesystemAPI(get_from='local')
 phy = phylesystem_api_wrapper.phylesystem_obj
 counter = 0
-start = 10
-limit = start+30
+start = 0
+limit = start+8000
 for study_id, studyobj in phy.iter_study_objs():
     if counter>start:
         p = [study_id]

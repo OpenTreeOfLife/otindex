@@ -9,6 +9,9 @@ select id from study where data @> '{"^ot:curatorName":["bryan drew"]}';
 or
 select id from study where data @> '{"^ot:tag":["cpDNA"]}';
 
+# do any rows contain this key:value
+select count(data->'^ot:foo') from study;
+
 # search for text within value
 select id from study where data->>('^ot:studyPublicationReference') ilike ('%Smith%');
 
