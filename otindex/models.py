@@ -145,3 +145,20 @@ class Synonym(Base):
     __tablename__='synonym'
     id = Column(Integer,ForeignKey("taxonomy.id"),primary_key=True)
     synonym = Column(String)
+
+# property table
+# tablestring = ('CREATE TABLE {tablename} '
+#     '(id serial PRIMARY KEY, '
+#     'property text, '
+#     'type text, '
+#     'UNIQUE (property,type));'
+#     .format(tablename=PROPERTYTABLE)
+# )
+class Property(Base):
+    __tablename__='property'
+    __table_args__ = (
+        UniqueConstraint('property','type'),
+        )
+    id = Column(Integer,primary_key=True)
+    property = Column(String, nullable=False)
+    type = Column(String, nullable=False)

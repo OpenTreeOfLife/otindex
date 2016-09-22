@@ -30,11 +30,19 @@ def get_all_studies(verbose):
 # get the list of searchable study properties
 # v3 list pruned down to only those implemented in v3
 def get_study_property_list(version=3):
-    study_props = [
-        "ot:focalClade", "ot:focalCladeOTTTaxonName", "ot:studyPublication",
-        "ot:tag", "ot:comment", "ot:studyPublicationReference", "ot:studyId",
-        "ot:curatorName", "ot:studyYear", "ot:dataDeposit"
-        ]
+    properties = []
+    query_obj = DBSession.query(Property.property).filter(
+        Property.type=='study'
+    ).all()
+    for row in query_obj:
+        properties.append[row.property]
+
+
+    # study_props = [
+    #     "ot:focalClade", "ot:focalCladeOTTTaxonName", "ot:studyPublication",
+    #     "ot:tag", "ot:comment", "ot:studyPublicationReference", "ot:studyId",
+    #     "ot:curatorName", "ot:studyYear", "ot:dataDeposit"
+    #     ]
     return study_props
 
 # return the query object without any filtering

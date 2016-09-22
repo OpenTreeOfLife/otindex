@@ -92,6 +92,10 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
 # load the nexson properties into a table
 def load_properties(connection,cursor,prop_table,study_props,tree_props):
     for p in study_props:
+        # remove the '^' or '@' at the start of the property
+        # should be true for all properties, but check just in case
+        if p.startswith('^') || p.startswith('@'):
+            p = p[1:]
         sqlstring = ("INSERT INTO {t} (property,type) "
             "VALUES (%s,%s);"
             .format(t=prop_table)
@@ -102,6 +106,8 @@ def load_properties(connection,cursor,prop_table,study_props,tree_props):
         connection.commit()
 
     for p in tree_props:
+        if p.startswith('^') || p.startswith('@'):
+            p = p[1:]
         sqlstring = ("INSERT INTO {t} (property,type) "
             "VALUES (%s,%s);"
             .format(t=prop_table)
