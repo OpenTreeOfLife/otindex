@@ -156,6 +156,17 @@ def create_all_tables(connection,cursor,config_dict):
     )
     create_table(connection,cursor,SYNONYMTABLE,tablestring)
 
+    # property table
+    PROPERTYTABLE = config_dict['tables']['propertytable']
+    tablestring = ('CREATE TABLE {tablename} '
+        '(id serial PRIMARY KEY, '
+        'property text, '
+        'type text, '
+        'UNIQUE (property,type));'
+        .format(tablename=PROPERTYTABLE)
+    )
+    create_table(connection,cursor,PROPERTYTABLE,tablestring)
+
 def delete_table(connection,cursor,tablename):
     try:
         #print 'deleting table',tablename

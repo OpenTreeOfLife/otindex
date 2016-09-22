@@ -89,13 +89,37 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
     except psy.ProgrammingError, ex:
         print 'Error inserting curator'
 
+# load the nexson properties into a table
+def load_properties(connection,cursor,prop_table,study_props,tree_props):
+    for p in study_props:
+        sqlstring = ("INSERT INTO {t} (property,type) "
+            "VALUES (%s,%s);"
+            .format(t=prop_table)
+        )
+        data = (p,'study')
+        #print '  SQL: ',cursor.mogrify(sqlstring)
+        cursor.execute(sqlstring,data)
+        connection.commit()
+
+    for p in tree_props:
+        sqlstring = ("INSERT INTO {t} (property,type) "
+            "VALUES (%s,%s);"
+            .format(t=prop_table)
+        )
+        data = (p,'tree')
+        #print '  SQL: ',cursor.mogrify(sqlstring)
+        cursor.execute(sqlstring,data)
+        connection.commit()
+
 # iterate over phylesystem nexsons and import
 def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
     counter = 0
+    study_properties = set()
+    tree_properties = set()
     for study_id, studyobj in phy.iter_study_objs():
         nexml = get_nexml_el(studyobj)
         #print 'STUDY: ',study_id
-
+        study_properties.update(nexml.keys())
         # study data for study table
         STUDYTABLE = config_dict['tables']['studytable']
         year = nexml.get('^ot:studyYear')
@@ -131,6 +155,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
                 proposedForSynth = False
+                tree_properties.update(tree.keys())
                 if (tree_id in proposedTrees):
                     proposedForSynth = True
                 treejson = json.dumps(tree)
@@ -191,6 +216,15 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         if (nstudies and counter>=nstudies):
             print "finished inserting",nstudies,"studies"
             break
+
+    # load the tree and study properties
+    PROPERTYTABLE = config_dict['tables']['propertytable']
+    load_properties(
+        connection,
+        cursor,
+        PROPERTYTABLE,
+        study_properties,
+        tree_properties)
 
 if __name__ == "__main__":
     # get command line argument (nstudies to import)

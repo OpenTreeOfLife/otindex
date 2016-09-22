@@ -1,17 +1,15 @@
 
 ---
 connection_info:
-  dbname: otindex
+  dbname: newoti
   user: pguser
 tables:
   curatorstudytable: curator_study_map
   treeotutable: tree_otu_map
+  otutable: otu
   curatortable: curator
   treetable: tree
   studytable: study
-  otttable: taxonomy
-  synonymtable: synonym
-  propertytable: property
 treeginindex: tree_ix_jsondata_gin
 studyginindex: study_ix_jsondata_gin
-taxonomy: None
+taxonomy: /Users/karen/Documents/opentreeoflife/data/ott2.9/
