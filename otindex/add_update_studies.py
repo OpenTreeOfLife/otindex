@@ -29,14 +29,24 @@ def add_study(study_id):
     except:
         raise HTTPNotFound("Study {s} not found in phylesystem".format(s=study_id))
     nexml = get_nexml_el(studyobj)
-    year = nexml.get('^ot:studyYear')
     proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
     if proposedTrees is None:
         proposedTrees = []
 
     # create a new Study object
-    new_study = Study(id=study_id,year=year)
+    new_study = Study(id=study_id)
     DBSession.add(new_study)
+
+    # update with treebase id, if exists
+    datadeposit = nexml.get('^ot:dataDeposit')
+    if (datadeposit):
+        url = datadeposit['@href']
+        if (url):
+            pattern = re.compile(u'.+TB2:(.+)$')
+            matchobj = re.match(pattern,url)
+            if (matchobj):
+                tb_id = matchobj.group(1)
+                new_study.treebase_id=tb_id
 
     # get curator(s), noting that ot:curators might be a
     # string or a list
@@ -68,8 +78,10 @@ def add_study(study_id):
             mapped_otus[oid]=ottID
 
     # iterate over trees and insert tree data
+    ntrees = 0
     for trees_group_id, tree_id, tree in iter_trees(studyobj):
         _LOG.debug(' tree : {t}'.format(t=tree_id))
+        ntrees+=1
         proposedForSynth = False
         if (tree_id in proposedTrees):
             proposedForSynth = True
@@ -116,17 +128,6 @@ def add_study(study_id):
             #     )
             new_tree.otus.append(taxon)
 
-        # update with treebase id, if exists
-        datadeposit = nexml.get('^ot:dataDeposit')
-        if (datadeposit):
-            url = datadeposit['@href']
-            if (url):
-                pattern = re.compile(u'.+TB2:(.+)$')
-                matchobj = re.match(pattern,url)
-                if (matchobj):
-                    tb_id = matchobj.group(1)
-                    new_tree.treebase_id=tb_id
-
         # add the tree
         DBSession.add(new_tree)
 
@@ -135,6 +136,7 @@ def add_study(study_id):
     del nexml['treesById']
     studyjson = json.dumps(nexml)
     new_study.data=studyjson
+    new_study.ntrees = ntrees
 
 def create_phylesystem_obj():
     # create connection to phylesystem

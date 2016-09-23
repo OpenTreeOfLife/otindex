@@ -52,7 +52,7 @@ if len(json_result[top_level_key]):
 ################################################
 # find trees based on a ot:nodeLabelMode
 p = {'verbose': False,
-     'property': 'ot:inferenceMethod',
+     'property': 'ot:curatedType',
      'value': 'Bayesian inference'}
 r = test_http_json_method(SUBMIT_URI,
                           'POST',

@@ -13,11 +13,12 @@ from sqlalchemy.orm import (
     aliased,
     )
 
-from dev_models import (
+from otindex.models import (
     Study,
     Tree,
     Taxonomy,
     Curator,
+    Property,
 )
 
 ###### Queries ###############################
@@ -84,8 +85,116 @@ def query_association_table(session):
     for row in query_obj:
         print row.study_id,row.tree_id
 
+def query_properties(session,type):
+    properties = []
+    query_obj = session.query(Property.property).filter(
+        Property.type=='study'
+    ).all()
+    for row in query_obj:
+        properties.append(row.property)
+    # now add the non-JSON properties
+    properties.append("ntrees")
+    print "study properties: "
+    for p in properties:
+        print " ",p
+
+    properties = []
+    query_obj = session.query(Property.property).filter(
+        Property.type=='tree'
+    ).all()
+    for row in query_obj:
+        properties.append(row.property)
+    # now add the non-JSON properties
+    properties.append("ntips")
+    properties.append("proposed")
+    properties.append("treebase_id")
+    print "tree properties: "
+    for p in properties:
+        print " ",p
+
+def get_tree_query_object(session,verbose):
+    query_obj = None
+    if (verbose):
+        # assigning labels like this makes it easy to build the response json
+        # but can't directly access any particular item via the label,
+        # i.e result.ot:studyId because of ':' in label
+        query_obj = session.query(
+            Tree.tree_id.label('ot:treeId'),
+            Tree.study_id.label('ot:studyId'),
+            Tree.proposed.label('ot:proposedForSynthesis'),
+            Tree.data[('@label')].label('@label'),
+            Tree.data[('^ot:branchLengthMode')].label('ot:branchLengthMode'),
+            Tree.data[('^ot:branchLengthDescription')].label('ot:branchLengthDescription')
+        )
+    else:
+        query_obj = session.query(
+            Tree.study_id.label('ot:studyId'),
+            Tree.tree_id.label('ot:treeId')
+        )
+    return query_obj
+
+def get_study_return_props(session,studyid,studydict):
+    slist =[
+        "^ot:studyPublicationReference","^ot:curatorName",
+        "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
+        "^ot:dataDeposit","^ot:studyPublication"
+        ]
+    # assigning labels like this makes it easy to build the response json
+    # but can't directly access any particular item via the label,
+    # i.e result.ot:studyId because of ':' in label
+    query_obj = session.query(
+        Study.id.label('ot:studyId'),
+        Study.data[(slist[0])].label('ot:studyPublicationReference'),
+        Study.data[(slist[1])].label('ot:curatorName'),
+        Study.data[(slist[2])].label('ot:studyYear'),
+        Study.data[(slist[3])].label('ot:focalClade'),
+        Study.data[(slist[4])].label('ot:focalCladeOTTTaxonName'),
+        Study.data[(slist[5])].label('ot:dataDeposit'),
+        Study.data[(slist[6])].label('ot:studyPublication'),
+    ).filter(
+        Study.id == studyid
+    )
+
+    # should only be one row
+    resultdict = {}
+    for row in query_obj.all():
+        for k,v in row._asdict().items():
+            if v is not None:
+                resultdict[k]=v
+    studydict[studyid] = resultdict
+    return studydict
+
+def build_json_response(filtered,verbose=False):
+    resultslist = []
+    studydict = {}
+    # run the query and build the response json
+    for row in filtered.all():
+        treedict = row._asdict()
+        studyid = treedict['ot:studyId']
+        if not studyid in studydict:
+            # if this is the first time we have seen this study,
+            # get either the studyid or the study properties and
+            # add a blank list for the trees
+            if (verbose):
+                get_study_return_props(session,studyid,studydict)
+            else:
+                studydict[studyid] = {'ot:studyId':studyid}
+            studydict[studyid]['matched_trees'] = []
+        # add the tree properties to the list of matched trees
+        studydict[studyid]['matched_trees'].append(treedict)
+    for k,v in studydict.items():
+        resultslist.append(v)
+    return resultslist
+
+def query_trees_by_study_id(session,study_id):
+    #resultlist = []
+    query_obj = get_tree_query_object(session,True)
+    filtered = query_obj.filter(Tree.study_id == study_id)
+    resp = build_json_response(filtered,True)
+    print resp
+
 # the tree queries involve joins on study table
-def query_trees(session):
+def query_trees_by_json_field(session):
     property_type = '^ot:tag'
     property_value = 'ITS'
 
@@ -126,8 +235,8 @@ def get_study_properties(session,studyid,studydict):
     # i.e result.ot:studyId because of ':' in label
     query_obj = session.query(
         Study.id.label('ot:studyId'),
-        Study.data[(slist[0])].label('ot:studyPublicationReference'),
-        Study.data[(slist[1])].label('ot:curatorName'),
+        Study.data[(slist[0])].label(slist[0]),
+        Study.data[(slist[1])].label(slist[1]),
         Study.data[(slist[2])].label('ot:studyYear'),
         Study.data[(slist[3])].label('ot:focalClade'),
         Study.data[(slist[4])].label('ot:focalCladeOTTTaxonName'),
@@ -324,14 +433,17 @@ if __name__ == "__main__":
     session = SessionFactory()
 
     try:
-        #test_joins(session)
+        # test_joins(session)
         # value_in_array(session)
         # basic_jsonb_query(session)
         # query_fulltext(session)
-        # query_trees(session)
-        all_tags(session)
+        query_trees_by_study_id(session,'ot_55')
+        # all_tags(session)
         #recursive_ott_query(691846,session)
         #query_association_table(session)
-        query_trees_by_ott_id(session)
+        # print "study props:"
+        # query_properties(session,'study')
+        # print "tree props:"
+        # query_properties(session,'tree')
     except ProgrammingError as e:
         print e.message

@@ -24,6 +24,7 @@ from otindex.models import (
     Tree,
     Curator,
     Taxonomy,
+    Property,
     )
 
 _LOG = logging.getLogger(__name__)
@@ -79,13 +80,13 @@ def find_studies_v3(request):
                 # is this a valid property?
                 study_properties = qs.get_study_property_list(3)
                 if property_type not in study_properties:
-                    # TODO: return helpful error about bad property
-                    return HTTPBadRequest()
+                    _msg="Property {p} is unknown".format(p=property_type)
+                    raise HTTPBadRequest(body=_msg)
 
             else:
                 # no value for property
-                # TODO: return helpful error about lacking value for property
-                return HTTPBadRequest()
+                _msg = "No value given for property {p}".format(p=property_type)
+                raise HTTPBadRequest(body=_msg)
 
     # query time!
     if (property_type is None):
@@ -157,13 +158,12 @@ def find_trees_v3(request):
                 # is this a valid property?
                 tree_properties = qt.get_tree_property_list(3)
                 if property_type not in tree_properties:
-                    # TODO: return helpful error about bad property
-                    return HTTPBadRequest()
+                    _msg="Property {p} is unknown".format(p=property_type)
+                    raise HTTPBadRequest(body=_msg)
 
             else:
-                # no value for property
-                # TODO: return helpful error about lacking value for property
-                return HTTPBadRequest()
+                _msg="No value given for property {p}".format(p=property_type)
+                raise HTTPBadRequest(body=_msg)
     # query time!
     if (property_type is None):
         resultlist = qt.get_all_trees(verbose)

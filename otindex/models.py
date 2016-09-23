@@ -60,7 +60,8 @@ class Study(Base):
     __tablename__ = 'study'
     # The studyID is of the form prefix_id, so String, not Int.
     id = Column(String, primary_key=True, index=True)
-    year = Column(Integer)
+    ntrees = Column(Integer)
+    treebase_id = Column(String)
     data = Column(JSONB)
     #trees = relationship('Tree',backref='study')
     # many-to-many study<-->curator relationship
@@ -93,7 +94,6 @@ class Tree(Base):
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     ntips = Column(Integer)
     proposed = Column(Boolean)
-    treebase_id = Column(String)
     # many-to-many tree<-->otu relationship
     otus = relationship('Taxonomy',
         secondary=tree_otu_table,
@@ -145,3 +145,22 @@ class Synonym(Base):
     __tablename__='synonym'
     id = Column(Integer,ForeignKey("taxonomy.id"),primary_key=True)
     synonym = Column(String)
+
+# property table
+# tablestring = ('CREATE TABLE {tablename} '
+#     '(id serial PRIMARY KEY, '
+#     'property text, '
+#     'prefix text, '
+#     'type text, '
+#     'UNIQUE (property,type));'
+#     .format(tablename=PROPERTYTABLE)
+# )
+class Property(Base):
+    __tablename__='property'
+    __table_args__ = (
+        UniqueConstraint('property','type'),
+        )
+    id = Column(Integer,primary_key=True)
+    property = Column(String, nullable=False)
+    prefix = Column(String, nullable=False)
+    type = Column(String, nullable=False)

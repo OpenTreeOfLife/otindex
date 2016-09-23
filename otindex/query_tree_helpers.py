@@ -5,14 +5,18 @@ from .models import (
     Study,
     Tree,
     Taxonomy,
+    Property,
     )
 
 import simplejson as json
 import sqlalchemy
+import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
+
+_LOG = logging.getLogger(__name__)
 
 # get all trees, no filtering
 # returns them grouped by study
@@ -31,7 +35,7 @@ def get_all_trees(verbose):
                 # get either the studyid or the study properties and
                 # add a blank list for the trees
                 if (verbose):
-                    get_study_properties(studyid,studydict)
+                    get_study_return_props(studyid,studydict)
                 else:
                     studydict[studyid] = {'ot:studyId':studyid}
                 studydict[studyid]['matched_trees'] = []
@@ -57,9 +61,16 @@ def get_ott_id(ottname):
     else:
         return None
 
+# given a property, returns the property with prefix
+def get_prop_with_prefix(prop):
+    query_obj = DBSession.query(Property.prefix).filter(
+        Property.property == prop
+    ).first()
+    return query_obj.prefix+prop
+
 # find_trees methods also return info about studies
 # this method gets the study-level fields
-def get_study_properties(studyid,studydict):
+def get_study_return_props(studyid,studydict):
     slist =[
         "^ot:studyPublicationReference","^ot:curatorName",
         "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
@@ -93,12 +104,18 @@ def get_study_properties(studyid,studydict):
 # get the list of searchable properties
 # v3 list pruned down to only those implemented in v3
 def get_tree_property_list(version=3):
-    tree_props= [
-        "ot:candidateTreeForSynthesis", "ot:branchLengthMode",
-        "ot:inferenceMethod", "ot:nodeLabelMode", "ot:ottId",
-        "ot:ottTaxonName", "ot:studyId", "ot:tag", "ot:treebaseTreeId"
-        ]
-    return tree_props
+    properties = []
+    query_obj = DBSession.query(Property.property).filter(
+        Property.type=='tree'
+    ).all()
+    for row in query_obj:
+        properties.append(row.property)
+    # now add the non-JSON properties
+    properties.append('ot:ottId')
+    properties.append('ot:studyId')
+    properties.append("ntips")
+    properties.append("proposed")
+    return properties
 
 # returns an (unfiltered) tree query object with either the set of
 # verbose=true or verbose=false fields. Query not yet run.
@@ -122,6 +139,13 @@ def get_tree_query_object(verbose):
             Tree.tree_id.label('ot:treeId')
         )
     return query_obj
+
+def is_deprecated_property(prop):
+    deprecated_oti_properties = [ "ot:treebaseOTUId", "ot:originalLabel", "oti_tree_id", "ot:treebaseTreeId", "ot:comment", "ot:treeModified", "ot:branchLengthTimeUnits", "is_deprecated", "ot:treeLastEdited" ]
+    if prop in deprecated_oti_properties:
+        return True
+    else:
+        return False
 
 # find trees by otu ids; uses Tree-Taxonomy association table
 def query_trees_by_ott_id(query_obj,property_value):
@@ -159,11 +183,33 @@ def query_fulltext(query_obj,property_type,property_value):
 #         )
 #     return filtered
 
+def build_json_response(filtered,verbose):
+    resultslist = []
+    studydict = {}
+    # run the query and build the response json
+    for row in filtered.all():
+        treedict = row._asdict()
+        studyid = treedict['ot:studyId']
+        if not studyid in studydict:
+            # if this is the first time we have seen this study,
+            # get either the studyid or the study properties and
+            # add a blank list for the trees
+            if (verbose):
+                get_study_return_props(studyid,studydict)
+            else:
+                studydict[studyid] = {'ot:studyId':studyid}
+            studydict[studyid]['matched_trees'] = []
+        # add the tree properties to the list of matched trees
+        studydict[studyid]['matched_trees'].append(treedict)
+    for k,v in studydict.items():
+        resultslist.append(v)
+    return resultslist
+
 # filter query to return only trees that match property_type and
 # property_value
 def query_trees(verbose,property_type,property_value):
     resultlist = []
-
+    _LOG.debug("querying trees by {p} : {v}".format(p=property_type,v=property_value))
     # get the base (unfiltered) query object
     query_obj = get_tree_query_object(verbose)
     filtered = None
@@ -200,35 +246,20 @@ def query_trees(verbose,property_type,property_value):
     # also, if property_type = ot:inferenceMethod, change to
     # ot:curatedType
     else:
+        # there are two properties where API docs do not match
+        # property name in nexson
+        if property_type == "ot:branchLengthTimeUnits":
+            property_type = "ot:branchLengthTimeUnit"
         if property_type == "ot:inferenceMethod":
             property_type = "ot:curatedType"
-        property_type = '^'+property_type
+        property_type = get_prop_with_prefix(property_type)
         filtered = query_obj.filter(
             Tree.data[
                 (property_type)
             ].astext == property_value
             )
-
-    resultslist = []
-    studydict = {}
     try:
-        for row in filtered.all():
-            treedict = row._asdict()
-            studyid = treedict['ot:studyId']
-            if not studyid in studydict:
-                # if this is the first time we have seen this study,
-                # get either the studyid or the study properties and
-                # add a blank list for the trees
-                if (verbose):
-                    get_study_properties(studyid,studydict)
-                else:
-                    studydict[studyid] = {'ot:studyId':studyid}
-                studydict[studyid]['matched_trees'] = []
-            # add the tree properties to the list of matched trees
-            studydict[studyid]['matched_trees'].append(treedict)
-        for k,v in studydict.items():
-            resultslist.append(v)
+        resultslist = build_json_response(filtered,verbose)
+        return resultslist
     except ProgrammingError as e:
         raise HTTPBadRequest()
-
-    return resultslist

@@ -80,7 +80,8 @@ def create_all_tables(connection,cursor,config_dict):
     STUDYTABLE = config_dict['tables']['studytable']
     tablestring = ('CREATE TABLE {tablename} '
         '(id text PRIMARY KEY, '
-        'year integer, '
+        'ntrees integer, '
+        'treebase_id text, '
         'data jsonb);'
         .format(tablename=STUDYTABLE)
         )
@@ -92,7 +93,6 @@ def create_all_tables(connection,cursor,config_dict):
         '(id serial PRIMARY KEY, '
         'tree_id text NOT NULL, '
         'study_id text REFERENCES study (id) ON DELETE CASCADE, '
-        'treebase_id text, '
         'ntips Integer, '
         'proposed boolean, '
         'data jsonb, '
@@ -118,15 +118,6 @@ def create_all_tables(connection,cursor,config_dict):
         .format(tablename=CURATORSTUDYTABLE)
         )
     create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
-
-    # otu table
-    # OTUTABLE = config_dict['tables']['otutable']
-    # tablestring = ('CREATE TABLE {tablename} '
-    #     '(id int PRIMARY KEY, '
-    #     'name text NOT NULL);'
-    #     .format(tablename=OTUTABLE)
-    #     )
-    # create_table(connection,cursor,OTUTABLE,tablestring)
 
     # taxonomy table
     TAXONOMYTABLE = config_dict['tables']['otttable']
@@ -155,6 +146,18 @@ def create_all_tables(connection,cursor,config_dict):
         .format(tablename=SYNONYMTABLE)
     )
     create_table(connection,cursor,SYNONYMTABLE,tablestring)
+
+    # property table
+    PROPERTYTABLE = config_dict['tables']['propertytable']
+    tablestring = ('CREATE TABLE {tablename} '
+        '(id serial PRIMARY KEY, '
+        'property text, '
+        'prefix text, '
+        'type text, '
+        'UNIQUE (property,type));'
+        .format(tablename=PROPERTYTABLE)
+    )
+    create_table(connection,cursor,PROPERTYTABLE,tablestring)
 
 def delete_table(connection,cursor,tablename):
     try:

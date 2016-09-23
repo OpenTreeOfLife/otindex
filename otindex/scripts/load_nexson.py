@@ -89,13 +89,47 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
     except psy.ProgrammingError, ex:
         print 'Error inserting curator'
 
+# load the nexson properties into a table
+def load_properties(connection,cursor,prop_table,study_props,tree_props):
+    for p in study_props:
+        prefix = None
+        # remove the '^' or '@' at the start of the property
+        # should be true for all properties, but check just in case
+        if p.startswith('^') or p.startswith('@'):
+            prefix = p[0]
+            p = p[1:]
+        sqlstring = ("INSERT INTO {t} (property,prefix,type) "
+            "VALUES (%s,%s,%s);"
+            .format(t=prop_table)
+        )
+        data = (p,prefix,'study')
+        #print '  SQL: ',cursor.mogrify(sqlstring)
+        cursor.execute(sqlstring,data)
+        connection.commit()
+
+    for p in tree_props:
+        prefix = None
+        if p.startswith('^') or p.startswith('@'):
+            prefix = p[0]
+            p = p[1:]
+        sqlstring = ("INSERT INTO {t} (property,prefix,type) "
+            "VALUES (%s,%s,%s);"
+            .format(t=prop_table)
+        )
+        data = (p,prefix,'tree')
+        #print '  SQL: ',cursor.mogrify(sqlstring)
+        cursor.execute(sqlstring,data)
+        connection.commit()
+
 # iterate over phylesystem nexsons and import
 def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
     counter = 0
+    study_properties = set()
+    tree_properties = set()
     for study_id, studyobj in phy.iter_study_objs():
         nexml = get_nexml_el(studyobj)
         #print 'STUDY: ',study_id
-
+        study_properties.update(nexml.keys())
         # study data for study table
         STUDYTABLE = config_dict['tables']['studytable']
         year = nexml.get('^ot:studyYear')
@@ -103,14 +137,33 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         if proposedTrees is None:
             proposedTrees = []
 
-        sqlstring = ("INSERT INTO {tablename} (id, year) "
-            "VALUES (%s,%s);"
+        # must insert study before trees
+        sqlstring = ("INSERT INTO {tablename} (id) "
+            "VALUES (%s);"
             .format(tablename=STUDYTABLE)
             )
-        data = (study_id,year)
+        data = (study_id,)
         #print '  SQL: ',cursor.mogrify(sqlstring)
         cursor.execute(sqlstring,data)
         connection.commit()
+
+        # update with treebase id, if exists
+        datadeposit = nexml.get('^ot:dataDeposit')
+        if (datadeposit):
+            url = datadeposit['@href']
+            pattern = re.compile(u'.+TB2:(.+)$')
+            matchobj = re.match(pattern,url)
+            if (matchobj):
+                tb_id = matchobj.group(1)
+                sqlstring = ("UPDATE {tablename} "
+                    "SET treebase_id=%s "
+                    "WHERE id=%s;"
+                    .format(tablename=STUDYTABLE)
+                    )
+                data = (tb_id,study_id)
+                #print '  SQL: ',cursor.mogrify(sqlstring,data)
+                cursor.execute(sqlstring,data)
+                connection.commit()
 
         # get curator(s), noting that ot:curators might be a
         # string or a list
@@ -127,10 +180,13 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
         TREETABLE = config_dict['tables']['treetable']
+        ntrees = 0
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
+                ntrees += 1
                 proposedForSynth = False
+                tree_properties.update(tree.keys())
                 if (tree_id in proposedTrees):
                     proposedForSynth = True
                 treejson = json.dumps(tree)
@@ -149,38 +205,21 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
                 data = (tree_id,study_id,ntips,proposedForSynth,treejson)
                 #print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
-                #connection.commit()
-                # update with treebase id, if exists
-                datadeposit = nexml.get('^ot:dataDeposit')
-                if (datadeposit):
-                    url = datadeposit['@href']
-                    pattern = re.compile(u'.+TB2:(.+)$')
-                    matchobj = re.match(pattern,url)
-                    if (matchobj):
-                        tb_id = matchobj.group(1)
-                        sqlstring = ("UPDATE {tablename} "
-                            "SET treebase_id=%s "
-                            "WHERE tree_id = %s and study_id=%s;"
-                            .format(tablename=TREETABLE)
-                            )
-                        data = (tb_id,tree_id,study_id)
-                        #print '  SQL: ',cursor.mogrify(sqlstring,data)
-                        cursor.execute(sqlstring,data)
                 connection.commit()
 
         except psy.Error as e:
             print e.pgerror
 
         # now that we have added the tree info, update the study record
-        # with the json data (minus the tree info)
+        # with the json data (minus the tree info) and ntrees
         del nexml['treesById']
         studyjson = json.dumps(nexml)
         sqlstring = ("UPDATE {tablename} "
-            "SET data=%s "
+            "SET data=%s,ntrees=%s "
             "WHERE id=%s;"
             .format(tablename=STUDYTABLE)
         )
-        data = (studyjson,study_id)
+        data = (studyjson,ntrees,study_id)
         cursor.execute(sqlstring,data)
         connection.commit()
 
@@ -191,6 +230,15 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         if (nstudies and counter>=nstudies):
             print "finished inserting",nstudies,"studies"
             break
+
+    # load the tree and study properties
+    PROPERTYTABLE = config_dict['tables']['propertytable']
+    load_properties(
+        connection,
+        cursor,
+        PROPERTYTABLE,
+        study_properties,
+        tree_properties)
 
 if __name__ == "__main__":
     # get command line argument (nstudies to import)
