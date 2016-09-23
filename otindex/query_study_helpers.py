@@ -5,6 +5,7 @@ from .models import (
     Study,
     Tree,
     Curator,
+    Property,
     )
 
 import simplejson as json
@@ -13,6 +14,13 @@ from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
+
+def is_deprecated_property(prop):
+    deprecated_oti_properties = [ "ot:studyModified", "ot:focalCladeOTTId", "ot:studyLastEditor", "ot:focalCladeTaxonName", "ot:studyLabel", "ot:authorContributed", "ot:studyUploaded", "is_deprecated", "ot:candidateTreeForSynthesis" ]
+    if prop in deprecated_oti_properties:
+        return True
+    else:
+        return False
 
 # get all trees, no filtering
 def get_all_studies(verbose):
@@ -35,27 +43,23 @@ def get_study_property_list(version=3):
         Property.type=='study'
     ).all()
     for row in query_obj:
-        properties.append[row.property]
+        properties.append(row.property)
+    # now add the non-JSON properties
+    properties.append("ntrees")
+    properties.append("treebase_id")
+    return properties
 
-
-    # study_props = [
-    #     "ot:focalClade", "ot:focalCladeOTTTaxonName", "ot:studyPublication",
-    #     "ot:tag", "ot:comment", "ot:studyPublicationReference", "ot:studyId",
-    #     "ot:curatorName", "ot:studyYear", "ot:dataDeposit"
-    #     ]
-    return study_props
-
-# return the query object without any filtering
-# (query not yet executed)
 # return the query object without any filtering
 # (query not yet executed)
 def get_study_query_object(verbose):
     query_obj = None
     if (verbose):
+        # these need to have '^' at the start, becuase that is how they
+        # appear in the JSON column
         clist =[
-            "^ot:studyPublicationReference","^ot:curatorName",
-            "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
-            "^ot:dataDeposit","^ot:studyPublication","^ot:tag"
+            "ot:studyPublicationReference","ot::curatorName",
+            "ot:studyYear","ot:focalClade","ot:focalCladeOTTTaxonName",
+            "ot:dataDeposit","ot:studyPublication","ot:tag"
             ]
         # assigning labels like this makes it easy to build the response json
         # but can't directly access any particular item via the label,
@@ -120,7 +124,8 @@ def query_studies(verbose,property_type,property_value):
     query_obj = get_study_query_object(verbose)
     filtered = None
 
-    # study id is straightforward
+    # study id is straightforward (use table id column rather than
+    # ^ot:studyId property in json)
     if property_type == "ot:studyId":
         filtered = query_obj.filter(Study.id == property_value)
 

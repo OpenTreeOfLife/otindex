@@ -147,6 +147,24 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         cursor.execute(sqlstring,data)
         connection.commit()
 
+        # update with treebase id, if exists
+        datadeposit = nexml.get('^ot:dataDeposit')
+        if (datadeposit):
+            url = datadeposit['@href']
+            pattern = re.compile(u'.+TB2:(.+)$')
+            matchobj = re.match(pattern,url)
+            if (matchobj):
+                tb_id = matchobj.group(1)
+                sqlstring = ("UPDATE {tablename} "
+                    "SET treebase_id=%s "
+                    "WHERE id=%s;"
+                    .format(tablename=STUDYTABLE)
+                    )
+                data = (tb_id,study_id)
+                #print '  SQL: ',cursor.mogrify(sqlstring,data)
+                cursor.execute(sqlstring,data)
+                connection.commit()
+
         # get curator(s), noting that ot:curators might be a
         # string or a list
         c = nexml.get('^ot:curatorName')
@@ -187,23 +205,6 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
                 data = (tree_id,study_id,ntips,proposedForSynth,treejson)
                 #print '  SQL: ',cursor.mogrify(sqlstring,data)
                 cursor.execute(sqlstring,data)
-                #connection.commit()
-                # update with treebase id, if exists
-                datadeposit = nexml.get('^ot:dataDeposit')
-                if (datadeposit):
-                    url = datadeposit['@href']
-                    pattern = re.compile(u'.+TB2:(.+)$')
-                    matchobj = re.match(pattern,url)
-                    if (matchobj):
-                        tb_id = matchobj.group(1)
-                        sqlstring = ("UPDATE {tablename} "
-                            "SET treebase_id=%s "
-                            "WHERE tree_id = %s and study_id=%s;"
-                            .format(tablename=TREETABLE)
-                            )
-                        data = (tb_id,tree_id,study_id)
-                        #print '  SQL: ',cursor.mogrify(sqlstring,data)
-                        cursor.execute(sqlstring,data)
                 connection.commit()
 
         except psy.Error as e:

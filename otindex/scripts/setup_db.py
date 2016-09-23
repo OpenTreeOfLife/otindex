@@ -81,6 +81,7 @@ def create_all_tables(connection,cursor,config_dict):
     tablestring = ('CREATE TABLE {tablename} '
         '(id text PRIMARY KEY, '
         'ntrees integer, '
+        'treebase_id text, '
         'data jsonb);'
         .format(tablename=STUDYTABLE)
         )
@@ -92,7 +93,6 @@ def create_all_tables(connection,cursor,config_dict):
         '(id serial PRIMARY KEY, '
         'tree_id text NOT NULL, '
         'study_id text REFERENCES study (id) ON DELETE CASCADE, '
-        'treebase_id text, '
         'ntips Integer, '
         'proposed boolean, '
         'data jsonb, '
