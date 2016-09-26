@@ -3,7 +3,6 @@
 # This is much faster than many inserts
 
 from peyotl.api.phylesystem_api import PhylesystemAPI
-from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
 from peyotl import gen_otu_dict, iter_node
 from peyotl.manip import iter_trees
 

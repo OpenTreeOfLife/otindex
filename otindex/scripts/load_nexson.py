@@ -18,7 +18,6 @@ import setup_db
 from peyotl.api.phylesystem_api import PhylesystemAPI
 from peyotl.manip import iter_trees
 from peyotl import gen_otu_dict, iter_node
-from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
 from peyotl.nexson_syntax import get_nexml_el
 
 def create_phylesystem_obj():
