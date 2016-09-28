@@ -51,6 +51,13 @@ def connect(config_dict):
             "user={dbuser}"
             .format(dbname=DBNAME,dbuser=USER)
             )
+        if (config_dict['connection_info']['password']):
+            PASSWORD = config_dict['connection_info']['password']
+            connectionstring=("dbname={dbname} "
+                "user={dbuser} "
+                "password={pwd}"
+                .format(dbname=DBNAME,dbuser=USER,pwd=PASSWORD)
+                )
         conn = psy.connect(connectionstring)
         cursor = conn.cursor()
     except KeyboardInterrupt:
