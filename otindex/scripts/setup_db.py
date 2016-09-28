@@ -47,16 +47,19 @@ def connect(config_dict):
     try:
         DBNAME = config_dict['connection_info']['dbname']
         USER = config_dict['connection_info']['user']
+        HOST = 'localhost'
         connectionstring=("dbname={dbname} "
+            "host={h} "
             "user={dbuser}"
-            .format(dbname=DBNAME,dbuser=USER)
+            .format(dbname=DBNAME,h=HOST,dbuser=USER)
             )
-        if (config_dict['connection_info']['password']):
+        if 'password' in config_dict['connection_info']:
             PASSWORD = config_dict['connection_info']['password']
             connectionstring=("dbname={dbname} "
                 "user={dbuser} "
+                "host={h} "
                 "password={pwd}"
-                .format(dbname=DBNAME,dbuser=USER,pwd=PASSWORD)
+                .format(dbname=DBNAME,h=HOST,dbuser=USER,pwd=PASSWORD)
                 )
         conn = psy.connect(connectionstring)
         cursor = conn.cursor()
