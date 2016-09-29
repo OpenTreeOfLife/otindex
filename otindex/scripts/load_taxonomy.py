@@ -104,14 +104,14 @@ if __name__ == "__main__":
         ott_loc = config_dict['taxonomy']
         if ott_loc == 'None':
             print 'No taxonomy'
-        if os.path.isdir(ott_loc)
+        if os.path.isdir(ott_loc):
             # data import
             starttime = dt.datetime.now()
             load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
             endtime = dt.datetime.now()
             print "OTT load time: ",endtime - starttime
         else:
-            print "{o} is not directory".format(o=ott_dir)
+            print "{o} is not directory".format(o=ott_loc)
     except psy.Error as e:
         print e.pgerror
     connection.close()
