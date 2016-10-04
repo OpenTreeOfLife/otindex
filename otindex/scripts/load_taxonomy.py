@@ -7,9 +7,7 @@
 import datetime as dt
 import argparse
 import psycopg2 as psy
-import csv
-import yaml
-import io
+import csv, yaml, io, os
 
 # other database functions
 import setup_db
@@ -19,7 +17,7 @@ import peyotl.ott as ott
 
 def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
     print "Loading taxonomy into memory"
-    taxonomy = ott.OTT(ott_loc)
+    taxonomy = ott.OTT(path)
     # get dictionary of ottids:ottnames, noting that the names can be strings
     # or tuples, e.g. (canonical name,synonym,synonym)
     ott_names = taxonomy.ott_id_to_names
@@ -106,12 +104,14 @@ if __name__ == "__main__":
         ott_loc = config_dict['taxonomy']
         if ott_loc == 'None':
             print 'No taxonomy'
-        else:
+        if os.path.isdir(ott_loc)
             # data import
             starttime = dt.datetime.now()
             load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
             endtime = dt.datetime.now()
             print "OTT load time: ",endtime - starttime
+        else:
+            print "{o} is not directory".format(o=ott_dir)
     except psy.Error as e:
         print e.pgerror
     connection.close()
