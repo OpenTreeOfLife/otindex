@@ -15,6 +15,7 @@ import setup_db
 # peyotl functions for handling the taxonomy
 import peyotl.ott as ott
 
+
 def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
     print "Loading taxonomy into memory"
     taxonomy = ott.OTT(path)
@@ -102,6 +103,7 @@ if __name__ == "__main__":
 
     try:
         ott_loc = config_dict['taxonomy']
+        # TODO: convert ott_loc to a full path
         if ott_loc == 'None':
             print 'No taxonomy'
         if os.path.isdir(ott_loc):
