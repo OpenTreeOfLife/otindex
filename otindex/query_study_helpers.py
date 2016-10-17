@@ -44,7 +44,7 @@ def get_prop_with_prefix(prop):
 
 # get the list of searchable study properties
 # v3 list pruned down to only those implemented in v3
-def get_study_property_list(version=3):
+def get_study_property_list():
     properties = []
     query_obj = DBSession.query(Property.property).filter(
         Property.type=='study'

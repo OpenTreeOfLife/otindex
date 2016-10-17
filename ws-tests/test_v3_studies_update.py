@@ -7,7 +7,7 @@ from opentreetesting import test_http_json_method, config
 DOMAIN = config('host', 'apihost')
 
 # get results from about method before
-CONTROLLER = DOMAIN + '/v4/studies'
+CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/about'
 r = test_http_json_method(SUBMIT_URI,
                           'GET',
@@ -24,6 +24,7 @@ print "studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
     o=notus_start,
     c=ncurators_start
 )
+
 # update a study
 # study_id = 'ot_688'
 p = ["https://github.com/OpenTreeOfLife/phylesystem-1/blob/master/study/ot_88/ot_688/ot_688.json"]
@@ -38,7 +39,7 @@ r = test_http_json_method(SUBMIT_URI,
 assert r[0] is True
 
 # get results from about method after
-CONTROLLER = DOMAIN + '/v4/studies'
+CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/about'
 r = test_http_json_method(SUBMIT_URI,
                           'GET',

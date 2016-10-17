@@ -1,9 +1,9 @@
 
-# tests the new v4 (otttreeindex) 'about' method
+# tests the new 'about' method
 import sys, os
 from opentreetesting import test_http_json_method, config
 DOMAIN = config('host', 'apihost')
-CONTROLLER = DOMAIN + '/v4/studies'
+CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/about'
 r = test_http_json_method(SUBMIT_URI,
                           'GET',

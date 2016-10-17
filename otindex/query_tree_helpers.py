@@ -103,7 +103,7 @@ def get_study_return_props(studyid,studydict):
 
 # get the list of searchable properties
 # v3 list pruned down to only those implemented in v3
-def get_tree_property_list(version=3):
+def get_tree_property_list():
     properties = []
     query_obj = DBSession.query(Property.property).filter(
         Property.type=='tree'
