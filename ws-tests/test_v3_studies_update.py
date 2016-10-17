@@ -28,8 +28,8 @@ print "studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
 # update a study
 # study_id = 'ot_688'
 p = ["https://github.com/OpenTreeOfLife/phylesystem-1/blob/master/study/ot_88/ot_688/ot_688.json"]
-CONTROLLER = DOMAIN + '/v3'
-SUBMIT_URI = CONTROLLER + '/add_update_studies'
+CONTROLLER = DOMAIN + '/v3/studies'
+SUBMIT_URI = CONTROLLER + '/add_update'
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,

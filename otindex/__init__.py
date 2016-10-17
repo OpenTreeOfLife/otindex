@@ -21,8 +21,8 @@ def main(global_config, **settings):
     config.add_route('find_studies','/v3/studies/find_studies',request_method="POST")
     config.add_route('find_trees','/v3/studies/find_trees',request_method="POST")
     config.add_route('properties','/v3/studies/properties',request_method="POST")
-    config.add_route('add_update_studies','v3/add_update_studies')
-    config.add_route('remove_studies','v3/remove_studies')
+    config.add_route('add_update','v3/studies/add_update')
+    config.add_route('remove','v3/studies/remove')
     config.add_route('about','v3/studies/about')
 
     config.scan()

@@ -152,7 +152,7 @@ def properties(request):
 # updates one or more studies
 # payload can be a list of URLs (oti syntax) or a list of
 # study ids
-@view_config(route_name='add_update_studies', renderer='json', request_method='POST')
+@view_config(route_name='add_update', renderer='json', request_method='POST')
 def add_update_studies(request):
     if (request.body):
         payload = request.json_body
@@ -164,7 +164,7 @@ def add_update_studies(request):
 
 # payload can be a list of URLs (oti syntax) or a list of
 # study ids
-@view_config(route_name='remove_studies', renderer='json', request_method='POST')
+@view_config(route_name='remove', renderer='json', request_method='POST')
 def remove_studies(request):
     if (request.body):
         payload = request.json_body
