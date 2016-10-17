@@ -35,6 +35,13 @@ def get_all_studies(verbose):
         resultlist.append(item)
     return resultlist
 
+# given a property, returns the property with prefix
+def get_prop_with_prefix(prop):
+    query_obj = DBSession.query(Property.prefix).filter(
+        Property.property == prop
+    ).first()
+    return query_obj.prefix+prop
+
 # get the list of searchable study properties
 # v3 list pruned down to only those implemented in v3
 def get_study_property_list(version=3):
@@ -46,7 +53,7 @@ def get_study_property_list(version=3):
         properties.append(row.property)
     # now add the non-JSON properties
     properties.append("ntrees")
-    properties.append("treebase_id")
+    properties.append("treebaseId")
     return properties
 
 # return the query object without any filtering
@@ -57,9 +64,9 @@ def get_study_query_object(verbose):
         # these need to have '^' at the start, becuase that is how they
         # appear in the JSON column
         clist =[
-            "ot:studyPublicationReference","ot::curatorName",
-            "ot:studyYear","ot:focalClade","ot:focalCladeOTTTaxonName",
-            "ot:dataDeposit","ot:studyPublication","ot:tag"
+            "^ot:studyPublicationReference","^ot::curatorName",
+            "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
+            "^ot:dataDeposit","^ot:studyPublication","^ot:tag"
             ]
         # assigning labels like this makes it easy to build the response json
         # but can't directly access any particular item via the label,
@@ -95,7 +102,7 @@ def query_by_tag(query_obj,property_value):
     return filtered
 
 def query_fulltext(query_obj,property_type,property_value):
-    property_type = '^'+property_type
+    property_type = get_prop_with_prefix(property_type)
     # add wildcards to the property_value
     property_value = '%'+property_value+'%'
     filtered = query_obj.filter(
@@ -107,7 +114,7 @@ def query_fulltext(query_obj,property_type,property_value):
 
 # find studies in cases where the property_value is an int
 def query_studies_by_integer_values(query_obj,property_type,property_value):
-    property_type = '^'+property_type
+    property_type = get_prop_with_prefix(property_type)
     filtered = query_obj.filter(
         Study.data[
             (property_type)
@@ -143,7 +150,7 @@ def query_studies(verbose,property_type,property_value):
     # value of ot:studyPublication and ot:dataDeposit
     # is a dict with key '@href'
     elif property_type == "ot:studyPublication" or property_type == "ot:dataDeposit":
-        property_type = '^'+property_type
+        property_type = get_prop_with_prefix(property_type)
         filtered = query_obj.filter(
             Study.data[
                 (property_type,'@href')
@@ -153,13 +160,16 @@ def query_studies(verbose,property_type,property_value):
     elif property_type == "ot:studyPublicationReference" or property_type == "ot:comment":
         filtered = query_fulltext(query_obj,property_type,property_value)
 
+    elif property_type == "treebaseId":
+        filtered = query_obj.filter(Study.treebase_id == property_value)
+
     # tag is a list
     elif property_type == "ot:tag":
         filtered = query_by_tag(query_obj,property_value)
 
     # all other property types are strings contained in json
     else:
-        property_type = '^'+property_type
+        property_type = get_prop_with_prefix(property_type)
         filtered = query_obj.filter(
             Study.data[
                 (property_type)

@@ -163,7 +163,7 @@ def query_trees_by_tag(query_obj,property_value):
     return filtered
 
 def query_fulltext(query_obj,property_type,property_value):
-     property_type = '^'+property_type
+     property_type = get_prop_with_prefix(property_type)
      # add wildcards to the property_value
      property_value = '%'+property_value+'%'
      filtered = query_obj.filter(
@@ -234,9 +234,6 @@ def query_trees(verbose,property_type,property_value):
 
     elif property_type == "ot:ottId":
         filtered = query_trees_by_ott_id(query_obj,property_value)
-
-    elif property_type == "ot:treebaseTreeId":
-        filtered = query_obj.filter(Tree.treebase_id == property_value)
 
     # tag is a list
     elif property_type == "ot:tag":
