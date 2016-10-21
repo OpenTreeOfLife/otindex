@@ -3,6 +3,7 @@ import psycopg2 as psy
 import simplejson as json
 import argparse
 import yaml
+import setup_db
 
 def find_all_studies(cursor,config_dict):
     STUDYTABLE = config_dict['tables']['studytable']
@@ -74,7 +75,8 @@ if __name__ == "__main__":
     with open(args.configfile,'r') as f:
         config_dict = yaml.safe_load(f)
 
-    connection, cursor = connect(config_dict)
+    connection, cursor = setup_db.connect(config_dict)
+    
     try:
         find_all_studies(cursor,config_dict)
         find_all_trees(cursor,config_dict)
