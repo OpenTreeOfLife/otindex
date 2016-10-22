@@ -8,17 +8,9 @@ from .models import (
     Base,
     )
 
-def read_config(configfile):
-    with open(configfile,'r') as f:
-        config_dict = yaml.safe_load(f)
-        return config_dict
-
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
-    db_secrets = read_config(settings['dbconfig.file'])
-    if 'password' in db_secrets:
-        settings['sqlalchemy.url'] = settings['sqlalchemy.url'] % (dbpass,)
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine

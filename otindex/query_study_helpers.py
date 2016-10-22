@@ -117,7 +117,7 @@ def query_studies_by_integer_values(query_obj,property_type,property_value):
     property_type = get_prop_with_prefix(property_type)
     filtered = query_obj.filter(
         Study.data[
-            (property_type)
+            property_type
         ].cast(sqlalchemy.Integer) == property_value
         )
     return filtered
