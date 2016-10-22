@@ -5,6 +5,9 @@ DOMAIN = config('host', 'apihost')
 CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/find_studies'
 
+# test methods where casting value to integer
+# ot:studyYear and ot:focalClade
+
 ################################################
 # find study matching year, using verbose = False
 p = {'verbose': False,
