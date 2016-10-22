@@ -277,6 +277,15 @@ def basic_jsonb_query(session):
         )
     print "studies with year = 2016: ",study.count()
 
+    year = 2016
+    year_str = str(year)
+    study = session.query(Study).filter(
+        Study.data[
+            ('^ot:studyYear')
+        ] == year_str
+        )
+    print "studies with str year = 2016: ",study.count()
+
     # one with string
     focalclade = 'Aves'
     study = session.query(Study).filter(
@@ -435,9 +444,9 @@ if __name__ == "__main__":
     try:
         # test_joins(session)
         # value_in_array(session)
-        # basic_jsonb_query(session)
+        basic_jsonb_query(session)
         # query_fulltext(session)
-        query_trees_by_study_id(session,'ot_55')
+        # query_trees_by_study_id(session,'ot_55')
         # all_tags(session)
         #recursive_ott_query(691846,session)
         #query_association_table(session)

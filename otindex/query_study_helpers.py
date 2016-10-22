@@ -115,10 +115,9 @@ def query_fulltext(query_obj,property_type,property_value):
 # find studies in cases where the property_value is an int
 def query_studies_by_integer_values(query_obj,property_type,property_value):
     property_type = get_prop_with_prefix(property_type)
+    str_value = str(property_value)
     filtered = query_obj.filter(
-        Study.data[
-            property_type
-        ].cast(sqlalchemy.Integer) == property_value
+        Study.data[(property_type)] == str_value
         )
     return filtered
 
