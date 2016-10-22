@@ -2,7 +2,8 @@
 ---
 connection_info:
   dbname: otindex
-  user: pguser
+  user: postgres
+  password: pwd
 tables:
   curatorstudytable: curator_study_map
   treeotutable: tree_otu_map
