@@ -266,8 +266,10 @@ def query_fulltext(session):
     )
     print "studies with Smith in reference: ",study.count()
 
-def basic_jsonb_query(session):
-    print "basic_jsonb_query"
+def query_int_or_string(session):
+    # cases where the query might comes in as a string or integer
+    # but needs to be a string
+
     # one with integer
     year = 2016
     study = session.query(Study).filter(
@@ -285,6 +287,17 @@ def basic_jsonb_query(session):
         ] == year_str
         )
     print "studies with str year = 2016: ",study.count()
+
+    focalClade = 765193
+    clade_str = str(focalClade)
+    study = session.query(Study).filter(
+        Study.data[
+            ('^ot:focalClade')
+        ].cast(sqlalchemy.Integer) == focalClade
+        )
+    print "studies with focal clade = 765193: ",study.count()
+
+def basic_jsonb_query(session):
 
     # one with string
     focalclade = 'Aves'
@@ -444,7 +457,8 @@ if __name__ == "__main__":
     try:
         # test_joins(session)
         # value_in_array(session)
-        basic_jsonb_query(session)
+        query_int_or_string(session)
+        # basic_jsonb_query(session)
         # query_fulltext(session)
         # query_trees_by_study_id(session,'ot_55')
         # all_tags(session)
