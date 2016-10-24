@@ -139,12 +139,19 @@ def query_studies(verbose,property_type,property_value):
     elif property_type == "ot:curatorName":
         filtered = query_studies_by_curator(query_obj,property_value)
 
-    # year and focal clade are in json, need to cast value to int
+    # year and focal clade are in json, need to cast an int to string
     elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
-        filtered = query_studies_by_integer_values(
-            query_obj,
-            property_type,
-            property_value)
+        property_type = get_prop_with_prefix(property_type)
+        property_value = str(property_value)
+        filtered = query_obj.filter(
+            Study.data[
+                (property_type)
+            ].astext == property_value
+            )
+        # filtered = query_studies_by_integer_values(
+        #     query_obj,
+        #     property_type,
+        #     property_value)
 
     # value of ot:studyPublication and ot:dataDeposit
     # is a dict with key '@href'
