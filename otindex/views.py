@@ -67,7 +67,7 @@ def find_studies(request):
         valid_parameters = ['verbose','property','value','exact']
         parameters = payload.keys()
 
-        _LOG.debug('find_studies with parameters:  {p}'.format(p=parameters))
+        _LOG.debug('find_studies with parameters: {p}'.format(p=parameters))
 
         extra_params = set(parameters).difference(valid_parameters)
         if len(extra_params) > 0:
@@ -91,6 +91,9 @@ def find_studies(request):
                 # no value for property
                 _msg = "No value given for property {p}".format(p=property_type)
                 raise HTTPBadRequest(body=_msg)
+
+    else:
+        _LOG.debug('find_studies with no parameters')
 
     # query time!
     if (property_type is None):
