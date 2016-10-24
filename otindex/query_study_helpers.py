@@ -10,10 +10,13 @@ from .models import (
 
 import simplejson as json
 import sqlalchemy
+import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
+
+_LOG = logging.getLogger(__name__)
 
 def is_deprecated_property(prop):
     deprecated_oti_properties = [ "ot:studyModified", "ot:focalCladeOTTId", "ot:studyLastEditor", "ot:focalCladeTaxonName", "ot:studyLabel", "ot:authorContributed", "ot:studyUploaded", "is_deprecated", "ot:candidateTreeForSynthesis" ]
@@ -124,14 +127,13 @@ def query_studies_by_integer_values(query_obj,property_type,property_value):
 # filter query to return only studies that match property_type and
 # property_value
 def query_studies(verbose,property_type,property_value):
-    resultlist = []
+    _LOG.debug('querying studies with {k}:{v}'.format(k=property_type,v=property_value))
 
     # get the base (unfiltered) query object
     query_obj = get_study_query_object(verbose)
     filtered = None
 
-    # study id is straightforward (use table id column rather than
-    # ^ot:studyId property in json)
+    # for studyId, use id column rather than ^ot:studyId json property
     if property_type == "ot:studyId":
         filtered = query_obj.filter(Study.id == property_value)
 
@@ -140,19 +142,14 @@ def query_studies(verbose,property_type,property_value):
         filtered = query_studies_by_curator(query_obj,property_value)
 
     # year and focal clade are in json, need to cast an int to string
-    elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
-        property_type = get_prop_with_prefix(property_type)
-        str_value = str(property_value)
-        filtered = query_obj.filter(
-            Study.data[
-                (property_type)
-            ].astext == str_value
-            )
-
-        # filtered = query_studies_by_integer_values(
-        #     query_obj,
-        #     property_type,
-        #     property_value)
+    # elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
+    #     property_type = get_prop_with_prefix(property_type)
+    #     str_value = str(property_value)
+    #     filtered = query_obj.filter(
+    #         Study.data[
+    #             (property_type)
+    #         ].astext == str_value
+    #         )
 
     # value of ot:studyPublication and ot:dataDeposit
     # is a dict with key '@href'
@@ -185,6 +182,7 @@ def query_studies(verbose,property_type,property_value):
 
     # get results as dict, where keys are the labels set in
     # get_study_query_object
+    resultlist = []
     try:
         for row in filtered.all():
             item = {}
