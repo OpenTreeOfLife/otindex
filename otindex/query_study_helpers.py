@@ -142,12 +142,13 @@ def query_studies(verbose,property_type,property_value):
     # year and focal clade are in json, need to cast an int to string
     elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
         property_type = get_prop_with_prefix(property_type)
-        property_value = str(property_value)
+        str_value = str(property_value)
         filtered = query_obj.filter(
             Study.data[
                 (property_type)
-            ].astext == property_value
+            ].astext == str_value
             )
+
         # filtered = query_studies_by_integer_values(
         #     query_obj,
         #     property_type,
