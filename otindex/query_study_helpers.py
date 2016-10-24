@@ -116,11 +116,12 @@ def query_fulltext(query_obj,property_type,property_value):
     return filtered
 
 # find studies in cases where the property_value is an int
-def query_studies_by_integer_values(query_obj,property_type,property_value):
+def query_studies_with_int_values(query_obj,property_type,property_value):
     property_type = get_prop_with_prefix(property_type)
-    str_value = str(property_value)
     filtered = query_obj.filter(
-        Study.data[(property_type)] == str_value
+        Study.data[
+            (property_type)
+            ].astext.cast(sqlalchemy.Integer) == property_value
         )
     return filtered
 
@@ -142,7 +143,8 @@ def query_studies(verbose,property_type,property_value):
         filtered = query_studies_by_curator(query_obj,property_value)
 
     # year and focal clade are in json, need to cast an int to string
-    # elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
+    elif property_type == "ot:studyYear" or property_type == "ot:focalClade":
+        filtered = query_studies_with_int_values(query_obj,property_type,property_value)
     #     property_type = get_prop_with_prefix(property_type)
     #     str_value = str(property_value)
     #     filtered = query_obj.filter(
