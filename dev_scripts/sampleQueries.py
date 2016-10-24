@@ -275,16 +275,15 @@ def query_int_or_string(session):
     study = session.query(Study).filter(
         Study.data[
             ('^ot:studyYear')
-        ].cast(sqlalchemy.Integer) == year
+        ].astext.cast(sqlalchemy.Integer) == year
         )
-    print "studies with year = 2016: ",study.count()
+    print "studies with int year = 2016: ",study.count()
 
-    year = 2016
-    year_str = str(year)
+    year = "2016"
     study = session.query(Study).filter(
         Study.data[
             ('^ot:studyYear')
-        ] == year_str
+        ].astext.cast(sqlalchemy.Integer) == year_str
         )
     print "studies with str year = 2016: ",study.count()
 

@@ -66,8 +66,12 @@ def find_studies(request):
         # check that we only have valid parameters
         valid_parameters = ['verbose','property','value','exact']
         parameters = payload.keys()
+
+        _LOG.debug('find_studies with parameters:  {p}'.format(p=parameters))
+
         extra_params = set(parameters).difference(valid_parameters)
         if len(extra_params) > 0:
+            _LOG.debug('found {x} extra parameters'.format(x=extra_params))
             return HTTPBadRequest()
 
         if 'verbose' in payload:

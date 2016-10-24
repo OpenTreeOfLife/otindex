@@ -121,7 +121,7 @@ def query_studies_with_int_values(query_obj,property_type,property_value):
     filtered = query_obj.filter(
         Study.data[
             (property_type)
-            ].astext.cast(sqlalchemy.Integer) == property_value
+        ].astext.cast(sqlalchemy.Integer) == property_value
         )
     return filtered
 
