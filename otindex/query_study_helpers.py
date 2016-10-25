@@ -128,7 +128,7 @@ def query_studies_with_int_values(query_obj,property_type,property_value):
 # filter query to return only studies that match property_type and
 # property_value
 def query_studies(verbose,property_type,property_value):
-    _LOG.debug('querying studies with {k}:{v}'.format(k=property_type,v=property_value))
+    _LOG.debug("querying studies by {p} : {v}".format(p=property_type,v=property_value))
 
     # get the base (unfiltered) query object
     query_obj = get_study_query_object(verbose)
