@@ -6,8 +6,6 @@ CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/find_studies'
 
 ################################################
-# find study curated by user, using verbose = False
-# study can have multiple curators
 p = {'verbose': False,
      'property': 'ot:studyPublicationReference',
      'value': 'Smith'}
