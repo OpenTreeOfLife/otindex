@@ -12,7 +12,6 @@ import simplejson as json
 import sqlalchemy
 import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
-from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
@@ -172,16 +171,6 @@ def query_fulltext(query_obj,property_type,property_value):
          ].astext.ilike(property_value)
      )
      return filtered
-
-# # find studies in cases where the property_value is an int
-# def query_studies_by_integer_values(query_obj,property_type,property_value):
-#     property_type = '^'+property_type
-#     filtered = query_obj.filter(
-#         Study.data[
-#             (property_type)
-#         ].cast(sqlalchemy.Integer) == property_value
-#         )
-#     return filtered
 
 def build_json_response(filtered,verbose):
     resultslist = []

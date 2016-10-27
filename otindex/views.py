@@ -15,6 +15,8 @@ import simplejson as json
 import requests
 import logging
 
+from peyotl import get_logger
+
 from otindex import query_study_helpers as qs
 from otindex import query_tree_helpers as qt
 from otindex import add_update_studies as aus
@@ -27,7 +29,8 @@ from otindex.models import (
     Property,
     )
 
-_LOG = logging.getLogger(__name__)
+#_LOG = logging.getLogger(__name__)
+_LOG = get_logger(__name__)
 
 @view_config(route_name='home', renderer='json')
 def index(request):
@@ -60,6 +63,7 @@ def find_studies(request):
     exact = False
     property_type = None
     property_value = None
+    _LOG.debug('find_studies')
 
     if (request.body):
         payload = request.json_body
@@ -163,11 +167,16 @@ def properties(request):
 def add_update_studies(request):
     if (request.body):
         payload = request.json_body
-        for study in payload:
-            aus.update_study(study)
+        failed_studies = []
+        for study in payload['studies']:
+            try:
+                aus.update_study(study)
+            except:
+                failed_studies.append(study)
     else:
-        # TODO: return helpful error message about requiring at least one URL
-        return HTTPBadRequest()
+        _msg="No payload provided"
+        raise HTTPBadRequest(body=_msg)
+    return { 'failed_studies' : failed_studies }
 
 # payload can be a list of URLs (oti syntax) or a list of
 # study ids
@@ -175,8 +184,13 @@ def add_update_studies(request):
 def remove_studies(request):
     if (request.body):
         payload = request.json_body
-        for study in payload:
-            aus.remove_study(study)
+        failed_studies = []
+        for study in payload['studies']:
+            try:
+                aus.remove_study(study)
+            except:
+                failed_studies.append(study)
     else:
-        # TODO: return helpful error message about requiring at least one URL
-        return HTTPBadRequest()
+        _msg="No payload provided"
+        raise HTTPBadRequest(body=_msg)
+    return { 'failed_studies' : failed_studies }
