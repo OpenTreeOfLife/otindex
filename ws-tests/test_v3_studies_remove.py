@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-# test update study by checking db properties before and after update
-# the add_update method deletes the study and re-adds it, so should
-# be the same before and after
+# test removal of study by checking db properties before and after update
+# re-adds the study afterwards, so no net change to database
 
 import sys, os
 from opentreetesting import test_http_json_method, config
 DOMAIN = config('host', 'apihost')
 
-# get results from about method before
+###################
+# Get results from about method before
 CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/about'
 r = test_http_json_method(SUBMIT_URI,
@@ -27,10 +27,10 @@ print "starting studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
     c=ncurators_start
 )
 
-# update a study
-# study_id = 'ot_688'
-p = {'studies':["ot_688","ot_535"]}
-SUBMIT_URI = CONTROLLER + '/add_update'
+############################
+# 1. remove a study
+p = { 'studies' : [ "ot_688" ] }
+SUBMIT_URI = CONTROLLER + '/remove'
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,
@@ -40,7 +40,8 @@ r = test_http_json_method(SUBMIT_URI,
 assert r[0] is True
 assert len(r[1]['failed_studies']) == 0
 
-# get results from about method after
+############################
+# 2. get results from about method after
 SUBMIT_URI = CONTROLLER + '/about'
 r = test_http_json_method(SUBMIT_URI,
                           'GET',
@@ -51,7 +52,42 @@ nstudies_end = r[1]['number_studies']
 ntrees_end = r[1]['number_trees']
 notus_end = r[1]['number_otus']
 ncurators_end = r[1]['number_curators']
-print "ending studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
+print "after delete studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
+    s=nstudies_end,
+    t=ntrees_end,
+    o=notus_end,
+    c=ncurators_end
+)
+
+assert nstudies_end < nstudies_start
+assert ntrees_end < ntrees_start
+
+############################
+# 3. re-add the study and check again
+SUBMIT_URI = CONTROLLER + '/add_update'
+r = test_http_json_method(SUBMIT_URI,
+                          'POST',
+                          data=p,
+                          expected_status=200,
+                          return_bool_data=True)
+
+assert r[0] is True
+assert len(r[1]['failed_studies']) == 0
+
+############################
+# 4. check about method after add / update
+CONTROLLER = DOMAIN + '/v3/studies'
+SUBMIT_URI = CONTROLLER + '/about'
+r = test_http_json_method(SUBMIT_URI,
+                          'GET',
+                          expected_status=200,
+                          return_bool_data=True)
+assert r[0] is True
+nstudies_end = r[1]['number_studies']
+ntrees_end = r[1]['number_trees']
+notus_end = r[1]['number_otus']
+ncurators_end = r[1]['number_curators']
+print "after update studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
     s=nstudies_end,
     t=ntrees_end,
     o=notus_end,
