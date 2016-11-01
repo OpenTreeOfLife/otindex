@@ -175,13 +175,14 @@ def add_update_studies(request):
                 updated_studies.append(study)
             except:
                 failed_studies.append(study)
+        results = {
+            "failed_studies" : failed_studies,
+            "updated_studies" : updated_studies
+            }
+        return results
     else:
         _msg="No payload provided"
         raise HTTPBadRequest(body=_msg)
-    results = {}
-    results['failed_studies'] = failed_studies
-    results['updated_studies'] = updated_studies
-    return results
 
 # payload can be a list of URLs (oti syntax) or a list of
 # study ids
@@ -197,10 +198,11 @@ def remove_studies(request):
                 updated_studies.append(study)
             except:
                 failed_studies.append(study)
+        results = {
+            "failed_studies" : failed_studies,
+            "updated_studies" : updated_studies
+            }
+        return results
     else:
         _msg="No payload provided"
         raise HTTPBadRequest(body=_msg)
-    results = {}
-    results['failed_studies'] = failed_studies
-    results['updated_studies'] = updated_studies
-    return results
