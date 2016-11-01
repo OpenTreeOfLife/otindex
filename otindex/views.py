@@ -168,15 +168,22 @@ def add_update_studies(request):
     if (request.body):
         payload = request.json_body
         failed_studies = []
+        updated_studies = []
         for study in payload['studies']:
             try:
                 aus.update_study(study)
+                updated_studies.append(study)
             except:
                 failed_studies.append(study)
     else:
         _msg="No payload provided"
         raise HTTPBadRequest(body=_msg)
-    return { 'failed_studies' : failed_studies }
+    results = {}
+    if len(failed_studies) > 0:
+        results['failed_studies' = failed_studies]
+    if len(updated_studies) > 0:
+        results['updated_studies' = updated_studies]
+    return results
 
 # payload can be a list of URLs (oti syntax) or a list of
 # study ids
@@ -185,12 +192,19 @@ def remove_studies(request):
     if (request.body):
         payload = request.json_body
         failed_studies = []
+        updated_studies = []
         for study in payload['studies']:
             try:
                 aus.remove_study(study)
+                updated_studies.append(study)
             except:
                 failed_studies.append(study)
     else:
         _msg="No payload provided"
         raise HTTPBadRequest(body=_msg)
-    return { 'failed_studies' : failed_studies }
+    results = {}
+    if len(failed_studies) > 0:
+        results['failed_studies' = failed_studies]
+    if len(updated_studies) > 0:
+        results['updated_studies' = updated_studies]
+    return results
