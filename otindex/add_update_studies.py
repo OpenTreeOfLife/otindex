@@ -23,10 +23,12 @@ def add_study(study_id):
     _LOG.debug('adding study {s}'.format(s=study_id))
 
     # get latest version of nexson
+    # location of repo (test vs dev) dependent on peyotl config
     phy = create_phylesystem_obj()
     try:
         studyobj = phy.get_study(study_id)['data']
     except:
+        _LOG.debug('did not find study {s}'.format(s=study_id))
         raise HTTPNotFound("Study {s} not found in phylesystem".format(s=study_id))
     nexml = get_nexml_el(studyobj)
     proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
@@ -168,13 +170,14 @@ def delete_study(study_id):
         Study.id == study_id
     ).first()
     if (study):
-        print "deleting study {s}".format(s=study_id)
+        _LOG.debug("deleting study {s}".format(s=study_id))
         # check for to-be-orphaned curators
         deleteOrphanedCurators(study_id)
         DBSession.delete(study)
         # need to flush here before re-adding updated study
         DBSession.flush()
     else:
+        _LOG.debug("did not find study {s} to delete".format(s=study_id))
         raise HTTPNotFound("study id {s} not found".format(s=study_id))
 
 # get the lineage from this ID back to the root node
@@ -226,7 +229,9 @@ def remove_study(studyid):
             study_id = get_study_id_from_url(studyid)
         _LOG.debug("removing study {s}".format(s=study_id))
         delete_study(study_id)
-    except Exception as e:
+    except HTTPNotFound:
+        raise
+    except Exception:
         raise
 
 def study_exists(study_id):
@@ -247,5 +252,5 @@ def update_study(studyid):
             delete_study(study_id)
         #with DBSession.no_autoflush:
         add_study(study_id)
-    except Exception as e:
+    except Exception:
         raise
