@@ -179,10 +179,8 @@ def add_update_studies(request):
         _msg="No payload provided"
         raise HTTPBadRequest(body=_msg)
     results = {}
-    if len(failed_studies) > 0:
-        results['failed_studies'] = failed_studies
-    if len(updated_studies) > 0:
-        results['updated_studies'] = updated_studies
+    results['failed_studies'] = failed_studies
+    results['updated_studies'] = updated_studies
     return results
 
 # payload can be a list of URLs (oti syntax) or a list of
@@ -203,8 +201,6 @@ def remove_studies(request):
         _msg="No payload provided"
         raise HTTPBadRequest(body=_msg)
     results = {}
-    if len(failed_studies) > 0:
-        results['failed_studies'] = failed_studies
-    if len(updated_studies) > 0:
-        results['updated_studies'] = updated_studies
+    results['failed_studies'] = failed_studies
+    results['updated_studies'] = updated_studies
     return results
