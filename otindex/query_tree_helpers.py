@@ -113,7 +113,7 @@ def get_tree_property_list():
     properties.append('ot:ottId')
     properties.append('ot:studyId')
     properties.append("ntips")
-    properties.append("proposed")
+    #properties.append("proposed")
     return properties
 
 # returns an (unfiltered) tree query object with either the set of
@@ -203,11 +203,15 @@ def query_trees(verbose,property_type,property_value):
     query_obj = get_tree_query_object(verbose)
     filtered = None
 
-    # study id is straightforward
+    # study id is straightforward; is table column
     if property_type == "ot:studyId":
         filtered = query_obj.filter(Tree.study_id == property_value)
 
-    # as is candidateForSynthesis
+    # ntips is a table column
+    if property_type == "ntips":
+        filtered = query_obj.filter(Tree.ntips == property_value)
+
+    # as is candidateForSynthesis - mapped to proposed
     elif property_type == "ot:candidateTreeForSynthesis":
         filtered = query_obj.filter(Tree.proposed == property_value)
 
