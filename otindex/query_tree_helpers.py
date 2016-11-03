@@ -208,7 +208,7 @@ def query_trees(verbose,property_type,property_value):
         filtered = query_obj.filter(Tree.study_id == property_value)
 
     # ntips is a table column
-    if property_type == "ntips":
+    elif property_type == "ntips":
         filtered = query_obj.filter(Tree.ntips == property_value)
 
     # as is candidateForSynthesis - mapped to proposed
