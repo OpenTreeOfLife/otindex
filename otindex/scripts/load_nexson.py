@@ -20,6 +20,9 @@ from peyotl.manip import iter_trees
 from peyotl import gen_otu_dict, iter_node
 from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
 from peyotl.nexson_syntax import get_nexml_el
+from peyotl import get_logger
+
+_LOG = get_logger()
 
 def create_phylesystem_obj():
     # create connection to local phylesystem
@@ -27,36 +30,27 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
-# create the JSON GIN indexes
-# def index_json_columns(connection,cursor,config_dict):
-#     try:
-#         # STUDY INDEX
-#         STUDYGININDEX=config_dict['studyginindex']
-#         STUDYTABLE = config_dict['tables']['studytable']
-#         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
-#             'USING gin({column});'
-#             .format(indexname=STUDYGININDEX,tablename=STUDYTABLE,column='data'))
-#         cursor.execute(sqlstring)
-#         connection.commit()
-#         # TREE INDEX
-#         TREEGININDEX=config_dict['treeginindex']
-#         TREETABLE = config_dict['tables']['treetable']
-#         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
-#             'USING gin({column});'
-#             .format(indexname=TREEGININDEX,tablename=TREETABLE,column='data'))
-#         cursor.execute(sqlstring)
-#         connection.commit()
-#     except psy.Error as e:
-#         print 'Error creating GIN index'
-#         print e.pgerror
+# Either convert a string to unicode, or returns an
+# already-unicode string. Used for curator names.
+def to_unicode(text):
+    try:
+        text = unicode(text, 'utf-8')
+    except TypeError:
+        return text
 
 # iterate over curators, adding curators to curator table and the
 # who-curated-what relationship to study-curator-map
 def insert_curators(connection,cursor,config_dict,study_id,curators):
+    _LOG.debug(u'Loading {n} curators for study {s}'.format(
+        n=len(curators),
+        s=study_id)
+        )
     try:
         CURATORTABLE = config_dict['tables']['curatortable']
         CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
         for name in curators:
+            name = to_unicode(name)
+            _LOG.debug(u'Loading curator {c}'.format(c=name))
             # check to make sure this curator name doesn't exist already
             sqlstring = ('SELECT id FROM {tablename} '
                 'WHERE name=%s;'
@@ -73,7 +67,7 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
                     .format(tablename=CURATORTABLE)
                     )
                 data = (name)
-                #print '  SQL: ',cursor.mogrify(sqlstring,(data,))
+                _LOG.debug('SQL: {p}'.format(p=cursor.mogrify(sqlstring,(data,))))
                 cursor.execute(sqlstring,(data,))
                 curator_id = cursor.fetchone()
 
@@ -83,7 +77,7 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
                 .format(tablename=CURATORSTUDYTABLE)
                 )
             data = (curator_id,study_id)
-            #print '  SQL: ',cursor.mogrify(sqlstring,data)
+            _LOG.debug(u'SQL: {p}'.format(p=cursor.mogrify(sqlstring,(data))))
             cursor.execute(sqlstring,data)
         connection.commit()
     except psy.ProgrammingError, ex:
@@ -103,7 +97,7 @@ def load_properties(connection,cursor,prop_table,study_props,tree_props):
             .format(t=prop_table)
         )
         data = (p,prefix,'study')
-        #print '  SQL: ',cursor.mogrify(sqlstring)
+        _LOG.debug(u'SQL: {s}'.format(s=cursor.mogrify(sqlstring,(data))))
         cursor.execute(sqlstring,data)
         connection.commit()
 
@@ -174,6 +168,8 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             curators.append(c)
         else:
             curators=c
+        # remove duplicates
+        curators = list(set(curators))
         insert_curators(connection,cursor,config_dict,study_id,curators)
 
         # iterate over trees and insert tree data

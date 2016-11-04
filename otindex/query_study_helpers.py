@@ -44,7 +44,10 @@ def get_prop_with_prefix(prop):
     query_obj = DBSession.query(Property.prefix).filter(
         Property.property == prop
     ).first()
-    return query_obj.prefix+prop
+    if query_obj.prefix is None:
+        return prop
+    else:
+        return query_obj.prefix+prop
 
 # get the list of searchable study properties
 # v3 list pruned down to only those implemented in v3

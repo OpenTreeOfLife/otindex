@@ -256,7 +256,7 @@ if __name__ == "__main__":
         dest='delete_tables',
         action='store_true',
         default=False,
-        help='use this flag to delete tables at start'
+        help='delete and re-create tables at start; default is to only clear tables'
         )
 
     args = parser.parse_args()
@@ -270,7 +270,6 @@ if __name__ == "__main__":
                 delete_all_tables(connection,cursor,config_dict)
                 create_all_tables(connection,cursor,config_dict)
             else:
-                create_all_tables(connection,cursor,config_dict)
                 clear_tables(connection,cursor,config_dict)
         except psy.Error as e:
             print e.pgerror

@@ -162,5 +162,5 @@ class Property(Base):
         )
     id = Column(Integer,primary_key=True)
     property = Column(String, nullable=False)
-    prefix = Column(String, nullable=False)
+    prefix = Column(String)
     type = Column(String, nullable=False)
