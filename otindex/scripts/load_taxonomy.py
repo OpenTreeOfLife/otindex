@@ -18,7 +18,8 @@ import peyotl.ott as ott
 
 def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
     print "Loading taxonomy into memory"
-    taxonomy = ott.OTT(path)
+    # if OTT dir not specified, uses path from peyotl config
+    taxonomy = ott.OTT()
     # get dictionary of ottids:ottnames, noting that the names can be strings
     # or tuples, e.g. (canonical name,synonym,synonym)
     ott_names = taxonomy.ott_id_to_names
