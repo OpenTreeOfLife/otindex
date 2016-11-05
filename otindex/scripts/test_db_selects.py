@@ -5,38 +5,32 @@ import argparse
 import yaml
 import setup_db
 
-def find_all_studies(cursor,config_dict):
-    STUDYTABLE = config_dict['tables']['studytable']
+def find_all_studies(cursor,config_obj):
+    STUDYTABLE = config_obj.get('database_tables','studytable')
     sqlstring = "SELECT id FROM {t};".format(t=STUDYTABLE)
     cursor.execute(sqlstring)
     print "returned",cursor.rowcount,"studies"
 
-def find_all_trees(cursor,config_dict):
-    TREETABLE = config_dict['tables']['treetable']
+def find_all_trees(cursor,config_obj):
+    TREETABLE = config_obj.get('database_tables','treetable')
     sqlstring = "SELECT tree_id FROM {t};".format(t=TREETABLE)
     cursor.execute(sqlstring)
     print "returned",cursor.rowcount,"trees"
 
-def find_all_curators(cursor,config_dict):
-    CURATORTABLE = config_dict['tables']['curatortable']
+def find_all_curators(cursor,config_obj):
+    CURATORTABLE = config_obj.get('database_tables','curatortable')
     sqlstring = "SELECT * FROM {t};".format(t=CURATORTABLE)
     cursor.execute(sqlstring)
     print "returned",cursor.rowcount,"curators"
 
-def find_all_taxa(cursor,config_dict):
-    TAXONOMYTABLE = config_dict['tables']['otttable']
+def find_all_taxa(cursor,config_obj):
+    TAXONOMYTABLE = config_obj.get('database_tables','otttable')
     sqlstring = "SELECT * FROM {t};".format(t=TAXONOMYTABLE)
     cursor.execute(sqlstring)
     print "returned",cursor.rowcount,"taxa"
 
-def find_all_otus(cursor,config_dict):
-    OTUTABLE = config_dict['tables']['otutable']
-    sqlstring = "SELECT * FROM {t};".format(t=OTUTABLE)
-    cursor.execute(sqlstring)
-    print "returned",cursor.rowcount,"otus"
-
-def find_properties(cursor,config_dict):
-    PROPERTYTABLE = config_dict['tables']['propertytable']
+def find_properties(cursor,config_obj):
+    PROPERTYTABLE = config_obj.get('database_tables','propertytable')
     sqlstring = "SELECT * FROM {t} where type='study';".format(t=PROPERTYTABLE)
     cursor.execute(sqlstring)
     print "returned",cursor.rowcount,"study properties"
@@ -44,11 +38,11 @@ def find_properties(cursor,config_dict):
     cursor.execute(sqlstring)
     print "returned",cursor.rowcount,"tree properties"
 
-def connect(config_dict):
+def connect(config_obj):
     conn = cursor = None  # not sure of exception intent
     try:
-        DBNAME = config_dict['connection_info']['dbname']
-        USER = config_dict['connection_info']['user']
+        DBNAME = config_obj.get('connection_info','dbname')
+        USER = config_obj.get('connection_info','dbuser')
         connectionstring=("dbname={dbname} "
             "user={dbuser}"
             .format(dbname=DBNAME,dbuser=USER)
@@ -71,19 +65,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # read config variables
-    config_dict={}
-    with open(args.configfile,'r') as f:
-        config_dict = yaml.safe_load(f)
+    config_obj = setup_db.read_config(configfile)
 
-    connection, cursor = setup_db.connect(config_dict)
-    
+    connection, cursor = setup_db.connect(config_obj)
+
     try:
-        find_all_studies(cursor,config_dict)
-        find_all_trees(cursor,config_dict)
-        find_all_curators(cursor,config_dict)
-        #find_all_otus(cursor,config_dict)
-        find_all_taxa(cursor,config_dict)
-        find_properties(cursor,config_dict)
+        find_all_studies(cursor,config_obj)
+        find_all_trees(cursor,config_obj)
+        find_all_curators(cursor,config_obj)
+        find_all_taxa(cursor,config_obj)
+        find_properties(cursor,config_obj)
     except psy.Error as e:
         print e.pgerror
     connection.close()
