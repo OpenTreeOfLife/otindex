@@ -60,7 +60,7 @@ if __name__ == "__main__":
     print "testing DB selects"
     parser = argparse.ArgumentParser(description='simple DB select tests')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
     args = parser.parse_args()
 

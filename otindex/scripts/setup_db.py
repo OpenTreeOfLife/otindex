@@ -240,7 +240,7 @@ if __name__ == "__main__":
     # get command line argument (option to delete tables and start over)
     parser = argparse.ArgumentParser(description='set up database tables')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
 
     parser.add_argument('-d',

@@ -240,7 +240,7 @@ if __name__ == "__main__":
     # get command line argument (nstudies to import)
     parser = argparse.ArgumentParser(description='load nexsons into postgres')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
     parser.add_argument('-n',
         dest='nstudies',
