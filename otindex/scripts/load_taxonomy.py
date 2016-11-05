@@ -7,7 +7,7 @@
 import datetime as dt
 import argparse
 import psycopg2 as psy
-import csv, yaml, io, os
+import csv, io, os
 
 # other database functions
 import setup_db
@@ -75,26 +75,24 @@ if __name__ == "__main__":
     # get command line argument (nstudies to import)
     parser = argparse.ArgumentParser(description='load ott into postgres')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
     args = parser.parse_args()
 
     # read config variables
-    config_dict={}
-    with open(args.configfile,'r') as f:
-        config_dict = yaml.safe_load(f)
+    config_obj = setup_db.read_config(configfile)
 
-    connection, cursor = setup_db.connect(config_dict)
+    connection, cursor = setup_db.connect(config_obj)
 
     # test that table exists
     # and clear data
     try:
         print "clearing OTT tables"
-        TAXONOMYTABLE = config_dict['tables']['otttable']
+        TAXONOMYTABLE = config_obj.get('tables','otttable')
         if not setup_db.table_exists(cursor,TAXONOMYTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=TAXONOMYTABLE))
         setup_db.clear_single_table(connection,cursor,TAXONOMYTABLE)
-        SYNONYMTABLE = config_dict['tables']['synonymtable']
+        SYNONYMTABLE = config_obj.get('tables','synonymtable')
         if not setup_db.table_exists(cursor,SYNONYMTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=SYNONYMTABLE))
         setup_db.clear_single_table(connection,cursor,SYNONYMTABLE)
