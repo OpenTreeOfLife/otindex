@@ -16,7 +16,7 @@ import setup_db
 import peyotl.ott as ott
 
 
-def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
+def load_taxonomy_using_copy(connection,cursor,otttable,syntable):
     print "Loading taxonomy into memory"
     # if OTT dir not specified, uses path from peyotl config
     taxonomy = ott.OTT()
@@ -103,18 +103,10 @@ if __name__ == "__main__":
         print e.pgerror
 
     try:
-        ott_loc = config_dict['taxonomy']
-        # TODO: convert ott_loc to a full path
-        if ott_loc == 'None':
-            print 'No taxonomy'
-        if os.path.isdir(ott_loc):
-            # data import
-            starttime = dt.datetime.now()
-            load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
-            endtime = dt.datetime.now()
-            print "OTT load time: ",endtime - starttime
-        else:
-            print "{o} is not directory".format(o=ott_loc)
+        starttime = dt.datetime.now()
+        load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE)
+        endtime = dt.datetime.now()
+        print "OTT load time: ",endtime - starttime
     except psy.Error as e:
         print e.pgerror
     connection.close()
