@@ -12,7 +12,7 @@ class TestDatabaseSetup():
 
     def setUp(self):
         # read config file
-        self.config_obj = setup_db.read_config('../development.ini')
+        self.config_obj = setup_db.read_config('../../development.ini')
         self.connection_tuple = setup_db.connect(self.config_obj)
 
     def tearDown(self):

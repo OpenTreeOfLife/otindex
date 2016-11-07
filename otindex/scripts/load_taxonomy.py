@@ -15,7 +15,6 @@ import setup_db
 # peyotl functions for handling the taxonomy
 import peyotl.ott as ott
 
-
 def load_taxonomy_using_copy(connection,cursor,otttable,syntable):
     print "Loading taxonomy into memory"
     # if OTT dir not specified, uses path from peyotl config
@@ -30,6 +29,9 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable):
     )
     ott_filename = "ott.csv"
     synonym_filename = "synonyms.csv"
+    # this creates the primary_key column for the table
+    # should really modify the copy method to take a column list
+    synonym_id = 1
     try:
         #with codecs.open(ott_filename,'w','utf-8') as of:
         # with io.open(ott_filename,'w',encoding='utf-8') as of, io.open(synonym_filename,'w',encoding='utf-8') as sf:
@@ -40,7 +42,7 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable):
             #of.write(u'ott_id,name,parent_id\n')
             ofwriter.writerow(('id','name','parent'))
             # header row for synonym file
-            sfwriter.writerow(('id','synonym'))
+            sfwriter.writerow(('id','ott_id','synonym'))
 
             for ott_id in ott_names:
                 name = ott_names[ott_id]
@@ -60,7 +62,8 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable):
                 # print synonym data
                 for s in synonyms:
                     #sf.write(u'{},"{}"\n'.format(ott_id,s))
-                    sfwriter.writerow((ott_id,s.encode('utf-8')))
+                    sfwriter.writerow((synonym_id,ott_id,s.encode('utf-8')))
+                    synonym_id+=1
         of.close()
         sf.close()
     except IOError as (errno,strerror):
@@ -80,7 +83,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # read config variables
-    config_obj = setup_db.read_config(configfile)
+    config_obj = setup_db.read_config(args.configfile)
 
     connection, cursor = setup_db.connect(config_obj)
 
@@ -88,11 +91,11 @@ if __name__ == "__main__":
     # and clear data
     try:
         print "clearing OTT tables"
-        TAXONOMYTABLE = config_obj.get('tables','otttable')
+        TAXONOMYTABLE = config_obj.get('database_tables','otttable')
         if not setup_db.table_exists(cursor,TAXONOMYTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=TAXONOMYTABLE))
         setup_db.clear_single_table(connection,cursor,TAXONOMYTABLE)
-        SYNONYMTABLE = config_obj.get('tables','synonymtable')
+        SYNONYMTABLE = config_obj.get('database_tables','synonymtable')
         if not setup_db.table_exists(cursor,SYNONYMTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=SYNONYMTABLE))
         setup_db.clear_single_table(connection,cursor,SYNONYMTABLE)

@@ -250,7 +250,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # read config variables
-    config_obj = setup_db.read_config(configfile)
+    config_obj = setup_db.read_config(args.configfile)
     connection, cursor = setup_db.connect(config_obj)
 
     # test that tables exist

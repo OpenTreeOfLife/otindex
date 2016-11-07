@@ -5,7 +5,7 @@
 # Changes to table structure must be replicated in ../models.py
 
 import argparse
-from ConfigParser import SafeConfigParser
+import ConfigParser
 import psycopg2 as psy
 import simplejson as json
 import pdb
@@ -16,7 +16,7 @@ def clear_gin_index(connection,cursor):
     sqlstring = "DROP INDEX IF EXISTS study_ix_jsondata_gin;"
     cursor.execute(sqlstring)
     # tree table
-    sqlstring = "DROP INDEX IF EXISTS tree_ix_jsondata_gin
+    sqlstring = "DROP INDEX IF EXISTS tree_ix_jsondata_gin;"
     cursor.execute(sqlstring)
 
     connection.commit()
@@ -47,7 +47,7 @@ def connect(config_obj):
         connectionstring = ""
         PASSWORD = config_obj.get('connection_info','password')
         # if there is no password specified
-        if password == '':
+        if PASSWORD == '':
             connectionstring=("dbname={dbname} "
                 "host={h} "
                 "user={dbuser}"
@@ -62,7 +62,7 @@ def connect(config_obj):
                 )
         conn = psy.connect(connectionstring)
         cursor = conn.cursor()
-    except NoSectionError as e:
+    except ConfigParser.NoSectionError as e:
         print "Error reading config file; {m}".format(m=e.Error)
     except KeyboardInterrupt:
         print "Shutdown requested because could not connect to DB"
@@ -152,7 +152,8 @@ def create_all_tables(connection,cursor,config_obj):
     # synonym table
     SYNONYMTABLE = config_obj.get('database_tables','synonymtable')
     tablestring = ('CREATE TABLE {tablename} '
-        '(id int REFERENCES taxonomy (id) ON DELETE CASCADE, '
+        '(id serial PRIMARY KEY, '
+        'ott_id int REFERENCES taxonomy (id) ON DELETE CASCADE, '
         'synonym text);'
         .format(tablename=SYNONYMTABLE)
     )
@@ -214,7 +215,7 @@ def index_json_columns(connection,cursor,config_obj):
 def import_csv_file(connection,cursor,table,filename):
     print "copying {f} into {t} table".format(f=filename,t=table)
     with open (filename,'r') as f:
-        copystring="COPY {t} FROM STDIN WITH CSV HEADER".format(t=table)
+        copystring="COPY {t}  FROM STDIN WITH CSV HEADER".format(t=table)
         cursor.copy_expert(copystring,f)
         connection.commit()
 
@@ -222,7 +223,7 @@ def import_csv_file(connection,cursor,table,filename):
 #  connection_info
 #  tables
 def read_config(configfile):
-    config_obj = ConfigParser.ConfigParser()
+    config_obj = ConfigParser.SafeConfigParser()
     config_obj.read(configfile)
     return config_obj
 
