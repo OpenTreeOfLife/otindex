@@ -46,8 +46,8 @@ def insert_curators(connection,cursor,config_obj,study_id,curators):
         s=study_id)
         )
     try:
-        CURATORTABLE = config_obj.get('tables','curatortable')
-        CURATORSTUDYTABLE = config_obj.get('tables','curatorstudytable')
+        CURATORTABLE = config_obj.get('database_tables','curatortable')
+        CURATORSTUDYTABLE = config_obj.get('database_tables','curatorstudytable')
         for name in curators:
             name = to_unicode(name)
             _LOG.debug(u'Loading curator {c}'.format(c=name))
@@ -125,7 +125,7 @@ def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
         #print 'STUDY: ',study_id
         study_properties.update(nexml.keys())
         # study data for study table
-        STUDYTABLE = config_obj.get('tables','studytable')
+        STUDYTABLE = config_obj.get('database_tables','studytable')
         year = nexml.get('^ot:studyYear')
         proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
         if proposedTrees is None:
@@ -175,7 +175,7 @@ def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
         # iterate over trees and insert tree data
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
-        TREETABLE = config_obj.get('tables','treetable')
+        TREETABLE = config_obj.get('database_tables','treetable')
         ntrees = 0
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
@@ -228,7 +228,7 @@ def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
             break
 
     # load the tree and study properties
-    PROPERTYTABLE = config_obj.get('tables','propertytable')
+    PROPERTYTABLE = config_obj.get('database_tables','propertytable')
     load_properties(
         connection,
         cursor,
@@ -257,13 +257,13 @@ if __name__ == "__main__":
     # and clear data, except taxonomy table
     try:
         tabledict = dict(config_obj.items('database_tables'))
-        for table in [tabledict]:
+        for table in tabledict:
             # skip the taxonomy table, which does note get loaded here
             if table == "otttable":
                 continue
             name = tabledict[table]
             if setup_db.table_exists(cursor,name):
-                setup_db.clear_single_tables(connection,cursor,name)
+                setup_db.clear_single_table(connection,cursor,name)
             else:
                 raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
         setup_db.clear_gin_index(connection,cursor)

@@ -13,8 +13,7 @@ fi
 config=$1
 
 if [ $nstudies ]; then
-    # delete existing tables, re-create
-    python setup_db.py -d $config
+    python setup_db.py $config
 
     # load nexson files
     python load_nexson.py $config -n $nstudies
@@ -31,8 +30,8 @@ if [ $nstudies ]; then
     exit 0
 fi
 
-# delete existing table, re-create
-python setup_db.py -d $config
+# clear existing tables
+python setup_db.py $config
 
 # load nexson files
 python load_nexson.py $config
