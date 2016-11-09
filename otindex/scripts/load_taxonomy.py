@@ -7,7 +7,7 @@
 import datetime as dt
 import argparse
 import psycopg2 as psy
-import csv, yaml, io, os
+import csv, io, os
 
 # other database functions
 import setup_db
@@ -15,10 +15,10 @@ import setup_db
 # peyotl functions for handling the taxonomy
 import peyotl.ott as ott
 
-
-def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
+def load_taxonomy_using_copy(connection,cursor,otttable,syntable):
     print "Loading taxonomy into memory"
-    taxonomy = ott.OTT(path)
+    # if OTT dir not specified, uses path from peyotl config
+    taxonomy = ott.OTT()
     # get dictionary of ottids:ottnames, noting that the names can be strings
     # or tuples, e.g. (canonical name,synonym,synonym)
     ott_names = taxonomy.ott_id_to_names
@@ -29,6 +29,9 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
     )
     ott_filename = "ott.csv"
     synonym_filename = "synonyms.csv"
+    # this creates the primary_key column for the table
+    # should really modify the copy method to take a column list
+    synonym_id = 1
     try:
         #with codecs.open(ott_filename,'w','utf-8') as of:
         # with io.open(ott_filename,'w',encoding='utf-8') as of, io.open(synonym_filename,'w',encoding='utf-8') as sf:
@@ -39,7 +42,7 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
             #of.write(u'ott_id,name,parent_id\n')
             ofwriter.writerow(('id','name','parent'))
             # header row for synonym file
-            sfwriter.writerow(('id','synonym'))
+            sfwriter.writerow(('id','ott_id','synonym'))
 
             for ott_id in ott_names:
                 name = ott_names[ott_id]
@@ -59,7 +62,8 @@ def load_taxonomy_using_copy(connection,cursor,otttable,syntable,path):
                 # print synonym data
                 for s in synonyms:
                     #sf.write(u'{},"{}"\n'.format(ott_id,s))
-                    sfwriter.writerow((ott_id,s.encode('utf-8')))
+                    sfwriter.writerow((synonym_id,ott_id,s.encode('utf-8')))
+                    synonym_id+=1
         of.close()
         sf.close()
     except IOError as (errno,strerror):
@@ -74,26 +78,24 @@ if __name__ == "__main__":
     # get command line argument (nstudies to import)
     parser = argparse.ArgumentParser(description='load ott into postgres')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
     args = parser.parse_args()
 
     # read config variables
-    config_dict={}
-    with open(args.configfile,'r') as f:
-        config_dict = yaml.safe_load(f)
+    config_obj = setup_db.read_config(args.configfile)
 
-    connection, cursor = setup_db.connect(config_dict)
+    connection, cursor = setup_db.connect(config_obj)
 
     # test that table exists
     # and clear data
     try:
         print "clearing OTT tables"
-        TAXONOMYTABLE = config_dict['tables']['otttable']
+        TAXONOMYTABLE = config_obj.get('database_tables','otttable')
         if not setup_db.table_exists(cursor,TAXONOMYTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=TAXONOMYTABLE))
         setup_db.clear_single_table(connection,cursor,TAXONOMYTABLE)
-        SYNONYMTABLE = config_dict['tables']['synonymtable']
+        SYNONYMTABLE = config_obj.get('database_tables','synonymtable')
         if not setup_db.table_exists(cursor,SYNONYMTABLE):
             raise psy.ProgrammingError("Table {t} does not exist".format(t=SYNONYMTABLE))
         setup_db.clear_single_table(connection,cursor,SYNONYMTABLE)
@@ -102,18 +104,10 @@ if __name__ == "__main__":
         print e.pgerror
 
     try:
-        ott_loc = config_dict['taxonomy']
-        # TODO: convert ott_loc to a full path
-        if ott_loc == 'None':
-            print 'No taxonomy'
-        if os.path.isdir(ott_loc):
-            # data import
-            starttime = dt.datetime.now()
-            load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE,ott_loc)
-            endtime = dt.datetime.now()
-            print "OTT load time: ",endtime - starttime
-        else:
-            print "{o} is not directory".format(o=ott_loc)
+        starttime = dt.datetime.now()
+        load_taxonomy_using_copy(connection,cursor,TAXONOMYTABLE,SYNONYMTABLE)
+        endtime = dt.datetime.now()
+        print "OTT load time: ",endtime - starttime
     except psy.Error as e:
         print e.pgerror
     connection.close()

@@ -5,22 +5,18 @@
 # Changes to table structure must be replicated in ../models.py
 
 import argparse
-import yaml
+import ConfigParser
 import psycopg2 as psy
 import simplejson as json
-#import logging
 import pdb
 
-def clear_gin_index(connection,cursor,config_dict):
+def clear_gin_index(connection,cursor):
     print 'clearing GIN indexes'
-
     # study table
-    STUDYGININDEX=config_dict['studyginindex']
-    sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=STUDYGININDEX)
+    sqlstring = "DROP INDEX IF EXISTS study_ix_jsondata_gin;"
     cursor.execute(sqlstring)
     # tree table
-    TREEGININDEX=config_dict['treeginindex']
-    sqlstring = "DROP INDEX IF EXISTS {indexname};".format(indexname=TREEGININDEX)
+    sqlstring = "DROP INDEX IF EXISTS tree_ix_jsondata_gin;"
     cursor.execute(sqlstring)
 
     connection.commit()
@@ -30,10 +26,10 @@ def clear_single_table(connection,cursor,tablename):
     sqlstring=('TRUNCATE {t} CASCADE;').format(t=tablename)
     cursor.execute(sqlstring)
 
-def clear_tables(connection,cursor,config_dict):
+def clear_tables(connection,cursor,config_obj):
     print 'clearing tables'
     # tree linked to study via foreign key, so cascade removes both
-    tabledict = config_dict['tables']
+    tabledict = dict(config_obj.items('database_tables'))
     for table in tabledict:
         name = tabledict[table]
         sqlstring=('TRUNCATE {t} CASCADE;'
@@ -42,19 +38,22 @@ def clear_tables(connection,cursor,config_dict):
         #print '  SQL: ',cursor.mogrify(sqlstring)
         cursor.execute(sqlstring)
 
-def connect(config_dict):
+def connect(config_obj):
     conn = cursor = None  # not sure of exception intent
     try:
-        DBNAME = config_dict['connection_info']['dbname']
-        USER = config_dict['connection_info']['user']
+        DBNAME = config_obj.get('connection_info','dbname')
+        USER = config_obj.get('connection_info','dbuser')
         HOST = 'localhost'
-        connectionstring=("dbname={dbname} "
-            "host={h} "
-            "user={dbuser}"
-            .format(dbname=DBNAME,h=HOST,dbuser=USER)
-            )
-        if 'password' in config_dict['connection_info']:
-            PASSWORD = config_dict['connection_info']['password']
+        connectionstring = ""
+        PASSWORD = config_obj.get('connection_info','password')
+        # if there is no password specified
+        if PASSWORD == '':
+            connectionstring=("dbname={dbname} "
+                "host={h} "
+                "user={dbuser}"
+                .format(dbname=DBNAME,h=HOST,dbuser=USER)
+                )
+        else:
             connectionstring=("dbname={dbname} "
                 "user={dbuser} "
                 "host={h} "
@@ -63,6 +62,8 @@ def connect(config_dict):
                 )
         conn = psy.connect(connectionstring)
         cursor = conn.cursor()
+    except ConfigParser.NoSectionError as e:
+        print "Error reading config file; {m}".format(m=e.Error)
     except KeyboardInterrupt:
         print "Shutdown requested because could not connect to DB"
     except psy.Error as e:
@@ -85,9 +86,9 @@ def create_table(connection,cursor,tablename,tablestring):
 # Function to create all database tables
 # Any changes made to the tablestring should also be reflected in
 # otindex/models.py
-def create_all_tables(connection,cursor,config_dict):
+def create_all_tables(connection,cursor,config_obj):
     # study table
-    STUDYTABLE = config_dict['tables']['studytable']
+    STUDYTABLE = config_obj.get('database_tables','studytable')
     tablestring = ('CREATE TABLE {tablename} '
         '(id text PRIMARY KEY, '
         'ntrees integer, '
@@ -98,7 +99,7 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,STUDYTABLE,tablestring)
 
     # tree table
-    TREETABLE = config_dict['tables']['treetable']
+    TREETABLE = config_obj.get('database_tables','treetable')
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
         'tree_id text NOT NULL, '
@@ -112,7 +113,7 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,TREETABLE,tablestring)
 
     # curator table
-    CURATORTABLE = config_dict['tables']['curatortable']
+    CURATORTABLE = config_obj.get('database_tables','curatortable')
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
         'name text UNIQUE);'
@@ -121,7 +122,7 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,CURATORTABLE,tablestring)
 
     # study-curator table
-    CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
+    CURATORSTUDYTABLE = config_obj.get('database_tables','curatorstudytable')
     tablestring = ('CREATE TABLE {tablename} '
         '(curator_id int REFERENCES curator (id) ON DELETE CASCADE,'
         'study_id text REFERENCES study (id) ON DELETE CASCADE);'
@@ -130,7 +131,7 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,CURATORSTUDYTABLE,tablestring)
 
     # taxonomy table
-    TAXONOMYTABLE = config_dict['tables']['otttable']
+    TAXONOMYTABLE = config_obj.get('database_tables','otttable')
     tablestring = ('CREATE TABLE {tablename} '
         '(id int PRIMARY KEY, '
         'name text, '
@@ -140,7 +141,7 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,TAXONOMYTABLE,tablestring)
 
     # otu-tree table
-    TREEOTUTABLE = config_dict['tables']['treeotutable']
+    TREEOTUTABLE = config_obj.get('database_tables','treeotutable')
     tablestring = ('CREATE TABLE {tablename} '
         '(tree_id int REFERENCES tree (id) ON DELETE CASCADE, '
         'ott_id int REFERENCES taxonomy (id) ON DELETE CASCADE);'
@@ -149,16 +150,17 @@ def create_all_tables(connection,cursor,config_dict):
     create_table(connection,cursor,TREEOTUTABLE,tablestring)
 
     # synonym table
-    SYNONYMTABLE = config_dict['tables']['synonymtable']
+    SYNONYMTABLE = config_obj.get('database_tables','synonymtable')
     tablestring = ('CREATE TABLE {tablename} '
-        '(id int REFERENCES taxonomy (id) ON DELETE CASCADE, '
+        '(id serial PRIMARY KEY, '
+        'ott_id int REFERENCES taxonomy (id) ON DELETE CASCADE, '
         'synonym text);'
         .format(tablename=SYNONYMTABLE)
     )
     create_table(connection,cursor,SYNONYMTABLE,tablestring)
 
     # property table
-    PROPERTYTABLE = config_dict['tables']['propertytable']
+    PROPERTYTABLE = config_obj.get('database_tables','propertytable')
     tablestring = ('CREATE TABLE {tablename} '
         '(id serial PRIMARY KEY, '
         'property text, '
@@ -181,30 +183,28 @@ def delete_table(connection,cursor,tablename):
     except psy.ProgrammingError, ex:
         print 'Error deleting table {name}'.format(name=tablename)
 
-def delete_all_tables(connection,cursor,config_dict):
+def delete_all_tables(connection,cursor,config_obj):
     print 'deleting tables'
-    tabledict = config_dict['tables']
+    tabledict = dict(config_obj.items('database_tables'))
     for table in tabledict:
         name = tabledict[table]
         delete_table(connection,cursor,name)
 
-def index_json_columns(connection,cursor,config_dict):
+def index_json_columns(connection,cursor,config_obj):
     #print "creating GIN index on JSONB columns in TREE and STUDY tables"
     try:
         # STUDY INDEX
-        STUDYGININDEX=config_dict['studyginindex']
-        STUDYTABLE = config_dict['tables']['studytable']
-        sqlstring = ('CREATE INDEX {indexname} on {tablename} '
+        STUDYTABLE = config_obj.get('database_tables','studytable')
+        sqlstring = ('CREATE INDEX study_ix_jsondata_gin on {tablename} '
             'USING gin({column});'
-            .format(indexname=STUDYGININDEX,tablename=STUDYTABLE,column='data'))
+            .format(tablename=STUDYTABLE,column='data'))
         cursor.execute(sqlstring)
         connection.commit()
         # TREE INDEX
-        TREEGININDEX=config_dict['treeginindex']
-        TREETABLE = config_dict['tables']['treetable']
-        sqlstring = ('CREATE INDEX {indexname} on {tablename} '
+        TREETABLE = config_obj.get('database_tables','treetable')
+        sqlstring = ('CREATE INDEX tree_ix_jsondata_gin on {tablename} '
             'USING gin({column});'
-            .format(indexname=TREEGININDEX,tablename=TREETABLE,column='data'))
+            .format(tablename=TREETABLE,column='data'))
         cursor.execute(sqlstring)
         connection.commit()
     except psy.ProgrammingError, ex:
@@ -215,20 +215,17 @@ def index_json_columns(connection,cursor,config_dict):
 def import_csv_file(connection,cursor,table,filename):
     print "copying {f} into {t} table".format(f=filename,t=table)
     with open (filename,'r') as f:
-        copystring="COPY {t} FROM STDIN WITH CSV HEADER".format(t=table)
+        copystring="COPY {t}  FROM STDIN WITH CSV HEADER".format(t=table)
         cursor.copy_expert(copystring,f)
         connection.commit()
 
-# Config file contains these variables
-# connection_info:
-#   dbname, user
-# tables:
-#   curatorstudytable, otutable, curatortable, treetable, studytable
-# ginindex:
+# Config file contains these sections
+#  connection_info
+#  tables
 def read_config(configfile):
-    with open(configfile,'r') as f:
-        config_dict = yaml.safe_load(f)
-        return config_dict
+    config_obj = ConfigParser.SafeConfigParser()
+    config_obj.read(configfile)
+    return config_obj
 
 def table_exists(cursor, tablename):
     sqlstring = ("SELECT EXISTS (SELECT 1 "
@@ -240,16 +237,11 @@ def table_exists(cursor, tablename):
     cursor.execute(sqlstring)
     return cursor.fetchone()[0]
 
-# TODO: need to hook this in, probably through config file
-# def get_logger(name='otindex'):
-#     logger = logging.getLogger(name)
-#     logger.basicConfig(filename='setup_db.log',level=logging.INFO)
-
 if __name__ == "__main__":
     # get command line argument (option to delete tables and start over)
     parser = argparse.ArgumentParser(description='set up database tables')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
 
     parser.add_argument('-d',
@@ -261,16 +253,16 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    config_dict = read_config(args.configfile)
-    connection, cursor = connect(config_dict)
+    config_obj = read_config(args.configfile)
+    connection, cursor = connect(config_obj)
 
     if connection != None:
         try:
             if (args.delete_tables):
-                delete_all_tables(connection,cursor,config_dict)
-                create_all_tables(connection,cursor,config_dict)
+                delete_all_tables(connection,cursor,config_obj)
+                create_all_tables(connection,cursor,config_obj)
             else:
-                clear_tables(connection,cursor,config_dict)
+                clear_tables(connection,cursor,config_obj)
         except psy.Error as e:
             print e.pgerror
 

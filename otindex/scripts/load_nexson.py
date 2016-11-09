@@ -40,14 +40,14 @@ def to_unicode(text):
 
 # iterate over curators, adding curators to curator table and the
 # who-curated-what relationship to study-curator-map
-def insert_curators(connection,cursor,config_dict,study_id,curators):
+def insert_curators(connection,cursor,config_obj,study_id,curators):
     _LOG.debug(u'Loading {n} curators for study {s}'.format(
         n=len(curators),
         s=study_id)
         )
     try:
-        CURATORTABLE = config_dict['tables']['curatortable']
-        CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
+        CURATORTABLE = config_obj.get('database_tables','curatortable')
+        CURATORSTUDYTABLE = config_obj.get('database_tables','curatorstudytable')
         for name in curators:
             name = to_unicode(name)
             _LOG.debug(u'Loading curator {c}'.format(c=name))
@@ -116,7 +116,7 @@ def load_properties(connection,cursor,prop_table,study_props,tree_props):
         connection.commit()
 
 # iterate over phylesystem nexsons and import
-def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
+def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
     counter = 0
     study_properties = set()
     tree_properties = set()
@@ -125,7 +125,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         #print 'STUDY: ',study_id
         study_properties.update(nexml.keys())
         # study data for study table
-        STUDYTABLE = config_dict['tables']['studytable']
+        STUDYTABLE = config_obj.get('database_tables','studytable')
         year = nexml.get('^ot:studyYear')
         proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
         if proposedTrees is None:
@@ -170,12 +170,12 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             curators=c
         # remove duplicates
         curators = list(set(curators))
-        insert_curators(connection,cursor,config_dict,study_id,curators)
+        insert_curators(connection,cursor,config_obj,study_id,curators)
 
         # iterate over trees and insert tree data
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
-        TREETABLE = config_dict['tables']['treetable']
+        TREETABLE = config_obj.get('database_tables','treetable')
         ntrees = 0
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
@@ -228,7 +228,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             break
 
     # load the tree and study properties
-    PROPERTYTABLE = config_dict['tables']['propertytable']
+    PROPERTYTABLE = config_obj.get('database_tables','propertytable')
     load_properties(
         connection,
         cursor,
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     # get command line argument (nstudies to import)
     parser = argparse.ArgumentParser(description='load nexsons into postgres')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
     parser.add_argument('-n',
         dest='nstudies',
@@ -250,22 +250,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # read config variables
-    config_dict={}
-    with open(args.configfile,'r') as f:
-        config_dict = yaml.safe_load(f)
-
-    connection, cursor = setup_db.connect(config_dict)
+    config_obj = setup_db.read_config(args.configfile)
+    connection, cursor = setup_db.connect(config_obj)
 
     # test that tables exist
-    # and clear data
+    # and clear data, except taxonomy table
     try:
-        tabledict = config_dict['tables']
+        tabledict = dict(config_obj.items('database_tables'))
         for table in tabledict:
+            # skip the taxonomy table, which does note get loaded here
+            if table == "otttable":
+                continue
             name = tabledict[table]
-            if not setup_db.table_exists(cursor,name):
+            if setup_db.table_exists(cursor,name):
+                setup_db.clear_single_table(connection,cursor,name)
+            else:
                 raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
-        setup_db.clear_tables(connection,cursor,config_dict)
-        setup_db.clear_gin_index(connection,cursor,config_dict)
+        setup_db.clear_gin_index(connection,cursor)
         print "done clearing tables and index"
     except psy.Error as e:
         print e.pgerror
@@ -277,13 +278,13 @@ if __name__ == "__main__":
         phy = create_phylesystem_obj()
         print "loading nexsons"
         if (args.nstudies):
-            load_nexsons(connection,cursor,phy,config_dict,args.nstudies)
+            load_nexsons(connection,cursor,phy,config_obj,args.nstudies)
         else:
-            load_nexsons(connection,cursor,phy,config_dict)
+            load_nexsons(connection,cursor,phy,config_obj)
         endtime = dt.datetime.now()
         print "Load time: ",endtime - starttime
         print "indexing JSONB columns in tree and study table"
-        setup_db.index_json_columns(connection,cursor,config_dict)
+        setup_db.index_json_columns(connection,cursor,config_obj)
     except psy.Error as e:
         print e.pgerror
     connection.close()

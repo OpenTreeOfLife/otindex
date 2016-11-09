@@ -143,7 +143,8 @@ class Taxonomy(Base):
 # )
 class Synonym(Base):
     __tablename__='synonym'
-    id = Column(Integer,ForeignKey("taxonomy.id"),primary_key=True)
+    id = Column(Integer,primary_key=True)
+    ott_id = Column(Integer,ForeignKey("taxonomy.id"))
     synonym = Column(String)
 
 # property table

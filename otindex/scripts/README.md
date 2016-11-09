@@ -39,24 +39,18 @@ The methods in `setup_db.py` call SQL `CREATE TABLE` directly using psycopg2.
 These methods are leftover from early development of the database schema, and it
 is possible that the CREATE statements may drift from the table definitions in
 `models.py` over time. Use at your own risk (and if you get errors, change the
-table defs here, not in models.py).
+table defs in `setup_db.py` to match `models.py`, not the other way around).
 
 ## Loading data
-
-To load data into the database:
-
-* `config.yml`: YAML file with database settings, including table names.
-* `run_setup_scripts.sh`: bash script that runs the setup python files listed below. Takes as arguments a config file (required) and an integer (optional) that is the number of studies to load (default = load whole phylesystem)
-* `setup_db.py`: creates DB tables if do not already exist; optionally deleting them all first
-* `load_nexson.py`: loads the nexson files into the database and creates the JSON index
-* `load_taxonomy.py`: loads the taxonomy files into the database
-* `create\_otu\_table.py`: generates a csv file of otu-tree relationships and then loads this using the COPY command
-* `test_db_selects.py`: does a few simple selects on study and tree table
 
 To run all of the data load steps:
       `$ bash run_setup_scripts.sh config.yml {n}`
 
-where n = number studies (optional; default is load all).
+where n = number studies (optional; default is load all). Note that this method
+only clears existing tables, it does not re-create them. If you want to create
+the tables (noting that you should really do this using the
+`initialize_otindex_db` script, see above) then you will need to run the steps
+individually.
 
 Or, you can run the steps individually:
 
