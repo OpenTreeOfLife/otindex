@@ -6,6 +6,7 @@ from peyotl.api.phylesystem_api import PhylesystemAPI
 from peyotl.phylesystem.phylesystem_umbrella import Phylesystem
 from peyotl import gen_otu_dict, iter_node
 from peyotl.manip import iter_trees
+from peyotl import get_logger
 
 import setup_db
 
@@ -15,6 +16,8 @@ import yaml
 import csv
 
 import peyotl.ott as ott
+
+_LOG = get_logger()
 
 def create_phylesystem_obj():
     # create connection to local phylesystem
@@ -28,6 +31,7 @@ def getTreeID(cursor,study_id,tree_id):
         .format(tablename='tree')
         )
     data = (study_id,tree_id)
+    _LOG.debug(u'SQL: {p}'.format(p=cursor.mogrify(sqlstring,(data))))
     #print '  SQL: ',cursor.mogrify(sqlstring,data)
     cursor.execute(sqlstring,data)
     result = cursor.fetchone()
@@ -46,7 +50,7 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
 
     with open(tree_otu_filename, 'w') as g:
         gwriter = csv.writer(g)
-        # datafile format is 'ottid'\t'treeid' where treeid is not
+        # datafile format is 'tree_id \t ottid' where treeid is not
         # the treeid (string) in the nexson, but the treeid (int) from
         # the database for faster indexing
         counter = 0
@@ -82,7 +86,7 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
                                 skipped_otus.add(ottID)
                 ottIDs = parent_closure(ottIDs,taxonomy)
                 for ottID in ottIDs:
-                    gwriter.writerow((tree_int_id,ottID))
+                    gwriter.writerow((ottID,tree_int_id))
 
             counter+=1
             if (counter%500 == 0):
@@ -90,7 +94,7 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
             if (nstudies and counter>=nstudies):
                 g.close()
                 break
-    print "skipped {s} mapped OTUs not in OTT".format(s=len(skipped_otus))
+    print "Skipped {s} mapped OTUs not in OTT".format(s=len(skipped_otus))
     return tree_otu_filename
 
 def parent_closure(ottIDs,taxonomy):
@@ -133,6 +137,7 @@ if __name__ == "__main__":
 
     # load taxonomy; location from peyotl config
     taxonomy = ott.OTT()
+    print "Using OTT version {v}".format(v=taxonomy.version)
     connection, cursor = setup_db.connect(config_obj)
     phy = create_phylesystem_obj()
     try:
