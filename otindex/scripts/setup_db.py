@@ -143,8 +143,8 @@ def create_all_tables(connection,cursor,config_obj):
     # otu-tree table
     TREEOTUTABLE = config_obj.get('database_tables','treeotutable')
     tablestring = ('CREATE TABLE {tablename} '
-        '(tree_id int REFERENCES tree (id) ON DELETE CASCADE, '
-        'ott_id int REFERENCES taxonomy (id) ON DELETE CASCADE);'
+        '(ott_id int REFERENCES tree (id) ON DELETE CASCADE, '
+        'tree_id int REFERENCES taxonomy (id) ON DELETE CASCADE);'
         .format(tablename=TREEOTUTABLE)
         )
     create_table(connection,cursor,TREEOTUTABLE,tablestring)
