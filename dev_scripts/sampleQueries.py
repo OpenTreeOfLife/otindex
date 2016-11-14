@@ -75,7 +75,7 @@ def query_association_table(session):
     #     ).all()
     # for row in query_obj:
     #     print row.id
-    property_value = '511967'
+    property_value = '81461'
     query_obj = session.query(
         Tree.study_id,
         Tree.tree_id
@@ -456,13 +456,13 @@ if __name__ == "__main__":
     try:
         # test_joins(session)
         # value_in_array(session)
-        query_int_or_string(session)
+        # query_int_or_string(session)
         # basic_jsonb_query(session)
         # query_fulltext(session)
         # query_trees_by_study_id(session,'ot_55')
         # all_tags(session)
         #recursive_ott_query(691846,session)
-        #query_association_table(session)
+        query_association_table(session)
         # print "study props:"
         # query_properties(session,'study')
         # print "tree props:"
