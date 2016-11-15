@@ -24,6 +24,15 @@ from peyotl import get_logger
 
 _LOG = get_logger()
 
+# creates an empty file once phylesystem loaded
+# used during ansible deployment to determine whether data loaded
+def create_status_file():
+    try:
+        with open('.phylesystem', 'w+') as f:
+            pass
+    except IOError as (errno,strerror):
+        print "I/O error({0}): {1}".format(errno, strerror)
+
 def create_phylesystem_obj():
     # create connection to local phylesystem
     phylesystem_api_wrapper = PhylesystemAPI(get_from='local')
@@ -285,6 +294,7 @@ if __name__ == "__main__":
         print "Load time: ",endtime - starttime
         print "indexing JSONB columns in tree and study table"
         setup_db.index_json_columns(connection,cursor,config_obj)
+        create_status_file()
     except psy.Error as e:
         print e.pgerror
     connection.close()
