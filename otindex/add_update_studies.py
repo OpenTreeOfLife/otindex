@@ -164,9 +164,6 @@ def deleteOrphanedCurators(study_id):
                     Curator.id==curator_id
                 ).one()
             )
-        else:
-            _LOG.debug("no orphaned curators for study {s}".format(s=study_id))
-
 
 # should only be called after determining that study exists
 def delete_study(study_id):
@@ -176,6 +173,7 @@ def delete_study(study_id):
     # check for to-be-orphaned curators
     deleteOrphanedCurators(study_id)
     DBSession.delete(study)
+    DBSession.flush()
 
 # get the lineage from this ID back to the root node
 def get_lineage(ott_id):
@@ -250,8 +248,6 @@ def update_study(studyid):
         # delete if already exists
         if (study_exists(study_id)):
             delete_study(study_id)
-            # need to flush here before re-adding updated study
-            DBSession.flush()
         #with DBSession.no_autoflush:
         add_study(study_id)
     except Exception:
