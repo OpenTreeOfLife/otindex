@@ -134,9 +134,12 @@ class Taxonomy(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String,nullable=False)
     parent = Column(Integer)
+    # many-to-many relationship with trees
     trees = relationship('Tree',
         secondary=tree_otu_table,
         back_populates='otus')
+    # one-to-many relationship with synonyms
+    synonyms = relationship("Synonym", back_populates="taxon")
 
 # synonym table
 # tablestring = ('CREATE TABLE {tablename} '
@@ -149,6 +152,8 @@ class Synonym(Base):
     id = Column(Integer,primary_key=True)
     ott_id = Column(Integer,ForeignKey("taxonomy.id"))
     synonym = Column(String)
+    # many-to-one relationship with Taxonomy
+    taxon = relationship("Taxonomy", back_populates="synonyms")
 
 # property table
 # tablestring = ('CREATE TABLE {tablename} '
