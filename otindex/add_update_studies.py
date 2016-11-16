@@ -225,7 +225,7 @@ def remove_study(studyid):
     except HTTPNotFound:
         raise
     if study_exists(study_id):
-        _LOG.debug("deleting study {s}".format(s=study_id))
+        _LOG.debug("removing study {s}".format(s=study_id))
         delete_study(study_id)
     else:
         _LOG.debug("did not find study {s} in database; cannot delete".format(s=study_id))

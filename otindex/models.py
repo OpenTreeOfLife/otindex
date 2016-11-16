@@ -63,7 +63,8 @@ class Study(Base):
     ntrees = Column(Integer)
     treebase_id = Column(String)
     data = Column(JSONB)
-    #trees = relationship('Tree',backref='study')
+    # one-to-many relationship with Tree
+    trees = relationship("Tree", back_populates="study")
     # many-to-many study<-->curator relationship
     curators = relationship('Curator',
         secondary=curator_study_table,
@@ -92,6 +93,8 @@ class Tree(Base):
     tree_id = Column(String, nullable=False)
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    # many-to-one relationship with Study
+    study = relationship("Study", back_populates="trees")
     ntips = Column(Integer)
     proposed = Column(Boolean)
     # many-to-many tree<-->otu relationship
