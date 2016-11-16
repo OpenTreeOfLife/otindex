@@ -29,7 +29,9 @@ print "starting studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
 
 ############################
 # 1. remove a study
-p = { 'studies' : [ "ot_688" ] }
+# If you change the study number, pick a study that exists in both
+# development and production phylesystems
+p = { 'studies' : [ "pg_100" ] }
 SUBMIT_URI = CONTROLLER + '/remove'
 r = test_http_json_method(SUBMIT_URI,
                           'POST',

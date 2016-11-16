@@ -28,8 +28,9 @@ print "starting studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
 )
 
 # update a study
-# study_id = 'ot_688'
-p = {'studies':["ot_688","ot_535"]}
+# If you change the list of study ids, pick studies that exists in both
+# development and production phylesystems
+p = {'studies':["pg_100","ot_535"]}
 SUBMIT_URI = CONTROLLER + '/add_update'
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
