@@ -173,8 +173,10 @@ def add_update_studies(request):
             try:
                 aus.update_study(study)
                 updated_studies.append(study)
+                _LOG.debug('updated study {s}'.format(s=study)
             except:
                 failed_studies.append(study)
+                _LOG.debug('failed to update study {s}'.format(s=study)
         results = {
             "failed_studies" : failed_studies,
             "updated_studies" : updated_studies
@@ -196,8 +198,10 @@ def remove_studies(request):
             try:
                 aus.remove_study(study)
                 updated_studies.append(study)
+                _LOG.debug('removed study {s}'.format(s=study)
             except:
                 failed_studies.append(study)
+                _LOG.debug('failed to remove study {s}'.format(s=study)
         results = {
             "failed_studies" : failed_studies,
             "updated_studies" : updated_studies
