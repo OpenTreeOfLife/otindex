@@ -64,7 +64,9 @@ class Study(Base):
     treebase_id = Column(String)
     data = Column(JSONB)
     # one-to-many relationship with Tree
-    trees = relationship("Tree", back_populates="study")
+    trees = relationship("Tree",
+        back_populates="study",
+        cascade="all, delete-orphan")
     # many-to-many study<-->curator relationship
     curators = relationship('Curator',
         secondary=curator_study_table,
@@ -139,7 +141,7 @@ class Taxonomy(Base):
         secondary=tree_otu_table,
         back_populates='otus')
     # one-to-many relationship with synonyms
-    synonyms = relationship("Synonym", back_populates="taxon")
+    synonyms = relationship("Synonym", back_populates="taxon",cascade="all, delete-orphan")
 
 # synonym table
 # tablestring = ('CREATE TABLE {tablename} '
