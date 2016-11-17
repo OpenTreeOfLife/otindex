@@ -5,10 +5,13 @@ DOMAIN = config('host', 'apihost')
 CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/find_studies'
 
+
 ################################################
+# find study matching focal clade, using verbose = False
+# ott765193 = Anatidae
 p = {'verbose': False,
-     'property': 'ot:studyPublicationReference',
-     'value': 'Smith'}
+     'property': 'ot:focalClade',
+     'value': '765193'}
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,

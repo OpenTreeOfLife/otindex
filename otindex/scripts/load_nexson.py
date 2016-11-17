@@ -19,6 +19,18 @@ from peyotl.api.phylesystem_api import PhylesystemAPI
 from peyotl.manip import iter_trees
 from peyotl import gen_otu_dict, iter_node
 from peyotl.nexson_syntax import get_nexml_el
+from peyotl import get_logger
+
+_LOG = get_logger()
+
+# creates an empty file once phylesystem loaded
+# used during ansible deployment to determine whether data loaded
+def create_status_file():
+    try:
+        with open('.phylesystem', 'w+') as f:
+            pass
+    except IOError as (errno,strerror):
+        print "I/O error({0}): {1}".format(errno, strerror)
 
 def create_phylesystem_obj():
     # create connection to local phylesystem
@@ -26,36 +38,27 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
-# create the JSON GIN indexes
-# def index_json_columns(connection,cursor,config_dict):
-#     try:
-#         # STUDY INDEX
-#         STUDYGININDEX=config_dict['studyginindex']
-#         STUDYTABLE = config_dict['tables']['studytable']
-#         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
-#             'USING gin({column});'
-#             .format(indexname=STUDYGININDEX,tablename=STUDYTABLE,column='data'))
-#         cursor.execute(sqlstring)
-#         connection.commit()
-#         # TREE INDEX
-#         TREEGININDEX=config_dict['treeginindex']
-#         TREETABLE = config_dict['tables']['treetable']
-#         sqlstring = ('CREATE INDEX {indexname} on {tablename} '
-#             'USING gin({column});'
-#             .format(indexname=TREEGININDEX,tablename=TREETABLE,column='data'))
-#         cursor.execute(sqlstring)
-#         connection.commit()
-#     except psy.Error as e:
-#         print 'Error creating GIN index'
-#         print e.pgerror
+# Either convert a string to unicode, or returns an
+# already-unicode string. Used for curator names.
+def to_unicode(text):
+    try:
+        text = unicode(text, 'utf-8')
+    except TypeError:
+        return text
 
 # iterate over curators, adding curators to curator table and the
 # who-curated-what relationship to study-curator-map
-def insert_curators(connection,cursor,config_dict,study_id,curators):
+def insert_curators(connection,cursor,config_obj,study_id,curators):
+    _LOG.debug(u'Loading {n} curators for study {s}'.format(
+        n=len(curators),
+        s=study_id)
+        )
     try:
-        CURATORTABLE = config_dict['tables']['curatortable']
-        CURATORSTUDYTABLE = config_dict['tables']['curatorstudytable']
+        CURATORTABLE = config_obj.get('database_tables','curatortable')
+        CURATORSTUDYTABLE = config_obj.get('database_tables','curatorstudytable')
         for name in curators:
+            name = to_unicode(name)
+            _LOG.debug(u'Loading curator {c}'.format(c=name))
             # check to make sure this curator name doesn't exist already
             sqlstring = ('SELECT id FROM {tablename} '
                 'WHERE name=%s;'
@@ -72,7 +75,7 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
                     .format(tablename=CURATORTABLE)
                     )
                 data = (name)
-                #print '  SQL: ',cursor.mogrify(sqlstring,(data,))
+                _LOG.debug('SQL: {p}'.format(p=cursor.mogrify(sqlstring,(data,))))
                 cursor.execute(sqlstring,(data,))
                 curator_id = cursor.fetchone()
 
@@ -82,7 +85,7 @@ def insert_curators(connection,cursor,config_dict,study_id,curators):
                 .format(tablename=CURATORSTUDYTABLE)
                 )
             data = (curator_id,study_id)
-            #print '  SQL: ',cursor.mogrify(sqlstring,data)
+            _LOG.debug(u'SQL: {p}'.format(p=cursor.mogrify(sqlstring,(data))))
             cursor.execute(sqlstring,data)
         connection.commit()
     except psy.ProgrammingError, ex:
@@ -102,7 +105,7 @@ def load_properties(connection,cursor,prop_table,study_props,tree_props):
             .format(t=prop_table)
         )
         data = (p,prefix,'study')
-        #print '  SQL: ',cursor.mogrify(sqlstring)
+        _LOG.debug(u'SQL: {s}'.format(s=cursor.mogrify(sqlstring,(data))))
         cursor.execute(sqlstring,data)
         connection.commit()
 
@@ -121,7 +124,7 @@ def load_properties(connection,cursor,prop_table,study_props,tree_props):
         connection.commit()
 
 # iterate over phylesystem nexsons and import
-def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
+def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
     counter = 0
     study_properties = set()
     tree_properties = set()
@@ -130,7 +133,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
         #print 'STUDY: ',study_id
         study_properties.update(nexml.keys())
         # study data for study table
-        STUDYTABLE = config_dict['tables']['studytable']
+        STUDYTABLE = config_obj.get('database_tables','studytable')
         year = nexml.get('^ot:studyYear')
         proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
         if proposedTrees is None:
@@ -173,12 +176,14 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             curators.append(c)
         else:
             curators=c
-        insert_curators(connection,cursor,config_dict,study_id,curators)
+        # remove duplicates
+        curators = list(set(curators))
+        insert_curators(connection,cursor,config_obj,study_id,curators)
 
         # iterate over trees and insert tree data
         # note that OTU data done separately as COPY
         # due to size of table (see script <scriptname>)
-        TREETABLE = config_dict['tables']['treetable']
+        TREETABLE = config_obj.get('database_tables','treetable')
         ntrees = 0
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
@@ -231,7 +236,7 @@ def load_nexsons(connection,cursor,phy,config_dict,nstudies=None):
             break
 
     # load the tree and study properties
-    PROPERTYTABLE = config_dict['tables']['propertytable']
+    PROPERTYTABLE = config_obj.get('database_tables','propertytable')
     load_properties(
         connection,
         cursor,
@@ -243,7 +248,7 @@ if __name__ == "__main__":
     # get command line argument (nstudies to import)
     parser = argparse.ArgumentParser(description='load nexsons into postgres')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
     parser.add_argument('-n',
         dest='nstudies',
@@ -253,22 +258,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # read config variables
-    config_dict={}
-    with open(args.configfile,'r') as f:
-        config_dict = yaml.safe_load(f)
-
-    connection, cursor = setup_db.connect(config_dict)
+    config_obj = setup_db.read_config(args.configfile)
+    connection, cursor = setup_db.connect(config_obj)
 
     # test that tables exist
-    # and clear data
+    # and clear data, except taxonomy table
     try:
-        tabledict = config_dict['tables']
+        tabledict = dict(config_obj.items('database_tables'))
         for table in tabledict:
+            # skip the taxonomy table, which does note get loaded here
+            if table == "otttable":
+                continue
             name = tabledict[table]
-            if not setup_db.table_exists(cursor,name):
+            if setup_db.table_exists(cursor,name):
+                setup_db.clear_single_table(connection,cursor,name)
+            else:
                 raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
-        setup_db.clear_tables(connection,cursor,config_dict)
-        setup_db.clear_gin_index(connection,cursor,config_dict)
+        setup_db.clear_gin_index(connection,cursor)
         print "done clearing tables and index"
     except psy.Error as e:
         print e.pgerror
@@ -280,13 +286,14 @@ if __name__ == "__main__":
         phy = create_phylesystem_obj()
         print "loading nexsons"
         if (args.nstudies):
-            load_nexsons(connection,cursor,phy,config_dict,args.nstudies)
+            load_nexsons(connection,cursor,phy,config_obj,args.nstudies)
         else:
-            load_nexsons(connection,cursor,phy,config_dict)
+            load_nexsons(connection,cursor,phy,config_obj)
         endtime = dt.datetime.now()
         print "Load time: ",endtime - starttime
         print "indexing JSONB columns in tree and study table"
-        setup_db.index_json_columns(connection,cursor,config_dict)
+        setup_db.index_json_columns(connection,cursor,config_obj)
+        create_status_file()
     except psy.Error as e:
         print e.pgerror
     connection.close()

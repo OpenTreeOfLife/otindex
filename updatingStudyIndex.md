@@ -8,7 +8,7 @@ The current (as of August 2016) procedure:
 * The modifications get saved as commits to the [phylesystem-1](https://github.com/OpenTreeOfLife/phylesystem-1) repo
 * a GitHub commit hook calls `https://api.opentreeoflife.org/phylesystem/search/nudgeStudyIndexOnUpdates`. The payload includes the details of the commit.
 * that call is handled by [phylesystem-api](https://github.com/OpenTreeOfLife/phylesystem-api), specifically the [nudgeStudyIndexOnUpdates method](https://github.com/OpenTreeOfLife/phylesystem-api/blob/56a0f3d531fb3e99a25f2cf4db65aad460d77806/controllers/search.py#L49), which bundles of up the list(s) of added, deleted, and modified study IDs, and calls OTI.
-* the OTI method [indexNexsons](https://github.com/OpenTreeOfLife/oti/blob/c4c83101edef0748b72af90e6ef20e76fab5d8eb/src/main/java/org/opentree/oti/plugins/IndexServices.java#L87) handles the call for additions and deletions and [unindexNexsons](https://github.com/OpenTreeOfLife/oti/blob/c4c83101edef0748b72af90e6ef20e76fab5d8eb/src/main/java/org/opentree/oti/plugins/IndexServices.java#L133) handles deletions, both modifying the database as needed
+* the OTI method [indexNexsons](https://github.com/OpenTreeOfLife/oti/blob/c4c83101edef0748b72af90e6ef20e76fab5d8eb/src/main/java/org/opentree/oti/plugins/IndexServices.java#L87) handles the call for additions and modifications and [unindexNexsons](https://github.com/OpenTreeOfLife/oti/blob/c4c83101edef0748b72af90e6ef20e76fab5d8eb/src/main/java/org/opentree/oti/plugins/IndexServices.java#L133) handles deletions, both modifying the database as needed
 
 Sample call from phylesystem-api to oti:
 

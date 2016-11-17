@@ -12,7 +12,6 @@ import simplejson as json
 import sqlalchemy
 import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
-from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
@@ -103,7 +102,7 @@ def get_study_return_props(studyid,studydict):
 
 # get the list of searchable properties
 # v3 list pruned down to only those implemented in v3
-def get_tree_property_list(version=3):
+def get_tree_property_list():
     properties = []
     query_obj = DBSession.query(Property.property).filter(
         Property.type=='tree'
@@ -114,7 +113,7 @@ def get_tree_property_list(version=3):
     properties.append('ot:ottId')
     properties.append('ot:studyId')
     properties.append("ntips")
-    properties.append("proposed")
+    #properties.append("proposed")
     return properties
 
 # returns an (unfiltered) tree query object with either the set of
@@ -163,7 +162,7 @@ def query_trees_by_tag(query_obj,property_value):
     return filtered
 
 def query_fulltext(query_obj,property_type,property_value):
-     property_type = '^'+property_type
+     property_type = get_prop_with_prefix(property_type)
      # add wildcards to the property_value
      property_value = '%'+property_value+'%'
      filtered = query_obj.filter(
@@ -172,16 +171,6 @@ def query_fulltext(query_obj,property_type,property_value):
          ].astext.ilike(property_value)
      )
      return filtered
-
-# # find studies in cases where the property_value is an int
-# def query_studies_by_integer_values(query_obj,property_type,property_value):
-#     property_type = '^'+property_type
-#     filtered = query_obj.filter(
-#         Study.data[
-#             (property_type)
-#         ].cast(sqlalchemy.Integer) == property_value
-#         )
-#     return filtered
 
 def build_json_response(filtered,verbose):
     resultslist = []
@@ -214,11 +203,15 @@ def query_trees(verbose,property_type,property_value):
     query_obj = get_tree_query_object(verbose)
     filtered = None
 
-    # study id is straightforward
+    # study id is straightforward; is table column
     if property_type == "ot:studyId":
         filtered = query_obj.filter(Tree.study_id == property_value)
 
-    # as is candidateForSynthesis
+    # ntips is a table column
+    elif property_type == "ntips":
+        filtered = query_obj.filter(Tree.ntips == property_value)
+
+    # as is candidateForSynthesis - mapped to proposed
     elif property_type == "ot:candidateTreeForSynthesis":
         filtered = query_obj.filter(Tree.proposed == property_value)
 
@@ -234,9 +227,6 @@ def query_trees(verbose,property_type,property_value):
 
     elif property_type == "ot:ottId":
         filtered = query_trees_by_ott_id(query_obj,property_value)
-
-    elif property_type == "ot:treebaseTreeId":
-        filtered = query_obj.filter(Tree.treebase_id == property_value)
 
     # tag is a list
     elif property_type == "ot:tag":

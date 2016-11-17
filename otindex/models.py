@@ -63,7 +63,10 @@ class Study(Base):
     ntrees = Column(Integer)
     treebase_id = Column(String)
     data = Column(JSONB)
-    #trees = relationship('Tree',backref='study')
+    # one-to-many relationship with Tree
+    trees = relationship("Tree",
+        back_populates="study",
+        cascade="all, delete-orphan")
     # many-to-many study<-->curator relationship
     curators = relationship('Curator',
         secondary=curator_study_table,
@@ -92,6 +95,8 @@ class Tree(Base):
     tree_id = Column(String, nullable=False)
     data = Column(JSONB)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    # many-to-one relationship with Study
+    study = relationship("Study", back_populates="trees")
     ntips = Column(Integer)
     proposed = Column(Boolean)
     # many-to-many tree<-->otu relationship
@@ -131,9 +136,12 @@ class Taxonomy(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String,nullable=False)
     parent = Column(Integer)
+    # many-to-many relationship with trees
     trees = relationship('Tree',
         secondary=tree_otu_table,
         back_populates='otus')
+    # one-to-many relationship with synonyms
+    synonyms = relationship("Synonym", back_populates="taxon",cascade="all, delete-orphan")
 
 # synonym table
 # tablestring = ('CREATE TABLE {tablename} '
@@ -143,8 +151,11 @@ class Taxonomy(Base):
 # )
 class Synonym(Base):
     __tablename__='synonym'
-    id = Column(Integer,ForeignKey("taxonomy.id"),primary_key=True)
+    id = Column(Integer,primary_key=True)
+    ott_id = Column(Integer,ForeignKey("taxonomy.id"))
     synonym = Column(String)
+    # many-to-one relationship with Taxonomy
+    taxon = relationship("Taxonomy", back_populates="synonyms")
 
 # property table
 # tablestring = ('CREATE TABLE {tablename} '
@@ -162,5 +173,5 @@ class Property(Base):
         )
     id = Column(Integer,primary_key=True)
     property = Column(String, nullable=False)
-    prefix = Column(String, nullable=False)
+    prefix = Column(String)
     type = Column(String, nullable=False)

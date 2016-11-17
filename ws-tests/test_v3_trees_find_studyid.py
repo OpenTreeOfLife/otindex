@@ -9,7 +9,7 @@ SUBMIT_URI = CONTROLLER + '/find_trees'
 # find trees for given studyId, using verbose = False
 p = {'verbose': False,
      'property': 'ot:studyId',
-     'value': 'ot_371'}
+     'value': 'pg_1010'}
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,
@@ -30,7 +30,7 @@ assert json_result[top_level_key][0].keys() == ['ot:studyId','matched_trees']
 # find trees for given studyId, using verbose = True
 p = {'verbose': True,
      'property': 'ot:studyId',
-     'value': 'ot_371'}
+     'value': 'pg_1010'}
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,

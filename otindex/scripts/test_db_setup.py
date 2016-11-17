@@ -7,13 +7,13 @@ import unittest
 
 class TestDatabaseSetup():
     def __init__(self):
-        self.config_dict = {}
+        self.config_obj = {}
         self.connection_tuple = ()
 
     def setUp(self):
         # read config file
-        self.config_dict = setup_db.read_config('config.yml')
-        self.connection_tuple = setup_db.connect(self.config_dict)
+        self.config_obj = setup_db.read_config('../../development.ini')
+        self.connection_tuple = setup_db.connect(self.config_obj)
 
     def tearDown(self):
         connection,cursor = self.connection_tuple

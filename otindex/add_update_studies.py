@@ -23,10 +23,12 @@ def add_study(study_id):
     _LOG.debug('adding study {s}'.format(s=study_id))
 
     # get latest version of nexson
+    # location of repo (test vs dev) dependent on peyotl config
     phy = create_phylesystem_obj()
     try:
         studyobj = phy.get_study(study_id)['data']
     except:
+        _LOG.debug('did not find study {s} in phylesystem'.format(s=study_id))
         raise HTTPNotFound("Study {s} not found in phylesystem".format(s=study_id))
     nexml = get_nexml_el(studyobj)
     proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
@@ -156,26 +158,22 @@ def deleteOrphanedCurators(study_id):
         )
         # if there is only one study edited by this curator
         if (studies.count()==1):
-            print "deleting curator {i}".format(i=curator_id)
+            _LOG.debug("deleting orphan curator {i} for study {s}".format(i=curator_id,s=study_id))
             DBSession.delete(
                 DBSession.query(Curator).filter(
                     Curator.id==curator_id
                 ).one()
             )
 
+# should only be called after determining that study exists
 def delete_study(study_id):
     study = DBSession.query(Study).filter(
         Study.id == study_id
     ).first()
-    if (study):
-        print "deleting study {s}".format(s=study_id)
-        # check for to-be-orphaned curators
-        deleteOrphanedCurators(study_id)
-        DBSession.delete(study)
-        # need to flush here before re-adding updated study
-        DBSession.flush()
-    else:
-        raise HTTPNotFound("study id {s} not found".format(s=study_id))
+    # check for to-be-orphaned curators
+    deleteOrphanedCurators(study_id)
+    DBSession.delete(study)
+    DBSession.flush()
 
 # get the lineage from this ID back to the root node
 def get_lineage(ott_id):
@@ -220,15 +218,20 @@ def get_study_id_from_url(url):
 
 # called directly by view add_update_studies_v3
 def remove_study(studyid):
+    study_id = studyid
     try:
-        study_id = studyid
         if studyid.startswith('http'):
             study_id = get_study_id_from_url(studyid)
+    except HTTPNotFound:
+        raise
+    if study_exists(study_id):
         _LOG.debug("removing study {s}".format(s=study_id))
         delete_study(study_id)
-    except Exception as e:
-        raise
+    else:
+        _LOG.debug("did not find study {s} in database; cannot delete".format(s=study_id))
+        raise HTTPNotFound("study {s} not found in database".format(s=study_id))
 
+# check if study exists in DB
 def study_exists(study_id):
     study = DBSession.query(Study.id).filter(Study.id==study_id).first()
     if study:
@@ -242,10 +245,10 @@ def update_study(studyid):
         study_id = studyid
         if studyid.startswith('http'):
             study_id = get_study_id_from_url(studyid)
-        _LOG.debug("adding / updating study {s}".format(s=study_id))
+        # delete if already exists
         if (study_exists(study_id)):
             delete_study(study_id)
         #with DBSession.no_autoflush:
         add_study(study_id)
-    except Exception as e:
+    except Exception:
         raise

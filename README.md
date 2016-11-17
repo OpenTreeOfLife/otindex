@@ -13,9 +13,24 @@ In progress; not production ready. Currently set up to simply use a local postgr
 
 ## Installation
 
-**Setting up the database**
-The `otindex/scripts` directory contains scripts for setting up the database
-(creating tables, loading phylesystem studies, etc). See the [README](https://github.com/OpenTreeOfLife/otindex/blob/master/otindex/scripts/README.md) file in that directory for detailed setup information.
+**Install otindex and set up the database tables**
+
+You probably want to be using a virtualenv.
+
+```
+$ pip install -r requirements.txt
+$ python setup.py develop
+$ initialize_otindex_db development.ini
+```
+where `initialize_otindex_db` is in the `bin` directory of your virtualenv.
+This last step creates the database tables defined in `models.py`. It drops any
+existing tables and re-creates them.
+
+**Load data into the database**
+The `otindex/scripts` directory contains scripts for loading data into the
+database. See the
+[README](https://github.com/OpenTreeOfLife/otindex/blob/master/otindex/scripts/README.md)
+file in that directory for detailed setup information.
 
 **Running the application**
 
@@ -23,19 +38,13 @@ Copy `development-example.ini` to `development.ini` and modify the database
 line to point to your local copy of the postgres database. Then, in the top-level
 directory, run:
 
-```
-$ pip install -r requirements.txt
-$ python setup.py develop
-$ pserve development.ini --reload
-```
+    $ pserve development.ini --reload
+
+You should now be able to access the methods on `http://0.0.0.0:6543`.
 
 **Running tests**
 
-In the ws-tests directory:
-
-```
-$ bash run_tests.sh
-```
+See TESTING.md in this repo.
 
 ## Development notes
 

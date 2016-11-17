@@ -13,3 +13,5 @@ assert r[0] is True
 k = r[1].keys()
 assert 'study_properties' in k
 assert isinstance(r[1]['tree_properties'], list)
+# print 'study props:',len(r[1]['study_properties'])
+# print 'tree props:',len(r[1]['tree_properties'])
