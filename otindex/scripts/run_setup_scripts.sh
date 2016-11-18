@@ -18,11 +18,11 @@ if [ $nstudies ]; then
     # load nexson files
     python load_nexson.py $config -n $nstudies
 
-    # load taxonomy
-    python load_taxonomy.py $config
+    # prepare taxonomy files
+    python generate_taxonomy_files.py $config
 
-    # load otu table
-    python create_otu_table.py $config -n $nstudies
+    # load taxonomy files
+    python load_taxonomy_files.py $config -n $nstudies
 
     # run some simple tests
     python test_db_selects.py $config
