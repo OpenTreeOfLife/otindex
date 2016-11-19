@@ -2,13 +2,14 @@ from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 
 import yaml
+import pprint
 
 from .models import (
     DBSession,
     Base,
     )
 
-def main(global_config, **settings):
+def otindex(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
     engine = engine_from_config(settings, 'sqlalchemy.')
@@ -28,3 +29,21 @@ def main(global_config, **settings):
 
     config.scan()
     return config.make_wsgi_app()
+
+# see http://modwsgi.readthedocs.io/en/develop/user-guides/debugging-techniques.html
+class LoggingMiddleware:
+
+    def __init__(self, otindex):
+        self.__otindex = otindex
+
+    def __call__(self, environ, start_response):
+        errors = environ['wsgi.errors']
+        pprint.pprint(('REQUEST', environ), stream=errors)
+
+        def _start_response(status, headers, *args):
+            pprint.pprint(('RESPONSE', status, headers), stream=errors)
+            return start_response(status, headers, *args)
+
+        return self.__otindex(environ, _start_response)
+
+otindex = LoggingMiddleware(otindex)
