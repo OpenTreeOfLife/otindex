@@ -1,5 +1,6 @@
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
+from paste.translogger import TransLogger
 
 import yaml
 
@@ -27,4 +28,7 @@ def main(global_config, **settings):
     config.add_route('about','v3/studies/about')
 
     config.scan()
-    return config.make_wsgi_app()
+    # return config.make_wsgi_app()
+    app = config.make_wsgi_app()
+    app = TransLogger(app, setup_console_handler=False)
+    return app
