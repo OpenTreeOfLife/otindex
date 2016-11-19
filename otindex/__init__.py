@@ -9,7 +9,7 @@ from .models import (
     Base,
     )
 
-def otindex(global_config, **settings):
+def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
     engine = engine_from_config(settings, 'sqlalchemy.')
@@ -33,8 +33,8 @@ def otindex(global_config, **settings):
 # see http://modwsgi.readthedocs.io/en/develop/user-guides/debugging-techniques.html
 class LoggingMiddleware:
 
-    def __init__(self, otindex):
-        self.__otindex = otindex
+    def __init__(self, main):
+        self.__otindex = main
 
     def __call__(self, environ, start_response):
         errors = environ['wsgi.errors']
@@ -46,4 +46,4 @@ class LoggingMiddleware:
 
         return self.__otindex(environ, _start_response)
 
-otindex = LoggingMiddleware(otindex)
+main = LoggingMiddleware(main)
