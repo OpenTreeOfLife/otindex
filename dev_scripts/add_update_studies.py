@@ -36,7 +36,7 @@ def update_study_data(session,study_id,nexson):
     study_to_update = session.query(Study).filter(Study.id==study_id).first()
 
     # delete the study
-    
+
     # # do we need to update year?
     # study_year = nexson._nexml_el['^ot:studyYear']
     # if not study_to_update.year == study_year:

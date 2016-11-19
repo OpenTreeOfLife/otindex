@@ -59,6 +59,8 @@ def parent_closure(ottIDs,taxonomy):
                 break
     return newids
 
+# iterates over trees in phylesystem, collecting association between trees and
+# otus (including higher taxa)
 def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
     tree_otu_filename = "tree_otu_assoc.csv"
 

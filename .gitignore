@@ -6,3 +6,4 @@ otindex.egg-info/
 config.yml
 .coverage
 .out*
+opentreetesting.py

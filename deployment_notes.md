@@ -58,6 +58,9 @@ and ott location.
 Set up and load the database
     $ bash run_setup_scripts.sh config.yml
 
+Apache configuration based on:
+http://docs.pylonsproject.org/projects/pyramid/en/latest/tutorials/modwsgi/
+
 Enable WSGI
   $ sudo a2enmod wsgi
   $ sudo /usr/sbin/apachectl restart
@@ -67,3 +70,18 @@ Set up the `production.ini` file:
 Run the application
 
 Run the tests
+
+# Deploying on AWS
+
+* Select Debian from Community AMIs: `debian-jessie-amd64-hvm-2016-09-19-ebs - ami-2a34e94a`
+* Select instance: m3.medium
+* Select the security group: 'OpenTree... with ping' for development and 'OpenTree production' for production. Note that you can't change the security group after launch!
+* Choose key pair: 'opentree' for dev, 'opentree production' for production
+* log in and accept the fingerprint prompt:
+
+      ssh -i <pem file> admin@<hostname>
+* edit the ansible playbook with the IP address of the EC2 host
+* run ansible, where server is either `production` or `development`:
+
+      ansible-playbook otindex.yml -i hosts --limit <server>
+* run the tests (see TESTING.md)
