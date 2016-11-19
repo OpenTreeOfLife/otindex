@@ -34,7 +34,7 @@ def main(global_config, **settings):
 class LoggingMiddleware:
 
     def __init__(self, main):
-        self.__otindex = main
+        self.__main = main
 
     def __call__(self, environ, start_response):
         errors = environ['wsgi.errors']
@@ -44,6 +44,6 @@ class LoggingMiddleware:
             pprint.pprint(('RESPONSE', status, headers), stream=errors)
             return start_response(status, headers, *args)
 
-        return self.__otindex(environ, _start_response)
+        return self.__main(environ, _start_response)
 
 main = LoggingMiddleware(main)
