@@ -1,8 +1,5 @@
-Planning to test deployment using ansible playbooks rather than bash scripts.
-
-Notes from reading ansible docs:
-
-* While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet.
+**NOTE**: These are notes only, not instructions. See the READMEs in this repo
+for documentation.
 
 ## Notes from manual deployment
 
@@ -49,11 +46,10 @@ Clone and setup the otindex repo
     $ pip install -r requirements.txt
     $ python setup.py install
 
-Edit the otindex `config.yml` file for the local setup
-    $ cd otindex/scripts
-    $ cp config.yml.example config.yml
-You will need to specify the postgres user (likely 'postgres'), DB password,
-and ott location.
+Edit the otindex `development.yml` file for the local setup
+    $ cp development-example.ini development.ini
+You will need to specify the postgres user (likely 'postgres'), DB name, and DB
+password.
 
 Set up and load the database
     $ bash run_setup_scripts.sh config.yml

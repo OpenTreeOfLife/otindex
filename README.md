@@ -1,8 +1,11 @@
 # otindex
 
-A pyramid implementation of a treestore (and possibly general) index for Open Tree of Life.
+A pyramid implementation of a treestore (and possibly general) index for Open
+Tree of Life.
 
-In progress; not production ready. Currently set up to simply use a local postgresql database.
+These instructions assumes you are doing development setup on your local
+machine. If you are wanting to deploy otindex on a server, look at the [ansible
+deployment](https://github.com/OpenTreeOfLife/otindex_ansible).
 
 ## Tech used in development
 
@@ -10,6 +13,20 @@ In progress; not production ready. Currently set up to simply use a local postgr
 * [pyramid](http://www.pylonsproject.org/) v 1.5.7
 * [postgres](http://www.postgresql.org/) v 9.5.2
 * [peyotl](https://github.com/OpenTreeOfLife/peyotl): for interacting with the opentree tree store
+
+## Configuration
+
+First copy the configuration template:
+
+    `$ cp development-example.ini development.ini`
+
+Then adjust the new file for your local settings:
+
+* In the `connection_info` section, add the database username, database name  
+  and password
+* In the [app:main] section, edit `sqlalchemy.url` to match the settings in
+  `connection_info`
+* Optionally, change the logging level for various components
 
 ## Installation
 
@@ -22,9 +39,10 @@ $ pip install -r requirements.txt
 $ python setup.py develop
 $ initialize_otindex_db development.ini
 ```
+
 where `initialize_otindex_db` is in the `bin` directory of your virtualenv.
-This last step creates the database tables defined in `models.py`. It drops any
-existing tables and re-creates them.
+This last step creates the database tables defined in `models.py`. It clears
+any existing tables.
 
 **Load data into the database**
 The `otindex/scripts` directory contains scripts for loading data into the
@@ -34,9 +52,7 @@ file in that directory for detailed setup information.
 
 **Running the application**
 
-Copy `development-example.ini` to `development.ini` and modify the database
-line to point to your local copy of the postgres database. Then, in the top-level
-directory, run:
+In the top-level directory, run:
 
     $ pserve development.ini --reload
 

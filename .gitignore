@@ -3,7 +3,6 @@ development.ini
 otindex.egg-info/
 *.pyc
 *.csv
-config.yml
 .coverage
 .out*
 opentreetesting.py
