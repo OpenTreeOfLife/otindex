@@ -14,6 +14,12 @@ Sample call from phylesystem-api to oti:
 
 `curl -X POST -d '{"urls": ["https://raw.github.com/OpenTreeOfLife/phylesystem/master/study/10/10.json", "https://raw.github.com/OpenTreeOfLife/phylesystem/master/study/9/9.json"]}' -H "Content-type: application/json" http://ec2-54-203-194-13.us-west-2.compute.amazonaws.com/oti/ext/IndexServices/graphdb/indexNexsons`
 
+# Setting URLs for re-indexing
+
+* The [phylesystem-api config](https://github.com/OpenTreeOfLife/phylesystem-api/blob/master/private/config.example) contains a OTI_BASE_URL variable that points to the OTI to update
+* The value of OTI_BASE_URL is defined in the deployed_systems config files for [development](https://github.com/OpenTreeOfLife/deployed-systems/blob/master/development/devapi.config) and [production](https://github.com/OpenTreeOfLife/deployed-systems/blob/master/production/api.config)
+* germinator's [push.sh script](https://github.com/OpenTreeOfLife/germinator/blob/master/deploy/push.sh) reads the config and passes the value of OTI_BASE_URL is passed to [install_api.sh](https://github.com/OpenTreeOfLife/germinator/blob/master/deploy/setup/install-api.sh) as a command line argument
+
 # Otindex procedure
 
 * Write a generic nudgeIndex method that can handle changes to studies, collections, amendments, or other data types

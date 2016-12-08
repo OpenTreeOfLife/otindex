@@ -1,19 +1,23 @@
-# Collects the OTU - tree relationships across phylesystem
-# Prints to file which is then inserted into postgres with COPY
-# This is much faster than many inserts
+# Generates the three taxonomy files:
+#   ott.csv: taxonomy
+#   synonyms.csv: synonyms
+#   tree_otu_assoc.csv: association between otus and trees
 
+# Assumes that phylesystem has already been loaded (tree table)
+
+import datetime as dt
+import argparse
+import psycopg2 as psy
+import csv, io, os
+
+# other database functions
+import setup_db
+
+# peyotl functions for handling the taxonomy
 from peyotl.api.phylesystem_api import PhylesystemAPI
 from peyotl import gen_otu_dict, iter_node
 from peyotl.manip import iter_trees
 from peyotl import get_logger
-
-import setup_db
-
-import psycopg2 as psy
-import argparse
-import yaml
-import csv
-
 import peyotl.ott as ott
 
 _LOG = get_logger()
@@ -24,6 +28,7 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
+# return the (internal) integer tree id from the phylesystem study and tree id
 def getTreeID(cursor,study_id,tree_id):
     sqlstring = ('SELECT id FROM {tablename} '
         'WHERE study_id=%s and tree_id=%s;'
@@ -31,7 +36,6 @@ def getTreeID(cursor,study_id,tree_id):
         )
     data = (study_id,tree_id)
     _LOG.debug(u'SQL: {p}'.format(p=cursor.mogrify(sqlstring,(data))))
-    #print '  SQL: ',cursor.mogrify(sqlstring,data)
     cursor.execute(sqlstring,data)
     result = cursor.fetchone()
     if result is not None:
@@ -41,10 +45,24 @@ def getTreeID(cursor,study_id,tree_id):
         raise LookupError('study {s}, tree {t}'
             ' not found'.format(s=study_id,t=tree_id))
 
+# used to get path to parents for tree association to higher taxa
+def parent_closure(ottIDs,taxonomy):
+    newids = set()
+    for ottID in ottIDs:
+        nextid = ottID
+        while True:
+            newids.add(nextid)
+            if taxonomy == None: break
+            nextid = taxonomy.ott_id2par_ott_id.get(nextid)
+            if nextid == None:
+                break
+    return newids
+
+# iterates over trees in phylesystem, collecting association between trees and
+# otus (including higher taxa)
 def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
     tree_otu_filename = "tree_otu_assoc.csv"
 
-    #ott_names = taxonomy.ott_id_to_names
     skipped_otus = set()
 
     with open(tree_otu_filename, 'w') as g:
@@ -94,57 +112,92 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
                 g.close()
                 break
     print "Skipped {s} mapped OTUs not in OTT".format(s=len(skipped_otus))
-    return tree_otu_filename
 
-def parent_closure(ottIDs,taxonomy):
-    #newids = {}
-    newids = set()
-    for ottID in ottIDs:
-        nextid = ottID
-        while True:
-            #newids[nextid] = True
-            newids.add(nextid)
-            if taxonomy == None: break
-            nextid = taxonomy.ott_id2par_ott_id.get(nextid)
-            if nextid == None:
-                break
-    return newids
+# outputs the taxonomy and synonym csv files
+def prepare_taxonomy_files(taxonomy):
+    # get dictionary of ottids:ottnames, noting that the names can be strings
+    # or tuples, e.g. (canonical name,synonym,synonym)
+    print "Loading taxonomy names and parents into memory"
+    ott_names = taxonomy.ott_id_to_names
+    # dictionary of ottid:parent_ottid
+    ott_parents = taxonomy.ott_id2par_ott_id
+    print " exporting {t} names".format(
+        t=len(ott_names),
+    )
+    ott_filename = "ott.csv"
+    synonym_filename = "synonyms.csv"
+    # this creates the primary_key column for the synonym table
+    # should really modify the copy method to take a column list
+    synonym_id = 1
+    counter = 0
+    print "Exporting taxon information"
+    try:
+        with open(ott_filename,'w') as of, open(synonym_filename,'w') as sf:
+            ofwriter = csv.writer(of)
+            sfwriter = csv.writer(sf)
+            ofwriter.writerow(('id','name','parent'))
+            sfwriter.writerow(('id','ott_id','synonym'))
+
+            for ott_id in ott_names:
+                name = ott_names[ott_id]
+                synonyms=[]
+                # if names is a tuple, then the first element is the unique name
+                # and the others are synonyms
+                if (isinstance(name,tuple)):
+                    synonyms = name[1:]
+                    name = name[0]
+                parent_id = ott_parents[ott_id]
+                # if this is the root, use -1 as the parent
+                if parent_id == None:
+                    parent_id = -1
+                ofwriter.writerow((ott_id,name.encode('utf-8'),parent_id))
+
+                # print synonym data
+                for s in synonyms:
+                    sfwriter.writerow((synonym_id,ott_id,s.encode('utf-8')))
+                    synonym_id+=1
+
+                counter+=1
+                if (counter%500000 == 0):
+                    print " exported",counter,"taxa"
+        of.close()
+        sf.close()
+    except IOError as (errno,strerror):
+        print "I/O error({0}): {1}".format(errno, strerror)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='create otu-tree table')
+    parser = argparse.ArgumentParser(description='load generate taxonomy files for  postgres')
     parser.add_argument('configfile',
-        help='path to the config file'
+        help='path to the development.ini file'
         )
+
     parser.add_argument('-n',
         dest='nstudies',
         type=int,
-        help='load only n studies; if absent, load all studies'
+        help='generate tree-otu file for only n studies; if absent, load all studies'
         )
     args = parser.parse_args()
 
     # read config variables
     config_obj = setup_db.read_config(args.configfile)
 
-    # ott_loc = config_dict['taxonomy']
-    # if ott_loc == 'None':
-    #     print 'No taxonomy'
-    #     taxonomy = None
-    # else:
-    #     print "Loading taxonomy into memory"
-    #     taxonomy = ott.OTT(ott_loc)
-
     # load taxonomy; location from peyotl config
     taxonomy = ott.OTT()
     print "Using OTT version {v}".format(v=taxonomy.version)
+
     connection, cursor = setup_db.connect(config_obj)
     phy = create_phylesystem_obj()
+
     try:
-        TREEOTUTABLE = config_obj.get('database_tables','treeotutable')
-        setup_db.clear_single_table(connection,cursor,TREEOTUTABLE)
+        starttime = dt.datetime.now()
+        print 'Generating taxonomy and synonyms files'
+        prepare_taxonomy_files(taxonomy)
+
         print 'Preparing tree - otu association file'
-        tree_otu_filename = prepare_otu_tree_file(connection,cursor,phy,taxonomy,args.nstudies)
-        print 'Importing tree/otus'
-        setup_db.import_csv_file(connection,cursor,TREEOTUTABLE,tree_otu_filename)
+        prepare_otu_tree_file(connection,cursor,phy,taxonomy,args.nstudies)
+
+        endtime = dt.datetime.now()
+        print "OTT file generation time: ",endtime - starttime
     except psy.Error as e:
         print e.pgerror

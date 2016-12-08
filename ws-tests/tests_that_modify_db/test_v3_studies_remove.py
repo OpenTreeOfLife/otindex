@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
-# test update study by checking db properties before and after update
+# test removal of study by checking db properties before and after update
+# re-adds the study afterwards, so no net change to database
 
 import sys, os
 from opentreetesting import test_http_json_method, config
 DOMAIN = config('host', 'apihost')
 
-# get results from about method before
-CONTROLLER = DOMAIN + '/v4/studies'
+###################
+# Get results from about method before
+CONTROLLER = DOMAIN + '/v3/studies'
 SUBMIT_URI = CONTROLLER + '/about'
 r = test_http_json_method(SUBMIT_URI,
                           'GET',
@@ -16,16 +18,21 @@ r = test_http_json_method(SUBMIT_URI,
 assert r[0] is True
 nstudies_start = r[1]['number_studies']
 ntrees_start = r[1]['number_trees']
-print "studies, trees: {s}, {t}".format(
+notus_start = r[1]['number_otus']
+ncurators_start = r[1]['number_curators']
+print "starting studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
     s=nstudies_start,
     t=ntrees_start,
+    o=notus_start,
+    c=ncurators_start
 )
 
-# remove a study
-# study_id = 'ot_688'
-p = ["https://github.com/OpenTreeOfLife/phylesystem-1/blob/master/study/ot_88/ot_688/ot_688.json"]
-CONTROLLER = DOMAIN + '/v3'
-SUBMIT_URI = CONTROLLER + '/remove_studies'
+############################
+# 1. remove a study
+# If you change the study number, pick a study that exists in both
+# development and production phylesystems
+p = { 'studies' : [ "pg_100" ] }
+SUBMIT_URI = CONTROLLER + '/remove'
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,
@@ -33,9 +40,11 @@ r = test_http_json_method(SUBMIT_URI,
                           return_bool_data=True)
 
 assert r[0] is True
+print r[1]
+assert len(r[1]['failed_studies']) == 0
 
-# get results from about method after
-CONTROLLER = DOMAIN + '/v4/studies'
+############################
+# 2. get results from about method after
 SUBMIT_URI = CONTROLLER + '/about'
 r = test_http_json_method(SUBMIT_URI,
                           'GET',
@@ -44,9 +53,13 @@ r = test_http_json_method(SUBMIT_URI,
 assert r[0] is True
 nstudies_end = r[1]['number_studies']
 ntrees_end = r[1]['number_trees']
-print "studies, trees: {s}, {t}".format(
+notus_end = r[1]['number_otus']
+ncurators_end = r[1]['number_curators']
+print "after delete studies, tree, otus, curators: {s}, {t}, {o}, {c}".format(
     s=nstudies_end,
     t=ntrees_end,
+    o=notus_end,
+    c=ncurators_end
 )
 
 assert nstudies_end < nstudies_start

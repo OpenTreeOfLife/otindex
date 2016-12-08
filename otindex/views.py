@@ -75,7 +75,7 @@ def find_studies(request):
 
         extra_params = set(parameters).difference(valid_parameters)
         if len(extra_params) > 0:
-            _LOG.debug('found {x} extra parameters'.format(x=extra_params))
+            _LOG.debug('found extra parameters: {x}'.format(x=extra_params))
             return HTTPBadRequest()
 
         if 'verbose' in payload:

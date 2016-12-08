@@ -210,9 +210,13 @@ def index_json_columns(connection,cursor,config_obj):
     except psy.ProgrammingError, ex:
         print 'Error creating GIN index'
 
-# imports csv data into the database using the (faster) bulk copy method
+# Imports csv data into the database using the (faster) bulk copy method
 # used to load otu_tree_map table and taxonomy tables
+# Clears table first
 def import_csv_file(connection,cursor,table,filename):
+    if not table_exists(cursor,table):
+        raise psy.ProgrammingError("Table {t} does not exist".format(t=table))
+    clear_single_table(connection,cursor,table)
     print "copying {f} into {t} table".format(f=filename,t=table)
     with open (filename,'r') as f:
         copystring="COPY {t}  FROM STDIN WITH CSV HEADER".format(t=table)
