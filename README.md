@@ -1,18 +1,19 @@
 # otindex
 
-A pyramid implementation of a treestore (and possibly general) index for Open
-Tree of Life.
+A pyramid + postgres implementation of a treestore index for Open Tree of Life.
+Provides API access to the JSON files in the OpenTree 
+[phylesystem](https://github.com/opentreeoflife/phylesystem) data store. 
 
-These instructions assumes you are doing development setup on your local
-machine. If you are wanting to deploy otindex on a server, look at the [ansible
-deployment](https://github.com/OpenTreeOfLife/otindex_ansible).
+These instructions assume you are doing development setup on your local
+machine. For deploying otindex on a server, we have [ansible
+playbook](https://github.com/OpenTreeOfLife/otindex_ansible).
 
 ## Tech used in development
 
 * python 2.7.10
 * [pyramid](http://www.pylonsproject.org/) v 1.5.7
 * [postgres](http://www.postgresql.org/) v 9.5.2
-* [peyotl](https://github.com/OpenTreeOfLife/peyotl): for interacting with the opentree tree store
+* [peyotl](https://github.com/OpenTreeOfLife/peyotl): opentree python library for interacting with the opentree tree store
 
 ## Configuration
 
