@@ -68,7 +68,8 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
 
     with open(tree_otu_filename, 'w') as g:
         gwriter = csv.writer(g)
-        # datafile format is 'tree_id \t ottid' where treeid is not
+        gwriter.writerow(('ott_id','tree_id'))
+        # datafile format is 'ott_id \t tree_id' where treeid is not
         # the treeid (string) in the nexson, but the treeid (int) from
         # the database for faster indexing
         counter = 0
