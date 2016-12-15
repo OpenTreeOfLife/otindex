@@ -22,7 +22,7 @@ if [ $nstudies ]; then
     python generate_taxonomy_files.py $config
 
     # load taxonomy files
-    python load_taxonomy_files.py $config -n $nstudies
+    python load_taxonomy_files.py $config -n $nstudies .
 
     # run some simple tests
     python test_db_selects.py $config
@@ -37,10 +37,10 @@ python setup_db.py $config
 python load_nexson.py $config
 
 # load taxonomy
-python load_taxonomy.py $config
+python generate_taxonomy_files.py $config
 
 # load otu table
-python create_otu_table.py $config
+python load_taxonomy_files.py $config .
 
 # run some simple tests
 python test_db_selects.py $config

@@ -113,7 +113,8 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
             if (nstudies and counter>=nstudies):
                 g.close()
                 break
-    print "Skipped {s} mapped OTUs not in OTT".format(s=len(skipped_otus))
+    if len(skipped_otus>0):
+        _LOG.debug(u'Skipped {s} mapped OTUs not in OTT'.format(s=len(skipped_otus))
 
 # outputs the taxonomy and synonym csv files
 def prepare_taxonomy_files(taxonomy):
