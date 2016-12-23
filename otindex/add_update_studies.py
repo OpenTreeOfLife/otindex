@@ -30,7 +30,7 @@ def add_study(study_id):
     except:
         _LOG.debug('did not find study {s} in phylesystem'.format(s=study_id))
         raise HTTPNotFound("Study {s} not found in phylesystem".format(s=study_id))
-    nexml = get_nexml_el(studyobj)
+    nexml = studyobj['nexml']
     proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
     if proposedTrees is None:
         proposedTrees = []
@@ -136,8 +136,7 @@ def add_study(study_id):
     # now that we have added the tree info, update the study record
     # with the json data (minus the tree info)
     del nexml['treesById']
-    studyjson = json.dumps(nexml)
-    new_study.data=studyjson
+    new_study.data = nexml
     new_study.ntrees = ntrees
 
 def create_phylesystem_obj():
