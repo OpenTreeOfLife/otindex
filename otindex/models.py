@@ -90,7 +90,7 @@ class Tree(Base):
     __tablename__ = 'tree'
     __table_args__ = (
         UniqueConstraint('id','study_id'),
-        )
+    )
     id = Column(Integer,primary_key=True)
     tree_id = Column(String, nullable=False)
     data = Column(JSONB)
@@ -175,3 +175,7 @@ class Property(Base):
     property = Column(String, nullable=False)
     prefix = Column(String)
     type = Column(String, nullable=False)
+
+# GIN indexes on jsonb columns
+Index('tree_ix_data_gin', Tree.data, postgresql_using='gin')
+Index('study_ix_data_gin', Study.data, postgresql_using='gin')
