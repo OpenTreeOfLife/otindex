@@ -54,6 +54,7 @@ def get_ott_id(ottname):
     ).filter(Taxonomy.name == ottname)
 
     # should only be one row
+    # should test for >1 row and throw error?
     row = query_obj.first()
     if row is not None:
         return row.id
@@ -219,7 +220,7 @@ def query_trees(verbose,property_type,property_value):
     # otu uses tree-otu association table
     elif property_type == "ot:ottTaxonName":
         # get OTT ID for this name
-        ott_id = get_ottid(property_value)
+        ott_id = get_ott_id(property_value)
         if ott_id is not None:
             filtered = query_trees_by_ott_id(ott_id)
         else:
