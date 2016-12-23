@@ -275,8 +275,9 @@ if __name__ == "__main__":
                 setup_db.clear_single_table(connection,cursor,name)
             else:
                 raise psy.ProgrammingError("Table {t} does not exist".format(t=name))
-        setup_db.clear_gin_index(connection,cursor)
-        print "done clearing tables and index"
+        # setup_db.clear_gin_index(connection,cursor)
+        # print "done clearing tables and index"
+        print "done clearing tables"
     except psy.Error as e:
         print e.pgerror
 
@@ -292,8 +293,8 @@ if __name__ == "__main__":
             load_nexsons(connection,cursor,phy,config_obj)
         endtime = dt.datetime.now()
         print "Load time: ",endtime - starttime
-        print "indexing JSONB columns in tree and study table"
-        setup_db.index_json_columns(connection,cursor,config_obj)
+        # print "indexing JSONB columns in tree and study table"
+        # setup_db.index_json_columns(connection,cursor,config_obj)
         create_status_file()
     except psy.Error as e:
         print e.pgerror
