@@ -2,7 +2,6 @@
 import psycopg2 as psy
 import simplejson as json
 import argparse
-import yaml
 import setup_db
 
 def find_all_studies(cursor,config_obj):

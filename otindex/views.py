@@ -88,7 +88,7 @@ def find_studies(request):
                 # is this a valid property?
                 study_properties = qs.get_study_property_list()
                 if property_type not in study_properties:
-                    _msg="Property {p} is unknown".format(p=property_type)
+                    _msg="Study property {p} is unknown".format(p=property_type)
                     raise HTTPBadRequest(body=_msg)
 
             else:
@@ -135,7 +135,7 @@ def find_trees(request):
                 # is this a valid property?
                 tree_properties = qt.get_tree_property_list()
                 if property_type not in tree_properties:
-                    _msg="Property {p} is unknown".format(p=property_type)
+                    _msg="Tree property {p} is unknown".format(p=property_type)
                     raise HTTPBadRequest(body=_msg)
 
             else:

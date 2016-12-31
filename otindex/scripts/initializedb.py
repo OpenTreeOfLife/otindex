@@ -37,7 +37,7 @@ def main(argv=sys.argv):
     DBSession.configure(bind=engine)
     # drop_all creating all sorts of havoc with ansible deployment and
     # database permissions
-    # Base.metadata.drop_all(engine)
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     #with transaction.manager:
         #model = MyModel(name='one', value=1)

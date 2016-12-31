@@ -53,12 +53,18 @@ def get_ott_id(ottname):
         Taxonomy.id
     ).filter(Taxonomy.name == ottname)
 
-    # should only be one row
-    row = query_obj.first()
-    if row is not None:
-        return row.id
+    n_rows = query_obj.count()
+    if n_rows == 0:
+        raise HTTPNotFound(
+            "Could not find ott id for taxon name '{n}'".format(n=ottname)
+            )
+    if n_rows > 1:
+        raise HTTPNotFound(
+            "No unique id for name '{n}'; name is a homonym"
+            .format(n=ottname)
+            )
     else:
-        return None
+        return query_obj.first().id
 
 # given a property, returns the property with prefix
 def get_prop_with_prefix(prop):
@@ -111,6 +117,7 @@ def get_tree_property_list():
         properties.append(row.property)
     # now add the non-JSON properties
     properties.append('ot:ottId')
+    properties.append('ot:ottTaxonName')
     properties.append('ot:studyId')
     properties.append("ntips")
     #properties.append("proposed")
@@ -218,12 +225,8 @@ def query_trees(verbose,property_type,property_value):
     # otu uses tree-otu association table
     elif property_type == "ot:ottTaxonName":
         # get OTT ID for this name
-        ott_id = get_ottid(property_value)
-        if ott_id is not None:
-            filtered = query_trees_by_ott_id(ott_id)
-        else:
-            # TODO: helpful error message about taxon name not found
-            raise HTTPNotFound()
+        ott_id = get_ott_id(property_value)
+        filtered = query_trees_by_ott_id(query_obj,ott_id)
 
     elif property_type == "ot:ottId":
         filtered = query_trees_by_ott_id(query_obj,property_value)

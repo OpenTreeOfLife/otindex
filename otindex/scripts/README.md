@@ -87,16 +87,27 @@ This was tested on OS X 10.9.
 
     `$ launchctl load ~/Library/LaunchAgents/homebrew.mxcl.postgresql.plist`
 
-1. Create database for use by Open Tree.  If username, given here as 'pguser',
+1. Create database for use by Open Tree.  If username, given here as 'postgres',
    does not exist on your system, either create it or specify a username that
-   does exist (e.g. you).
+   does exist (e.g. you). If you plan to export the database to a server, then
+   you need to use username=postgres and database name = otindex.
 
-    `$ createdb -Opguser -Eutf8 newoti`
+    `$ createdb -Opostgres -Eutf8 otindex`
+
+1. Create a non-priviledged database user:
+
+    `$ createuser opentree -D -S -P`
+
+1. Connect to the database with the superuser account and grant permissions to
+   the new user:
+
+   ` $ psql otindex`
+   ` otindex=# GRANT ALL ON DATABASE otindex TO opentree;`
 
 # For interactive SQL
 
 You'll want this for debugging.
 
-    `$ psql -U pguser newoti`
+    `$ psql -U postgres otindex`
 
-were `pguser` is the postgres user and `newoti` is the database name.
+were `postgres` is the postgres user and `otindex` is the database name.

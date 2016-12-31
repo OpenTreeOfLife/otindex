@@ -67,7 +67,8 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
 
     with open(tree_otu_filename, 'w') as g:
         gwriter = csv.writer(g)
-        # datafile format is 'tree_id \t ottid' where treeid is not
+        gwriter.writerow(('ott_id','tree_id'))
+        # datafile format is 'ott_id \t tree_id' where treeid is not
         # the treeid (string) in the nexson, but the treeid (int) from
         # the database for faster indexing
         counter = 0
@@ -111,7 +112,9 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
             if (nstudies and counter>=nstudies):
                 g.close()
                 break
-    print "Skipped {s} mapped OTUs not in OTT".format(s=len(skipped_otus))
+    n_skipped = len(skipped_otus)
+    if n_skipped>0:
+        _LOG.debug(u'Skipped {s} mapped OTUs not in OTT'.format(s=n_skipped))
 
 # outputs the taxonomy and synonym csv files
 def prepare_taxonomy_files(taxonomy):
