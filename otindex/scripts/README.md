@@ -71,13 +71,10 @@ This was tested on OS X 10.9.
 
     `$ brew install postgres`
 
-1. Arrange for postgres to start after reboots.  The .plist file references `/usr/local/var/postgres`.
-   You will probably have to change the version number in the path.
-   This step is completely optional; you can start it manually with `postgres -D /usr/local/var/postgres` if you prefer.
+1. Arrange for postgres to start after reboots.  This step is completely optional; you can start it manually with `postgres -D /usr/local/var/postgres` if you prefer.
 
-    `$ mkdir -p ~/Library/LaunchAgents
-    $ ln -sfv /usr/local/opt/postgresql/*.plist ~/Library/LaunchAgents`
-
+    `brew services start postgresql`
+  
 1. Initialize the directory where postgres keeps its databases.
    (Do this only if the directory does not exist or is empty.)
 
