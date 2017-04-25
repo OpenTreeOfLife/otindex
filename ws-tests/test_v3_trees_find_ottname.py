@@ -45,7 +45,7 @@ assert r[0] is True
 # test with homonym
 p = {'verbose': False,
      'property': 'ot:ottTaxonName',
-     'value': 'Bacteria'}
+     'value': 'Erica'}
 r = test_http_json_method(SUBMIT_URI,
                           'POST',
                           data=p,
