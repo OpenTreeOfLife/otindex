@@ -32,6 +32,20 @@ from otindex.models import (
 #_LOG = logging.getLogger(__name__)
 _LOG = get_logger(__name__)
 
+# generic method to handle OPTIONS requests
+# from https://github.com/mtholder/pyraphyletic/blob/master/phylesystem_api/views.py
+@view_config(route_name='options', renderer='json', request_method='OPTIONS')
+def study_options(request):
+    """A simple method for approving CORS preflight request"""
+    response = Response(status_code=200)
+    if request.env.http_access_control_request_method:
+        response.headers['Access-Control-Allow-Methods'] = 'POST,GET,OPTIONS'
+    if request.env.http_access_control_request_headers:
+        headers = 'Origin, Content-Type, Accept, Authorization'
+        response.headers['Access-Control-Allow-Headers'] = headers
+    return response
+
+@view_config(route_name='home', request_method="OPTIONS")
 @view_config(route_name='home', renderer='json')
 def index(request):
     return {
