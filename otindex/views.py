@@ -45,7 +45,6 @@ def study_options(request):
         response.headers['Access-Control-Allow-Headers'] = headers
     return response
 
-@view_config(route_name='home', request_method="OPTIONS")
 @view_config(route_name='home', renderer='json')
 def index(request):
     return {
