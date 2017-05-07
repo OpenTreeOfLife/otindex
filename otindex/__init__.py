@@ -19,13 +19,13 @@ def main(global_config, **settings):
     config.include('pyramid_chameleon')
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
-
-    config.add_route('find_studies','/v3/studies/find_studies',request_method="POST")
-    config.add_route('find_trees','/v3/studies/find_trees',request_method="POST")
-    config.add_route('properties','/v3/studies/properties',request_method="POST")
-    config.add_route('add_update','v3/studies/add_update')
-    config.add_route('remove','v3/studies/remove')
-    config.add_route('about','v3/studies/about')
+    v = '{api_version:v1|v2|v3|v4}'
+    config.add_route('find_studies','/{v}/studies/find_studies'.format(v=v),request_method="POST")
+    config.add_route('find_trees','/{v}/studies/find_trees'.format(v=v),request_method="POST")
+    config.add_route('properties','/{v}/studies/properties'.format(v=v),request_method="POST")
+    config.add_route('add_update','{v}/studies/add_update'.format(v=v))
+    config.add_route('remove','{v}/studies/remove'.format(v=v))
+    config.add_route('about','{v}/studies/about'.format(v=v))
 
     config.scan()
     return config.make_wsgi_app()
