@@ -20,9 +20,9 @@ def main(global_config, **settings):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     v = '{api_version:v1|v2|v3|v4}'
-    config.add_route('find_studies','/{v}/studies/find_studies'.format(v=v),request_method="POST")
-    config.add_route('find_trees','/{v}/studies/find_trees'.format(v=v),request_method="POST")
-    config.add_route('properties','/{v}/studies/properties'.format(v=v),request_method="POST")
+    config.add_route('find_studies','{v}/studies/find_studies'.format(v=v),request_method="POST")
+    config.add_route('find_trees','{v}/studies/find_trees'.format(v=v),request_method="POST")
+    config.add_route('properties','{v}/studies/properties'.format(v=v),request_method="POST")
     config.add_route('add_update','{v}/studies/add_update'.format(v=v))
     config.add_route('remove','{v}/studies/remove'.format(v=v))
     config.add_route('about','{v}/studies/about'.format(v=v))
