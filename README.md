@@ -15,6 +15,20 @@ playbook](https://github.com/OpenTreeOfLife/otindex_ansible).
 * [postgres](http://www.postgresql.org/) v 9.5.2
 * [peyotl](https://github.com/OpenTreeOfLife/peyotl): opentree python library for interacting with the opentree tree store
 
+## Setup your postgres database
+See the
+[README](https://github.com/OpenTreeOfLife/otindex/blob/master/otindex/scripts/README.md)
+file in that directory for more detailed setup information.
+# Postgres setup ubuntu version (draft)
+    sudo apt-get install postgresql  
+    service postgresql start  
+    sudo -u postgres createdb -O postgres -E utf8 otindex  
+    sudo -u postgres createuser opentree -D -S -P  
+    <create password>
+    sudo su - postgres  
+    psql otindex  
+    otindex=> GRANT ALL ON DATABASE otindex TO opentree;
+
 ## Configuration
 
 First copy the configuration template:
@@ -50,6 +64,14 @@ The `otindex/scripts` directory contains scripts for loading data into the
 database. See the
 [README](https://github.com/OpenTreeOfLife/otindex/blob/master/otindex/scripts/README.md)
 file in that directory for detailed setup information.
+
+Note: if running locally, relies on "home/user/.peyotl/config" to find taxonomy and phylesystem
+It will also write out logs to peyotl log file
+
+cd otindex/scripts
+bash run_setup_scripts.sh ../../development.ini 100
+
+
 
 **Running the application**
 

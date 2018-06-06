@@ -189,6 +189,11 @@ def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
+                _LOG.debug(u'{i} Loading tree  {t} for study {s}'.format(
+                           i=counter,
+                           s=study_id,
+                           t=tree_id)
+                           )
                 ntrees += 1
                 proposedForSynth = False
                 tree_properties.update(tree.keys())

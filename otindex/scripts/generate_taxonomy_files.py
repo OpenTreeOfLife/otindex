@@ -42,7 +42,7 @@ def getTreeID(cursor,study_id,tree_id):
     if result is not None:
         treeid = result[0]
         return treeid
-    else:
+    else: #todo can fail if trees were added since db was built
         raise LookupError('study {s}, tree {t}'
             ' not found'.format(s=study_id,t=tree_id))
 
@@ -73,8 +73,8 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
         # the treeid (string) in the nexson, but the treeid (int) from
         # the database for faster indexing
         counter = 0
-        for study_id, n in phy.iter_study_objs():
-            otu_dict = gen_otu_dict(n)
+        for study_id, studyobj in phy.iter_study_objs():
+            otu_dict = gen_otu_dict(studyobj)
             # iterate over the OTUs in the study, collecting the mapped
             # ones (oid to ott_id mapping held at the study level)
             mapped_otus = {}
@@ -85,10 +85,15 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
 
             # iterate over the trees in the study, collecting
             # tree/otu associations (including lineage)
-            for trees_group_id, tree_id, tree in iter_trees(n):
+            for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 # the unique identifier in the tree table is an auto-incrementing
                 # int, not the tree_id in the nexson, which is not unique
-                tree_int_id = getTreeID(cursor,study_id,tree_id)
+                _LOG.debug(u'{i} getting otus for tree  {t} for study {s}'.format(
+                           i=counter,
+                           s=study_id,
+                           t=tree_id)
+                           )
+                tree_int_id = getTreeID(cursor,study_id,tree_id) #todo can fail if trees were added since db was built
                 ottIDs = set()     # ott ids for this tree
                 for node_id, node in iter_node(tree):
                     oid = node.get('@otu')
@@ -106,7 +111,6 @@ def prepare_otu_tree_file(connection,cursor,phy,taxonomy,nstudies=None):
                 ottIDs = parent_closure(ottIDs,taxonomy)
                 for ottID in ottIDs:
                     gwriter.writerow((ottID,tree_int_id))
-
             counter+=1
             if (counter%500 == 0):
                 print " prepared",counter,"studies"
