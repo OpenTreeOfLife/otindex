@@ -205,7 +205,7 @@ def build_json_response(filtered,verbose):
 # property_value
 def query_trees(verbose,property_type,property_value):
     resultlist = []
-    _LOG.debug("querying trees by {p} : {v}".format(p=property_type,v=property_value))
+    _LOG.debug("1. querying trees by {p} : {v}".format(p=property_type,v=property_value))
     # get the base (unfiltered) query object
     query_obj = get_tree_query_object(verbose)
     filtered = None
@@ -227,6 +227,7 @@ def query_trees(verbose,property_type,property_value):
         # get OTT ID for this name
         ott_id = get_ott_id(property_value)
         filtered = query_trees_by_ott_id(query_obj,ott_id)
+        _LOG.debug("2. querying trees by {p} : {v}".format(p=property_type,v=property_value))
 
     elif property_type == "ot:ottId":
         filtered = query_trees_by_ott_id(query_obj,property_value)
