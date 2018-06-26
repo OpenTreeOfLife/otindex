@@ -1,4 +1,5 @@
 from pyramid.config import Configurator
+from pyramid.request import Request
 from sqlalchemy import engine_from_config
 # from paste.translogger import TransLogger
 
@@ -9,6 +10,27 @@ from .models import (
     Base,
     )
 
+def request_factory(environ):
+    """Factory function that adds the headers necessary for Cross-domain calls.
+
+    Adapted from:
+       http://stackoverflow.com/questions/21107057/pyramid-cors-for-ajax-requests
+    Copied from mtholder/pyraphyletic
+    """
+    request = Request(environ)
+    if request.is_xhr:
+        request.response = Response()
+        request.response.headerlist = []
+        request.response.headerlist.extend(
+            (
+                ('Access-Control-Allow-Origin', '*'),
+                ('Access-Control-Allow-Credentials', 'true'),
+                ('Access-Control-Max-Age', 86400),
+                ('Content-Type', 'application/json')
+            )
+        )
+    return request
+
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
@@ -17,6 +39,7 @@ def main(global_config, **settings):
     Base.metadata.bind = engine
     config = Configurator(settings=settings)
     config.include('pyramid_chameleon')
+    config.set_request_factory(request_factory)
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     v = '{api_version:v1|v2|v3|v4}'
