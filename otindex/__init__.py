@@ -2,13 +2,16 @@ from pyramid.config import Configurator
 from pyramid.request import Request
 from sqlalchemy import engine_from_config
 # from paste.translogger import TransLogger
-
+import logging
 import yaml
 
 from .models import (
     DBSession,
     Base,
     )
+
+
+_LOG = logging.getLogger(__name__)
 
 def request_factory(environ):
     """Factory function that adds the headers necessary for Cross-domain calls.
@@ -19,6 +22,7 @@ def request_factory(environ):
     """
     request = Request(environ)
     if request.is_xhr:
+        _LOG.debug('cross origin request {e}'.format(environ))
         request.response = Response()
         request.response.headerlist = []
         request.response.headerlist.extend(
