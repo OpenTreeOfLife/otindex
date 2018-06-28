@@ -23,8 +23,9 @@ def request_factory(environ):
     """
     request = Request(environ)
     _LOG.debug('request factory, .is_xhr {x}'.format(x=request.is_xhr))
+    _LOG.debug('request body: {b}'.format(b=request.body))
 #    _LOG.debug('request factory, .context {c}'.format(c=request.context))
-    if 1:
+    if request.is_xhr:
         _LOG.debug('cross origin request')
         request.response = Response()
         request.response.headerlist = []
