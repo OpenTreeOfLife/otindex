@@ -64,40 +64,42 @@ def find_studies(request):
     property_type = None
     property_value = None
     _LOG.debug('find_studies')
-
+    _LOG.debug('request headers are: {h}'.format(h=request.headers))
     if (request.body):
         _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
-        payload = request.json_body
-        _LOG.debug('find_studies payload is {p}'.format(p=payload))
-        # check that we only have valid parameters
-        valid_parameters = ['verbose','property','value','exact']
-        parameters = payload.keys()
+        try:
+            payload = request.json_body
+            _LOG.debug('find_studies payload is {p}'.format(p=payload))
+            # check that we only have valid parameters
+            valid_parameters = ['verbose','property','value','exact']
+            parameters = payload.keys()
 
-        _LOG.debug('find_studies with parameters: {p}'.format(p=parameters))
+            _LOG.debug('find_studies with parameters: {p}'.format(p=parameters))
 
-        extra_params = set(parameters).difference(valid_parameters)
-        if len(extra_params) > 0:
-            _LOG.debug('found extra parameters: {x}'.format(x=extra_params))
-            return HTTPBadRequest()
+            extra_params = set(parameters).difference(valid_parameters)
+            if len(extra_params) > 0:
+                _LOG.debug('found extra parameters: {x}'.format(x=extra_params))
+                return HTTPBadRequest()
 
-        if 'verbose' in payload:
-            verbose = payload['verbose']
+            if 'verbose' in payload:
+                verbose = payload['verbose']
 
-        if 'property' in payload:
-            if 'value' in payload:
-                property_type = payload['property']
-                property_value = payload['value']
-                # is this a valid property?
-                study_properties = qs.get_study_property_list()
-                if property_type not in study_properties:
-                    _msg="Study property {p} is unknown".format(p=property_type)
+            if 'property' in payload:
+                if 'value' in payload:
+                    property_type = payload['property']
+                    property_value = payload['value']
+                    # is this a valid property?
+                    study_properties = qs.get_study_property_list()
+                    if property_type not in study_properties:
+                        _msg="Study property {p} is unknown".format(p=property_type)
+                        raise HTTPBadRequest(body=_msg)
+
+                else:
+                    # no value for property
+                    _msg = "No value given for property {p}".format(p=property_type)
                     raise HTTPBadRequest(body=_msg)
-
-            else:
-                # no value for property
-                _msg = "No value given for property {p}".format(p=property_type)
-                raise HTTPBadRequest(body=_msg)
-
+        except:
+            _LOG.debug('are we hitting find studies a second time? why?')
     else:
         _LOG.debug('find_studies with no parameters')
 
