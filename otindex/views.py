@@ -66,7 +66,9 @@ def find_studies(request):
     _LOG.debug('find_studies')
 
     if (request.body):
+        _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
         payload = request.json_body
+        _LOG.debug('find_studies payload is {p}'.format(p=payload))
         # check that we only have valid parameters
         valid_parameters = ['verbose','property','value','exact']
         parameters = payload.keys()
