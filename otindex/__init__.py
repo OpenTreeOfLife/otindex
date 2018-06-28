@@ -1,5 +1,6 @@
 from pyramid.config import Configurator
 from pyramid.request import Request
+from pyramid.request import Response
 from sqlalchemy import engine_from_config
 # from paste.translogger import TransLogger
 import logging
@@ -21,8 +22,10 @@ def request_factory(environ):
     Copied from mtholder/pyraphyletic
     """
     request = Request(environ)
-    if request.is_xhr:
-        _LOG.debug('cross origin request {e}'.format(environ))
+    _LOG.debug('request factory, .is_xhr {x}'.format(x=request.is_xhr))
+#    _LOG.debug('request factory, .context {c}'.format(c=request.context))
+    if 1:
+        _LOG.debug('cross origin request')
         request.response = Response()
         request.response.headerlist = []
         request.response.headerlist.extend(
