@@ -67,11 +67,8 @@ def find_studies(request):
     _LOG.debug('request headers are: {h}'.format(h=request.headers))
     if (request.body):
         _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
-        try:
-            payload = request.json_body
-            _LOG.debug('find_studies payload is {p}'.format(p=payload))
-        except:
-            payload = {'verbose':True}
+        payload = request.json_body
+        _LOG.debug('find_studies payload is {p}'.format(p=payload))
         # check that we only have valid parameters
         valid_parameters = ['verbose','property','value','exact']
         parameters = payload.keys()
