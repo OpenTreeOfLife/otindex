@@ -36,7 +36,8 @@ def get_all_studies(verbose):
         item = {}
         for k,v in row._asdict().items():
             k = k.encode('utf-8')
-            v = v.encode('utf-8')
+            if isinstance(v, dict):
+                v = dict([(kk.encode('utf-8'), vv.encode('utf-8')) for kk, vv in v.items()])
             item[k]=v
         resultlist.append(item)
     return resultlist

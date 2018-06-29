@@ -42,4 +42,4 @@ assert len(json_result) > 0
 
 top_level_key = json_result.keys()[0]
 assert top_level_key == 'matched_studies'
-assert json_result[top_level_key][0].keys() == ['ot:studyId']
+assert json_result[top_level_key][0].keys() == ['ot:studyId', 'ot:focalCladeOTTTaxonName', 'ot:dataDeposit', 'ot:focalClade', 'ot:tag', 'ot:studyPublication', 'ot:studyYear', 'ot:curatorName', 'ot:studyPublicationReference']
