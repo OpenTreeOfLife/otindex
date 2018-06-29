@@ -65,6 +65,7 @@ def find_studies(request):
     property_value = None
     _LOG.debug('find_studies')
     _LOG.debug('request headers are: {h}'.format(h=request.headers))
+    _LOG.debug('request.response is: {r}'.format(r=request.response))
     if (request.body):
         _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
         try:
