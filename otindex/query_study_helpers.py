@@ -35,7 +35,7 @@ def get_all_studies(verbose):
     for row in query_obj.all():
         item = {}
         for k,v in row._asdict().items():
-            item[str(k)]=str(v)
+            item[str(k).encode('utf-8')]=str(v).encode('utf-8')
         resultlist.append(item)
     return resultlist
 
