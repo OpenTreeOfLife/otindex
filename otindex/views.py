@@ -74,6 +74,7 @@ def find_studies(request):
                                             ('Content-Type', 'application/json')
                                           )
                                         )
+    _LOG.debug('request.response is: {r}'.format(r=request.response))
     if (request.body):
         _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
         try:
@@ -111,13 +112,13 @@ def find_studies(request):
                 raise HTTPBadRequest(body=_msg)
     else:
         _LOG.debug('find_studies with no parameters')
-
     # query time!
     if (property_type is None):
         resultlist = qs.get_all_studies(verbose)
     else:
         resultlist = qs.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
+    _LOG.debug("the result dict is {d}".format(d=resultdict))
     return resultdict
 
 # find_trees method

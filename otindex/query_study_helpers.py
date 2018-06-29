@@ -32,11 +32,15 @@ def get_all_studies(verbose):
     query_obj = get_study_query_object(verbose)
     # get results as dict, where keys are the labels set in
     # get_study_query_object
+    count = 0 #TEMPORARY
     for row in query_obj.all():
+        count += 1
         item = {}
         for k,v in row._asdict().items():
-            item[k]=v
+            item[str(k)]=str(v)
         resultlist.append(item)
+        if count == 10:
+            break
     return resultlist
 
 # given a property, returns the property with prefix
