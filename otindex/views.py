@@ -70,7 +70,7 @@ def find_studies(request):
                                           (
                                             ('Access-Control-Allow-Origin', '*'),
                                             ('Access-Control-Allow-Credentials', 'true'),
-                                            ('Access-Control-Max-Age', 86400),
+                                            ('Access-Control-Max-Age', '86400'),
                                             ('Content-Type', 'application/json')
                                           )
                                         )
