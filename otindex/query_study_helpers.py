@@ -35,7 +35,9 @@ def get_all_studies(verbose):
     for row in query_obj.all():
         item = {}
         for k,v in row._asdict().items():
-            item[str(k).encode('utf-8')]=str(v).encode('utf-8')
+            k = k.encode('utf-8')
+            v = v.encode('utf-8')
+            item[k]=v
         resultlist.append(item)
     return resultlist
 
@@ -71,7 +73,7 @@ def get_study_query_object(verbose):
         # these need to have '^' at the start, becuase that is how they
         # appear in the JSON column
         clist =[
-            "^ot:studyPublicationReference","^ot::curatorName",
+            "^ot:studyPublicationReference","^ot:curatorName",
             "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
             "^ot:dataDeposit","^ot:studyPublication","^ot:tag"
             ]
