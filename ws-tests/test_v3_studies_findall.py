@@ -26,3 +26,20 @@ assert len(json_result) > 0
 # is a dict with only the key 'ot:studyId'
 top_level_key = json_result.keys()[0]
 assert json_result[top_level_key][0].keys() == ['ot:studyId']
+
+############################
+p = {'verbose': True}
+r = test_http_json_method(SUBMIT_URI,
+                          'POST',
+                          data=p,
+                          expected_status=200,
+                          return_bool_data=True)
+
+#structure of r is (true/false,json-results,true/false)
+assert r[0] is True
+json_result = r[1]
+assert len(json_result) > 0
+
+top_level_key = json_result.keys()[0]
+assert top_level_key == 'matched_studies'
+assert json_result[top_level_key][0].keys() == ['ot:studyId']
