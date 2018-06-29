@@ -66,6 +66,14 @@ def find_studies(request):
     _LOG.debug('find_studies')
     _LOG.debug('request headers are: {h}'.format(h=request.headers))
     _LOG.debug('request.response is: {r}'.format(r=request.response))
+    request.response.headerlist.extend(
+                                          (
+                                            ('Access-Control-Allow-Origin', '*'),
+                                            ('Access-Control-Allow-Credentials', 'true'),
+                                            ('Access-Control-Max-Age', 86400),
+                                            ('Content-Type', 'application/json')
+                                          )
+                                        )
     if (request.body):
         _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
         try:
