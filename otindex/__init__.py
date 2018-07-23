@@ -22,21 +22,7 @@ def request_factory(environ):
     Copied from mtholder/pyraphyletic
     """
     request = Request(environ)
-    _LOG.debug('request factory, .is_xhr {x}'.format(x=request.is_xhr))
     _LOG.debug('request body: {b}'.format(b=request.body))
-#    _LOG.debug('request factory, .context {c}'.format(c=request.context))
-    if request.is_xhr:
-        _LOG.debug('cross origin request')
-        request.response = Response()
-        request.response.headerlist = []
-        request.response.headerlist.extend(
-            (
-                ('Access-Control-Allow-Origin', '*'),
-                ('Access-Control-Allow-Credentials', 'true'),
-                ('Access-Control-Max-Age', 86400),
-                ('Content-Type', 'application/json')
-            )
-        )
     return request
 
 def main(global_config, **settings):

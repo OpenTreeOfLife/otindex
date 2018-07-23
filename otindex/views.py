@@ -33,16 +33,6 @@ from otindex.models import (
 _LOG = get_logger(__name__)
 
 
-def add_cors(item):
-    item.response.headerlist.extend(
-                                    (
-                                            ('Access-Control-Allow-Origin', '*'),
-                                            ('Access-Control-Allow-Credentials', 'true'),
-                                            ('Access-Control-Max-Age', '86400'),
-                                            ('Content-Type', 'application/json')
-                                    )
-                                        )
-    return(item)
 
 @view_config(route_name='home', renderer='json')
 def index(request):
@@ -78,7 +68,7 @@ def find_studies(request):
     _LOG.debug('find_studies')
     _LOG.debug('request headers are: {h}'.format(h=request.headers))
     _LOG.debug('request.response is: {r}'.format(r=request.response))
-    add_cors(request)
+#    add_cors(request)
     _LOG.debug('request.response is: {r}'.format(r=request.response))
     if (request.body):
         _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
