@@ -33,6 +33,7 @@ from otindex.models import (
 _LOG = get_logger(__name__)
 
 
+view_config.add_renderer('json', JSON(indent=4))
 
 @view_config(route_name='home', renderer='json')
 def index(request):
