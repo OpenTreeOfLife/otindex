@@ -3,6 +3,7 @@
 # defined in __init__.py.
 ##################################################
 from pyramid.renderers import JSON
+from pyramid.config import Configurator
 from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.url import route_url
@@ -32,7 +33,7 @@ from otindex.models import (
 #_LOG = logging.getLogger(__name__)
 _LOG = get_logger(__name__)
 
-
+config = Configurator()
 config.add_renderer('json', JSON(indent=4))
 
 @view_config(route_name='home', renderer='json')
