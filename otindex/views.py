@@ -2,7 +2,7 @@
 # views.py: All methods directly implement routes
 # defined in __init__.py.
 ##################################################
-
+from pyramid.renderers import JSON
 from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.url import route_url
@@ -33,7 +33,7 @@ from otindex.models import (
 _LOG = get_logger(__name__)
 
 
-view_config.add_renderer('json', JSON(indent=4))
+config.add_renderer('json', JSON(indent=4))
 
 @view_config(route_name='home', renderer='json')
 def index(request):
