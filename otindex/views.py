@@ -20,6 +20,7 @@ from peyotl import get_logger
 from otindex import query_study_helpers as qs
 from otindex import query_tree_helpers as qt
 from otindex import add_update_studies as aus
+from otindex import tnrs
 from otindex.models import (
     DBSession,
     Study,
@@ -209,6 +210,19 @@ def remove_studies(request):
             "failed_studies" : failed_studies,
             "updated_studies" : updated_studies
             }
+        return results
+    else:
+        _msg="No payload provided"
+        raise HTTPBadRequest(body=_msg)
+
+# tnrs: match names
+@view_config(route_name='match_names', renderer='json', request_method='POST')
+def match_names(request):
+    if (request.body):
+        payload = request.json_body
+        results = {}
+        for name in payload['names']:
+            result = tnrs.match_name(name)
         return results
     else:
         _msg="No payload provided"
