@@ -32,6 +32,8 @@ def main(global_config, **settings):
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
     config = Configurator(settings=settings)
+    config.include('.cors')
+    config.add_cors_preflight_handler()
     config.include('pyramid_chameleon')
     config.set_request_factory(request_factory)
     config.add_static_view('static', 'static', cache_max_age=3600)
