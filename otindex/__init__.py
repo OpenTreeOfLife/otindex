@@ -22,7 +22,7 @@ def request_factory(environ):
     Copied from mtholder/pyraphyletic
     """
     request = Request(environ)
-    _LOG.debug('request body: {b}'.format(b=request.body))
+    _LOG.debug('trunctated request body: {b}'.format(b=request.body[:1000]))
     return request
 
 def main(global_config, **settings):
@@ -42,7 +42,7 @@ def main(global_config, **settings):
     config.add_route('find_studies','{v}/studies/find_studies'.format(v=v),request_method="POST")
     config.add_route('find_trees','{v}/studies/find_trees'.format(v=v),request_method="POST")
     config.add_route('properties','{v}/studies/properties'.format(v=v),request_method="POST")
-    config.add_route('add_update','{v}/studies/add_update'.format(v=v))
+    config.add_route('add_update','{v}/studies/add_update'.format(v=v),request_method="POST")
     config.add_route('remove','{v}/studies/remove'.format(v=v))
     config.add_route('about','{v}/studies/about'.format(v=v))
 

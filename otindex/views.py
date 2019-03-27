@@ -67,9 +67,9 @@ def find_studies(request):
     property_value = None
     _LOG.debug('find_studies')
     _LOG.debug('request headers are: {h}'.format(h=request.headers))
-    _LOG.debug('request.response is: {r}'.format(r=request.response))
+    _LOG.debug('truncated request.response is: {r}'.format(r=request.response)[:1000])
 #    add_cors(request)
-    _LOG.debug('request.response is: {r}'.format(r=request.response))
+#    _LOG.debug('request.response is: {r}'.format(r=request.response))
     if (request.body):
         _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
         try:
@@ -113,7 +113,7 @@ def find_studies(request):
     else:
         resultlist = qs.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
-    _LOG.debug("the result dict is {d}".format(d=resultdict))
+    _LOG.debug("the trunctaed result dict is {d}".format(d=resultdict[100]))
     return resultdict
 
 # find_trees method
