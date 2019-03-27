@@ -113,7 +113,7 @@ def find_studies(request):
     else:
         resultlist = qs.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
-    _LOG.debug("the truncated result dict is {d}".format(d=str(resultdict)[1000]))
+    _LOG.debug("the truncated result dict is {d}".format(d=str(resultdict)[:1000]))
     return resultdict
 
 # find_trees method
