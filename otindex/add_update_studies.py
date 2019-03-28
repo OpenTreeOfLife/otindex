@@ -141,7 +141,7 @@ def add_study(study_id):
 
 def create_phylesystem_obj():
     # create connection to phylesystem
-    phy = PhylesystemAPI()
+    phy = PhylesystemAPI(get_from='api')
     return phy
 
 # If the curator(s) associated with this study are *only* associated with
