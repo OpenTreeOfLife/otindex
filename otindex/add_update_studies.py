@@ -25,7 +25,7 @@ def add_study(study_id):
     # get latest version of nexson
     # location of repo (test vs dev) dependent on peyotl config
     phy = create_phylesystem_obj()
-    _LOG.debug('Domain of phylesystem being used by otindex is {d}'.format(d=domain(phy)))
+    _LOG.debug('Domain of phylesystem being used by otindex is {d}'.format(d=phy.domain))
     try:
         studyobj = phy.get_study(study_id)['data']
     except:
