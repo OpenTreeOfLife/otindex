@@ -10,8 +10,7 @@ from .models import (
 
 import simplejson as json
 import sqlalchemy
-#import logging
-from peyotl import get_logger
+import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
