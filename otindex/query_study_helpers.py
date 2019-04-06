@@ -200,4 +200,5 @@ def query_studies(verbose,property_type,property_value):
             resultlist.append(item)
         return resultlist
     except ProgrammingError as e:
+        _LOG.exception('exception in dict creation'.format(e))
         raise HTTPBadRequest()
