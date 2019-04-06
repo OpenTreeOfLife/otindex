@@ -91,6 +91,7 @@ def find_studies(request):
             verbose = payload['verbose']
 
         if 'property' in payload:
+            _LOG.debug('property in payload')
             if 'value' in payload:
                 property_type = payload['property']
                 property_value = payload['value']
@@ -108,9 +109,10 @@ def find_studies(request):
         _LOG.debug('find_studies with no parameters')
     # query time!
     if (property_type is None):
+        _LOG.debug('property_type is None')
         resultlist = qs.get_all_studies(verbose)
     else:
-        _LOG.debug('views: query with  {v},{pt},{pv}'.format(v=verbose,pt=property_type,pv=property_value))
+        _LOG.debug('views: query_studies with  {v},{pt},{pv}'.format(v=verbose,pt=property_type,pv=property_value))
         resultlist = qs.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
     _LOG.debug("the truncated result dict is {d}".format(d=str(resultdict)[:1000]))
