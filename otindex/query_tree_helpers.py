@@ -102,7 +102,10 @@ def get_study_return_props(studyid,studydict):
     for row in query_obj.all():
         for k,v in row._asdict().items():
             if v is not None:
-                resultdict[k]=v
+                if isinstance(v, dict) and '@href' in v:
+                    resultdict[k]=v['@href']
+                else:
+                    resultdict[k]=v
     studydict[studyid] = resultdict
     return studydict
 
