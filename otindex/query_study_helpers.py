@@ -16,6 +16,7 @@ from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
+from .util import clean_dict_values
 
 _LOG = get_logger(__name__)
 
@@ -195,8 +196,7 @@ def query_studies(verbose,property_type,property_value):
     try:
         for row in filtered.all():
             item = {}
-            for k,v in row._asdict().items():
-                item[k]=v
+            clean_dict_values(row._asdict(), item)
             resultlist.append(item)
         return resultlist
     except ProgrammingError as e:

@@ -14,6 +14,7 @@ import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
+from .util import clean_dict_values
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,12 +101,7 @@ def get_study_return_props(studyid,studydict):
     # should only be one row
     resultdict = {}
     for row in query_obj.all():
-        for k,v in row._asdict().items():
-            if v is not None:
-                if isinstance(v, dict) and '@href' in v:
-                    resultdict[k]=v['@href']
-                else:
-                    resultdict[k]=v
+        clean_dict_values(row._asdict(), resultdict)
     studydict[studyid] = resultdict
     return studydict
 
@@ -125,6 +121,7 @@ def get_tree_property_list():
     properties.append("ntips")
     #properties.append("proposed")
     return properties
+
 
 # returns an (unfiltered) tree query object with either the set of
 # verbose=true or verbose=false fields. Query not yet run.
