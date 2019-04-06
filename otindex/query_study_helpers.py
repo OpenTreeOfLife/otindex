@@ -18,7 +18,7 @@ from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 from .util import clean_dict_values
 
-_LOG = get_logger(__name__)
+_LOG = logging.getLogger(__name__)
 
 def is_deprecated_property(prop):
     deprecated_oti_properties = [ "ot:studyModified", "ot:focalCladeOTTId", "ot:studyLastEditor", "ot:focalCladeTaxonName", "ot:studyLabel", "ot:authorContributed", "ot:studyUploaded", "is_deprecated", "ot:candidateTreeForSynthesis" ]
