@@ -110,6 +110,7 @@ def find_studies(request):
     if (property_type is None):
         resultlist = qs.get_all_studies(verbose)
     else:
+        _LOG.debug('views: query with  {v},{pt},{pv}'.format(v=verbose,pt=property_type,pv=property_value))
         resultlist = qs.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
     _LOG.debug("the truncated result dict is {d}".format(d=str(resultdict)[:1000]))
