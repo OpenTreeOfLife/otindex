@@ -29,8 +29,7 @@ from otindex.models import (
     Property,
     )
 
-#_LOG = logging.getLogger(__name__)
-_LOG = get_logger(__name__)
+_LOG = logging.getLogger(__name__)
 
 
 
