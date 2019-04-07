@@ -70,7 +70,7 @@ def get_study_query_object(verbose):
     if (verbose):
         # these need to have '^' at the start, becuase that is how they
         # appear in the JSON column
-        labels = = util.get_study_properties(decorated=False)
+        labels = util.get_study_properties(decorated=False)
         clist = util.get_study_properties(decorated=True)
         # assigning labels like this makes it easy to build the response json
         # but can't directly access any particular item via the label,
