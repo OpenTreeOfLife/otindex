@@ -78,7 +78,7 @@ def get_prop_with_prefix(prop):
 # this method gets the study-level fields
 def get_study_return_props(studyid,studydict):
     labels = get_study_properties(decorated=False)
-    slist = get_study_properties(decorated=True)
+    clist = get_study_properties(decorated=True)
     # assigning labels like this makes it easy to build the response json
     # but can't directly access any particular item via the label,
     # i.e result.ot:studyId because of ':' in label
