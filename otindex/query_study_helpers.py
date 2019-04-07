@@ -57,15 +57,10 @@ def get_prop_with_prefix(prop):
 # get the list of searchable study properties
 # v3 list pruned down to only those implemented in v3
 def get_study_property_list(prop_only=True):
-    properties = []
-    query_obj = DBSession.query(Property.property).filter(
-        Property.type=='study'
-    ).all()
-    for row in query_obj:
-    properties.append(row.property)
+    properties = get_study_properties()
     # now add the non-JSON properties
-    properties.append("ntrees")
-    properties.append("treebaseId")
+#    properties.append("ntrees")
+#    properties.append("treebaseId")
     return properties
 
 # return the query object without any filtering
