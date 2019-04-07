@@ -11,7 +11,7 @@ def clean_dict_values(inputdict, output):
 
 
 
-def get_study_properties(decorated=False)
+def get_study_properties(decorated=False):
     properties = [
             "ot:studyPublicationReference","ot:curatorName",
             "ot:studyYear","ot:focalClade","ot:focalCladeOTTTaxonName",
