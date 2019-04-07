@@ -15,7 +15,7 @@ from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
-from .util import clean_dict_values
+from .util import clean_dict_values, get_study_properties
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def get_prop_with_prefix(prop):
 # get the list of searchable study properties
 # v3 list pruned down to only those implemented in v3
 def get_study_property_list(prop_only=True):
-    properties = util.get_study_properties()
+    properties = get_study_properties()
     # now add the non-JSON properties
     properties.append("ntrees")
     properties.append("treebaseId")
@@ -70,8 +70,8 @@ def get_study_query_object(verbose):
     if (verbose):
         # these need to have '^' at the start, becuase that is how they
         # appear in the JSON column
-        labels = util.get_study_properties(decorated=False)
-        clist = util.get_study_properties(decorated=True)
+        labels = get_study_properties(decorated=False)
+        clist = get_study_properties(decorated=True)
         # assigning labels like this makes it easy to build the response json
         # but can't directly access any particular item via the label,
         # i.e result.ot:studyId because of ':' in label
