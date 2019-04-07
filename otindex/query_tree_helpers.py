@@ -109,10 +109,10 @@ def get_tree_property_list():
     properties = get_tree_properties()
     #_LOG.debug("tree properties are {}".format(",".join(properties)))
     # now add the non-JSON properties
-    properties.append('ot:ottId')
-    properties.append('ot:ottTaxonName')
-    properties.append('ot:studyId')
-    properties.append("ntips")
+#    properties.append('ot:ottId')
+#    properties.append('ot:ottTaxonName')
+#    properties.append('ot:studyId')
+#    properties.append("ntips")
     #properties.append("proposed")
     return properties
 

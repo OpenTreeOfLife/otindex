@@ -13,8 +13,10 @@ def get_study_properties(decorated=False):
     properties = [
             "ot:studyPublicationReference","ot:curatorName",
             "ot:studyYear","ot:focalClade","ot:focalCladeOTTTaxonName",
-            "ot:dataDeposit","ot:studyPublication","ot:tag"
+            "ot:dataDeposit","ot:studyPublication","ot:tag", "ot:studyId", "ntrees", "treebaseId"
             ]
+    # Includes these non-JSON properties
+    #"ot:studyId", "ntrees", "treebaseId"
     dec_properties = ["^{}".format(prop) for prop in properties]
     if decorated:
         return dec_properties
@@ -28,9 +30,10 @@ def get_tree_properties(decorated=False):
                 "oti_tree_id",  "ot:inferenceMethod",
                 "ot:tag", "ot:treebaseTreeId", "ot:comment", "ot:branchLengthDescription",
                 "ot:treeModified","ot:branchLengthTimeUnits",
-                "ot:branchLengthMode", "ot:treeLastEdited", "ot:nodeLabelDescription" 
+                "ot:branchLengthMode", "ot:treeLastEdited", "ot:nodeLabelDescription",  
+                "ot:ottId", "ot:ottTaxonName",  "ot:studyId", "ntips"
                 ]
-    # Pulled these , non-JSON properties out
+    # Includes these non-JSON properties
     #"ot:ottTaxonName",  "ot:ottId",  "ot:studyId", 
     dec_properties = ["^{}".format(prop) for prop in properties]
     if decorated:
