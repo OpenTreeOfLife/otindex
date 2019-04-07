@@ -99,11 +99,13 @@ def find_studies(request):
                 study_properties = qs.get_study_property_list()
                 if property_type not in study_properties:
                     _msg="Study property {p} is unknown".format(p=property_type)
+                    _LOG.exception("HTTPBadRequest: {m}".format(m=_msg))
                     raise HTTPBadRequest(body=_msg)
 
             else:
                 # no value for property
                 _msg = "No value given for property {p}".format(p=property_type)
+                _LOG.exception("HTTPBadRequest: {m}".format(m=_msg))
                 raise HTTPBadRequest(body=_msg)
     else:
         _LOG.debug('find_studies with no parameters')
