@@ -77,23 +77,21 @@ def get_prop_with_prefix(prop):
 # find_trees methods also return info about studies
 # this method gets the study-level fields
 def get_study_return_props(studyid,studydict):
-    slist =[
-        "^ot:studyPublicationReference","^ot:curatorName",
-        "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
-        "^ot:dataDeposit","^ot:studyPublication"
-        ]
+    labels = get_study_properties(decorated=False)
+    slist = get_study_properties(decorated=True)
     # assigning labels like this makes it easy to build the response json
     # but can't directly access any particular item via the label,
     # i.e result.ot:studyId because of ':' in label
     query_obj = DBSession.query(
         Study.id.label('ot:studyId'),
-        Study.data[(slist[0])].label('ot:studyPublicationReference'),
-        Study.data[(slist[1])].label('ot:curatorName'),
-        Study.data[(slist[2])].label('ot:studyYear'),
-        Study.data[(slist[3])].label('ot:focalClade'),
-        Study.data[(slist[4])].label('ot:focalCladeOTTTaxonName'),
-        Study.data[(slist[5])].label('ot:dataDeposit'),
-        Study.data[(slist[6])].label('ot:studyPublication'),
+        Study.data[(clist[0])].label(labels[0]),
+        Study.data[(clist[1])].label(labels[1]),
+        Study.data[(clist[2])].label(labels[2]),
+        Study.data[(clist[3])].label(labels[3]),
+        Study.data[(clist[4])].label(labels[4]),
+        Study.data[(clist[5])].label(labels[5]),
+        Study.data[(clist[6])].label(labels[6]),
+        Study.data[(clist[7])].label(labels[7]),
     ).filter(
         Study.id == studyid
     )
