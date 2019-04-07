@@ -14,7 +14,7 @@ import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
-from .util import clean_dict_values
+from .util import clean_dict_values, get_tree_properties
 
 _LOG = logging.getLogger(__name__)
 
@@ -106,12 +106,7 @@ def get_study_return_props(studyid,studydict):
 # get the list of searchable properties
 # v3 list pruned down to only those implemented in v3
 def get_tree_property_list():
-    properties = []
-    query_obj = DBSession.query(Property.property).filter(
-        Property.type=='tree'
-    ).all()
-    for row in query_obj:
-        properties.append(row.property)
+    properties = get_tree_properties()
     # now add the non-JSON properties
     properties.append('ot:ottId')
     properties.append('ot:ottTaxonName')
