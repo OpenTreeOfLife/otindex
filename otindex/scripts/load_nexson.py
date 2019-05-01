@@ -44,6 +44,7 @@ def create_phylesystem_obj():
 def to_unicode(text):
     try:
         text = unicode(text, 'utf-8')
+        return text
     except TypeError:
         return text
 
