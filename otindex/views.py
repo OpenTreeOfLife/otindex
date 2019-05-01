@@ -36,7 +36,7 @@ _LOG = logging.getLogger(__name__)
 @view_config(route_name='home', renderer='json')
 def index(request):
     return {
-        "description": "The Open Tree of Life Phylesystem Index (options branch)",
+        "description": "The Open Tree of Life Phylesystem Index",
         "source_url": "https://github.com/opentreeoflife/otindex/",
     }
 
