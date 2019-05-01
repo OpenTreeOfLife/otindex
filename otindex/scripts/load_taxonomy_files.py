@@ -52,3 +52,4 @@ if __name__ == "__main__":
 
     except psy.Error as e:
         print e.pgerror
+        sys.exit(1)
