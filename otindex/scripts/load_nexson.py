@@ -285,6 +285,7 @@ if __name__ == "__main__":
         print "done clearing tables"
     except psy.Error as e:
         print e.pgerror
+        sys.exit(1)
 
     # data import
     starttime = dt.datetime.now()
@@ -303,6 +304,7 @@ if __name__ == "__main__":
         create_status_file()
     except psy.Error as e:
         print e.pgerror
+        sys.exit(1)
     connection.close()
     endtime = dt.datetime.now()
     print "Total load + index time: ",endtime - starttime
