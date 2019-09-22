@@ -19,10 +19,10 @@ if [ $nstudies ]; then
     python load_nexson.py $config -n $nstudies
 
     # prepare taxonomy files
-    python generate_taxonomy_files.py $config
+    python generate_taxonomy_files.py $config -n $nstudies
 
     # load taxonomy files
-    python load_taxonomy_files.py $config -n $nstudies .
+    python load_taxonomy_files.py $config .
 
     # run some simple tests
     python test_db_selects.py $config

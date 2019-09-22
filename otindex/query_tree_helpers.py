@@ -14,6 +14,7 @@ import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
+from .util import clean_dict_values, get_study_parameters
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,23 +77,21 @@ def get_prop_with_prefix(prop):
 # find_trees methods also return info about studies
 # this method gets the study-level fields
 def get_study_return_props(studyid,studydict):
-    slist =[
-        "^ot:studyPublicationReference","^ot:curatorName",
-        "^ot:studyYear","^ot:focalClade","^ot:focalCladeOTTTaxonName",
-        "^ot:dataDeposit","^ot:studyPublication"
-        ]
+    labels = get_study_parameters(decorated=False)
+    clist = get_study_parameters(decorated=True)
     # assigning labels like this makes it easy to build the response json
     # but can't directly access any particular item via the label,
     # i.e result.ot:studyId because of ':' in label
     query_obj = DBSession.query(
         Study.id.label('ot:studyId'),
-        Study.data[(slist[0])].label('ot:studyPublicationReference'),
-        Study.data[(slist[1])].label('ot:curatorName'),
-        Study.data[(slist[2])].label('ot:studyYear'),
-        Study.data[(slist[3])].label('ot:focalClade'),
-        Study.data[(slist[4])].label('ot:focalCladeOTTTaxonName'),
-        Study.data[(slist[5])].label('ot:dataDeposit'),
-        Study.data[(slist[6])].label('ot:studyPublication'),
+        Study.data[(clist[0])].label(labels[0]),
+        Study.data[(clist[1])].label(labels[1]),
+        Study.data[(clist[2])].label(labels[2]),
+        Study.data[(clist[3])].label(labels[3]),
+        Study.data[(clist[4])].label(labels[4]),
+        Study.data[(clist[5])].label(labels[5]),
+        Study.data[(clist[6])].label(labels[6]),
+        Study.data[(clist[7])].label(labels[7]),
     ).filter(
         Study.id == studyid
     )
@@ -100,9 +99,7 @@ def get_study_return_props(studyid,studydict):
     # should only be one row
     resultdict = {}
     for row in query_obj.all():
-        for k,v in row._asdict().items():
-            if v is not None:
-                resultdict[k]=v
+        clean_dict_values(row._asdict(), resultdict)
     studydict[studyid] = resultdict
     return studydict
 
@@ -115,13 +112,8 @@ def get_tree_property_list():
     ).all()
     for row in query_obj:
         properties.append(row.property)
-    # now add the non-JSON properties
-    properties.append('ot:ottId')
-    properties.append('ot:ottTaxonName')
-    properties.append('ot:studyId')
-    properties.append("ntips")
-    #properties.append("proposed")
     return properties
+
 
 # returns an (unfiltered) tree query object with either the set of
 # verbose=true or verbose=false fields. Query not yet run.
@@ -205,7 +197,7 @@ def build_json_response(filtered,verbose):
 # property_value
 def query_trees(verbose,property_type,property_value):
     resultlist = []
-    _LOG.debug("querying trees by {p} : {v}".format(p=property_type,v=property_value))
+    _LOG.debug("1. querying trees by {p} : {v}".format(p=property_type,v=property_value))
     # get the base (unfiltered) query object
     query_obj = get_tree_query_object(verbose)
     filtered = None
@@ -227,6 +219,7 @@ def query_trees(verbose,property_type,property_value):
         # get OTT ID for this name
         ott_id = get_ott_id(property_value)
         filtered = query_trees_by_ott_id(query_obj,ott_id)
+        _LOG.debug("2. querying trees by {p} : {v}".format(p=property_type,v=property_value))
 
     elif property_type == "ot:ottId":
         filtered = query_trees_by_ott_id(query_obj,property_value)

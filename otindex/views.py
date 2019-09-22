@@ -29,8 +29,9 @@ from otindex.models import (
     Property,
     )
 
-#_LOG = logging.getLogger(__name__)
-_LOG = get_logger(__name__)
+_LOG = logging.getLogger(__name__)
+
+
 
 @view_config(route_name='home', renderer='json')
 def index(request):
@@ -64,9 +65,17 @@ def find_studies(request):
     property_type = None
     property_value = None
     _LOG.debug('find_studies')
-
+    _LOG.debug('request headers are: {h}'.format(h=request.headers))
+    _LOG.debug('truncated request.response is: {r}'.format(r=request.response)[:1000])
+#    add_cors(request)
+#    _LOG.debug('request.response is: {r}'.format(r=request.response))
     if (request.body):
-        payload = request.json_body
+        _LOG.debug('find_studies request.body is {b}'.format(b=request.body))
+        try:
+            payload = request.json_body
+            _LOG.debug('find_studies payload is {p}'.format(p=payload))
+        except:
+            payload = {'verbose':True}
         # check that we only have valid parameters
         valid_parameters = ['verbose','property','value','exact']
         parameters = payload.keys()
@@ -82,6 +91,7 @@ def find_studies(request):
             verbose = payload['verbose']
 
         if 'property' in payload:
+            _LOG.debug('property in payload')
             if 'value' in payload:
                 property_type = payload['property']
                 property_value = payload['value']
@@ -89,22 +99,25 @@ def find_studies(request):
                 study_properties = qs.get_study_property_list()
                 if property_type not in study_properties:
                     _msg="Study property {p} is unknown".format(p=property_type)
+                    _LOG.exception("HTTPBadRequest: {m}".format(m=_msg))
                     raise HTTPBadRequest(body=_msg)
 
             else:
                 # no value for property
                 _msg = "No value given for property {p}".format(p=property_type)
+                _LOG.exception("HTTPBadRequest: {m}".format(m=_msg))
                 raise HTTPBadRequest(body=_msg)
-
     else:
         _LOG.debug('find_studies with no parameters')
-
     # query time!
     if (property_type is None):
+        _LOG.debug('property_type is None')
         resultlist = qs.get_all_studies(verbose)
     else:
+        _LOG.debug('views: query_studies with  {v},{pt},{pv}'.format(v=verbose,pt=property_type,pv=property_value))
         resultlist = qs.query_studies(verbose,property_type,property_value)
     resultdict = { "matched_studies" : resultlist}
+    _LOG.debug("the truncated result dict is {d}".format(d=str(resultdict)[:1000]))
     return resultdict
 
 # find_trees method

@@ -44,6 +44,7 @@ def create_phylesystem_obj():
 def to_unicode(text):
     try:
         text = unicode(text, 'utf-8')
+        return text
     except TypeError:
         return text
 
@@ -189,6 +190,11 @@ def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
         try:
             for trees_group_id, tree_id, tree in iter_trees(studyobj):
                 #print ' tree :' ,tree_id
+                _LOG.debug(u'{i} Loading tree  {t} for study {s}'.format(
+                           i=counter,
+                           s=study_id,
+                           t=tree_id)
+                           )
                 ntrees += 1
                 proposedForSynth = False
                 tree_properties.update(tree.keys())
@@ -236,7 +242,15 @@ def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
             print "finished inserting",nstudies,"studies"
             break
 
-    # load the tree and study properties
+    # add the searchable properties that are not in the nexsons
+    tree_properties.add("ot:ottId")
+    tree_properties.add("ot:ottTaxonName")
+    tree_properties.add("ot:studyId")
+    tree_properties.add("ntips")
+    study_properties.add("ntrees")
+    study_properties.add("treebaseId")
+
+    # and load the tree and study properties into the property table
     PROPERTYTABLE = config_obj.get('database_tables','propertytable')
     load_properties(
         connection,
@@ -280,6 +294,7 @@ if __name__ == "__main__":
         print "done clearing tables"
     except psy.Error as e:
         print e.pgerror
+        sys.exit(1)
 
     # data import
     starttime = dt.datetime.now()
@@ -298,6 +313,7 @@ if __name__ == "__main__":
         create_status_file()
     except psy.Error as e:
         print e.pgerror
+        sys.exit(1)
     connection.close()
     endtime = dt.datetime.now()
     print "Total load + index time: ",endtime - starttime

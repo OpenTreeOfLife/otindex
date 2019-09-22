@@ -108,3 +108,12 @@ You'll want this for debugging.
     `$ psql -U postgres otindex`
 
 were `postgres` is the postgres user and `otindex` is the database name.
+
+# Postgres setup ubuntu version (draft)
+    sudo apt-get install postgresql  
+    service postgresql start  
+    sudo -u postgres createdb -O postgres -E utf8 otindex  
+    sudo -u postgres createuser opentree -D -S -P  
+    sudo su - postgres  
+    psql otindex  
+    otindex=> GRANT ALL ON DATABASE otindex TO opentree;

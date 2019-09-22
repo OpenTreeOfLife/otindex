@@ -21,14 +21,14 @@ _LOG = logging.getLogger(__name__)
 
 def add_study(study_id):
     _LOG.debug('adding study {s}'.format(s=study_id))
-
     # get latest version of nexson
     # location of repo (test vs dev) dependent on peyotl config
     phy = create_phylesystem_obj()
+    _LOG.debug('Domain of phylesystem being used by otindex is {d}'.format(d=phy.domain))
     try:
         studyobj = phy.get_study(study_id)['data']
     except:
-        _LOG.debug('did not find study {s} in phylesystem'.format(s=study_id))
+        _LOG.exception('did not find study {s} in phylesystem'.format(s=study_id))
         raise HTTPNotFound("Study {s} not found in phylesystem".format(s=study_id))
     nexml = studyobj['nexml']
     proposedTrees = nexml.get('^ot:candidateTreeForSynthesis')
@@ -141,7 +141,7 @@ def add_study(study_id):
 
 def create_phylesystem_obj():
     # create connection to phylesystem
-    phy = PhylesystemAPI()
+    phy = PhylesystemAPI(get_from='api')
     return phy
 
 # If the curator(s) associated with this study are *only* associated with
