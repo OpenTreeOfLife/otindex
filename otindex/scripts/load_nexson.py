@@ -242,7 +242,15 @@ def load_nexsons(connection,cursor,phy,config_obj,nstudies=None):
             print "finished inserting",nstudies,"studies"
             break
 
-    # load the tree and study properties
+    # add the searchable properties that are not in the nexsons
+    tree_properties.add("ot:ottId")
+    tree_properties.add("ot:ottTaxonName")
+    tree_properties.add("ot:studyId")
+    tree_properties.add("ntips")
+    study_properties.add("ntrees")
+    study_properties.add("treebaseId")
+
+    # and load the tree and study properties into the property table
     PROPERTYTABLE = config_obj.get('database_tables','propertytable')
     load_properties(
         connection,
