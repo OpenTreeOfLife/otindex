@@ -14,7 +14,7 @@ import logging
 from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
-from .util import clean_dict_values, get_study_properties, get_tree_properties
+from .util import clean_dict_values, get_study_parameters
 
 _LOG = logging.getLogger(__name__)
 
@@ -77,8 +77,8 @@ def get_prop_with_prefix(prop):
 # find_trees methods also return info about studies
 # this method gets the study-level fields
 def get_study_return_props(studyid,studydict):
-    labels = get_study_properties(decorated=False)
-    clist = get_study_properties(decorated=True)
+    labels = get_study_parameters(decorated=False)
+    clist = get_study_parameters(decorated=True)
     # assigning labels like this makes it easy to build the response json
     # but can't directly access any particular item via the label,
     # i.e result.ot:studyId because of ':' in label
@@ -106,14 +106,12 @@ def get_study_return_props(studyid,studydict):
 # get the list of searchable properties
 # v3 list pruned down to only those implemented in v3
 def get_tree_property_list():
-    properties = get_tree_properties()
-    #_LOG.debug("tree properties are {}".format(",".join(properties)))
-    # now add the non-JSON properties
-#    properties.append('ot:ottId')
-#    properties.append('ot:ottTaxonName')
-#    properties.append('ot:studyId')
-#    properties.append("ntips")
-    #properties.append("proposed")
+    properties = []
+    query_obj = DBSession.query(Property.property).filter(
+        Property.type=='tree'
+    ).all()
+    for row in query_obj:
+        properties.append(row.property)
     return properties
 
 

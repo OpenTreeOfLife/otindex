@@ -15,7 +15,7 @@ from sqlalchemy.dialects.postgresql import JSON,JSONB
 from sqlalchemy import Integer
 from sqlalchemy.exc import ProgrammingError
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
-from .util import clean_dict_values, get_study_properties
+from .util import clean_dict_values, get_study_parameters
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,11 +52,13 @@ def get_prop_with_prefix(prop):
 
 # get the list of searchable study properties
 # v3 list pruned down to only those implemented in v3
-def get_study_property_list(prop_only=True):
-    properties = get_study_properties()
-    # now add the non-JSON properties
-#    properties.append("ntrees")
-#    properties.append("treebaseId")
+def get_study_property_list():
+    properties = []
+    query_obj = DBSession.query(Property.property).filter(
+        Property.type=='study'
+    ).all()
+    for row in query_obj:
+        properties.append(row.property)
     return properties
 
 # return the query object without any filtering
@@ -64,10 +66,11 @@ def get_study_property_list(prop_only=True):
 def get_study_query_object(verbose):
     query_obj = None
     if (verbose):
-        # these need to have '^' at the start, becuase that is how they
+        # Get the study parameters returned by the method when verbose
+        # Decorated properties have '^' at the start, becuase that is how they
         # appear in the JSON column
-        labels = get_study_properties(decorated=False)
-        clist = get_study_properties(decorated=True)
+        labels = get_study_parameters(decorated=False)
+        clist = get_study_parameters(decorated=True)
         # assigning labels like this makes it easy to build the response json
         # but can't directly access any particular item via the label,
         # i.e result.ot:studyId because of ':' in label

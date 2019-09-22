@@ -8,33 +8,13 @@ def clean_dict_values(inputdict, output):
                 output[k] = v
 
 
-
-def get_study_properties(decorated=False):
+# get the list of study parameters returned when verbose = True
+def get_study_parameters(decorated=False):
     properties = [
             "ot:studyPublicationReference","ot:curatorName",
             "ot:studyYear","ot:focalClade","ot:focalCladeOTTTaxonName",
             "ot:dataDeposit","ot:studyPublication","ot:tag", "ot:studyId", "ntrees", "treebaseId"
             ]
-    # Includes these non-JSON properties
-    #"ot:studyId", "ntrees", "treebaseId"
-    dec_properties = ["^{}".format(prop) for prop in properties]
-    if decorated:
-        return dec_properties
-    else:
-        return properties
-
-
-def get_tree_properties(decorated=False):
-    properties = [
-                "ot:treebaseOTUId", "ot:nodeLabelMode", "ot:originalLabel",
-                "oti_tree_id",  "ot:inferenceMethod",
-                "ot:tag", "ot:treebaseTreeId", "ot:comment", "ot:branchLengthDescription",
-                "ot:treeModified","ot:branchLengthTimeUnits",
-                "ot:branchLengthMode", "ot:treeLastEdited", "ot:nodeLabelDescription",  
-                "ot:ottId", "ot:ottTaxonName",  "ot:studyId", "ntips"
-                ]
-    # Includes these non-JSON properties
-    #"ot:ottTaxonName",  "ot:ottId",  "ot:studyId", 
     dec_properties = ["^{}".format(prop) for prop in properties]
     if decorated:
         return dec_properties
