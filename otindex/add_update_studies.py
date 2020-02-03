@@ -88,12 +88,11 @@ def add_study(study_id):
         if (tree_id in proposedTrees):
             proposedForSynth = True
 
-        treejson = json.dumps(tree)
         new_tree = Tree(
             tree_id=tree_id,
             study_id=study_id,
             proposed=proposedForSynth,
-            data=treejson
+            data=tree
             )
 
         # get otus
