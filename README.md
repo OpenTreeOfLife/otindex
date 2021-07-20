@@ -19,6 +19,7 @@ playbook](https://github.com/OpenTreeOfLife/otindex_ansible).
 See the
 [README](https://github.com/OpenTreeOfLife/otindex/blob/master/otindex/scripts/README.md)
 file in that directory for more detailed setup information.
+
 # Postgres setup ubuntu version (draft)
     sudo apt-get install postgresql  
     service postgresql start  
@@ -27,6 +28,31 @@ file in that directory for more detailed setup information.
     <create password>
     sudo su - postgres  
     psql otindex  
+    otindex=> GRANT ALL ON DATABASE otindex TO opentree;
+
+# Postgres setup on MacOS (draft)
+This assumes we're installing a particular Postgres version using Homebrew.
+    % brew install postgresql@9.5
+If it's an older/deprecated version, postgres binaries might not be linked in
+the usual. Let's modify the PATH in `~/.zshenv`:
+    # add temporary support for postgresql@9.5 (for otindex)
+    PATH="/usr/local/opt/postgresql@9.5/bin:${PATH}"
+Now any new terminal should recognize its binaries. To confirm:
+    % which psql
+    /usr/local/opt/postgresql@9.5/bin/psql
+Homebrew's postgres setup might not create the usual `postgres` superuser
+account. We can do that now, so that other commands will be consistent with the
+exmples here:
+    % createuser -s postgres
+You'll need to make sure this OS user has the same PATH adjustment above, so
+that it can find the expected binaries. Or just use your own OS (login) account
+to manage postgres, instead of user `postgres`. Let's take the latter approach
+to match the ubuntu setup above:
+    % brew services start postgresql
+    % createdb -E utf8 otindex
+    % createuser opentree -D -S -P
+    <create password>
+    % psql otindex
     otindex=> GRANT ALL ON DATABASE otindex TO opentree;
 
 ## Configuration
