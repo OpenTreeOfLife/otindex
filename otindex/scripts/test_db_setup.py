@@ -2,7 +2,7 @@
 import psycopg2 as psy
 import simplejson as json
 import datetime as dt
-import setup_db
+from . import setup_db
 import unittest
 
 class TestDatabaseSetup():

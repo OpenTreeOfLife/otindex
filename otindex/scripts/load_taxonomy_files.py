@@ -9,7 +9,7 @@ import psycopg2 as psy
 import os
 
 # other database functions
-import setup_db
+from . import setup_db
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='load ott into postgres')
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
         # import the csv files into the tables
         starttime = dt.datetime.now()
-        print "Importing taxonomy files"
+        print("Importing taxonomy files")
 
         fullpath = os.path.abspath(args.files_dir)
         # taxonomy: ott.csv
@@ -47,9 +47,9 @@ if __name__ == "__main__":
         setup_db.import_csv_file(connection,cursor,TREEOTUTABLE,tree_otu_filename)
 
         endtime = dt.datetime.now()
-        print "OTT file load time: ",endtime - starttime
+        print(("OTT file load time: ",endtime - starttime))
         connection.close()
 
     except psy.Error as e:
-        print e.pgerror
+        print((e.pgerror))
         sys.exit(1)
