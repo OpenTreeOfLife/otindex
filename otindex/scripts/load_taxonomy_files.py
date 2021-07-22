@@ -9,7 +9,10 @@ import psycopg2 as psy
 import os
 
 # other database functions
-from . import setup_db
+if __name__ == "__main__":
+    import setup_db
+else:
+    from . import setup_db
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='load ott into postgres')

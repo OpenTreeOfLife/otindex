@@ -11,7 +11,10 @@ import psycopg2 as psy
 import csv, io, os
 
 # other database functions
-from . import setup_db
+if __name__ == "__main__":
+    import setup_db
+else:
+    from . import setup_db
 
 # peyotl functions for handling the taxonomy
 from peyotl.api.phylesystem_api import PhylesystemAPI

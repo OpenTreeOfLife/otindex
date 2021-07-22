@@ -2,7 +2,11 @@
 import psycopg2 as psy
 import simplejson as json
 import argparse
-from . import setup_db
+# other database functions
+if __name__ == "__main__":
+    import setup_db
+else:
+    from . import setup_db
 
 def find_all_studies(cursor,config_obj):
     STUDYTABLE = config_obj.get('database_tables','studytable')

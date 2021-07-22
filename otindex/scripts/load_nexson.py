@@ -12,7 +12,10 @@ import yaml
 import re
 
 # other database functions
-from . import setup_db
+if __name__ == "__main__":
+    import setup_db
+else:
+    from . import setup_db
 
 # peyotl setup
 from peyotl.api.phylesystem_api import PhylesystemAPI
