@@ -76,7 +76,7 @@ Then adjust the new file for your local settings:
 You probably want to be using a virtualenv.
 
 ```
-$ pip install -r requirements.txt
+$ pip install -r requirements.in
 $ python setup.py develop
 $ initialize_otindex_db development.ini
 ```
