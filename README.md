@@ -15,6 +15,31 @@ playbook](https://github.com/OpenTreeOfLife/otindex_ansible).
 * [postgres](http://www.postgresql.org/) v 9.5.2
 * [peyotl](https://github.com/OpenTreeOfLife/peyotl): opentree python library for interacting with the opentree tree store
 
+### Tracking dependencies and their versions
+The top-level dependencies for otindex are listed in `requirements.in`. These
+are generally listed without versions, so a simple installation or update will
+fetch the latest stable version of everything.
+
+In practice, peyotl will also be run from the same virtual environment, so its
+dependencies will mix with those of otindex. Hopefully this won't cause
+conflicts going forward.
+
+For actual ("known good") versions and a full list of lower-level dependencies,
+look in `requirements.txt`. Assuming these versions have undergone some
+testing, using this file is the safest path for deployment.
+
+This version of `requirements.txt` clearly separates top-level from
+lower-level dependencies, and ignores packages introduced by peyotl and
+dev tools. This is better for fool-proof deployment, assuming you follow
+a similar practice for peyotl in this venv. To update this file, use
+```sh
+$VENV/bin/pip freeze –r requirements.in > requirements.txt
+```
+
+For more insight into the full dependency tree, use
+[`pipdeptree`](https://pypi.org/project/pipdeptree/) to see all
+installed packages and dependencies. You can save updates to `pipdeptree.out`.
+
 ## Setup your postgres database
 See the
 [README](https://github.com/OpenTreeOfLife/otindex/blob/master/otindex/scripts/README.md)
