@@ -157,11 +157,28 @@ def query_studies(verbose,property_type,property_value):
     # is a dict with key '@href'
     elif property_type == "ot:studyPublication" or property_type == "ot:dataDeposit":
         property_type = get_prop_with_prefix(property_type)
+
+        # OLD version using exact match
+        #filtered = query_obj.filter(
+        #   Study.data[
+        #       (property_type,'@href')
+        #   ].astext == property_value
+        #   )
+
+        # add leading wildcard to property_value
+        property_value = '%'+property_value
         filtered = query_obj.filter(
             Study.data[
                 (property_type,'@href')
-            ].astext == property_value
+            ].astext.rstrip().ilike(property_value)
             )
+
+        # a faster alternative?
+        #filtered = query_obj.filter(
+        #    Study.data[
+        #        (property_type,'@href')
+        #    ].astext.rstrip().endswith(property_value)
+        #    )
 
     elif property_type == "ot:studyPublicationReference" or property_type == "ot:comment":
         filtered = query_fulltext(query_obj,property_type,property_value)
