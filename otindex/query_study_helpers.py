@@ -165,19 +165,30 @@ def query_studies(verbose,property_type,property_value):
         #   ].astext == property_value
         #   )
 
-        # add leading wildcard to property_value
-        property_value = '%'+property_value
+        # strip any leading junk, test for bare DOI if found
+        DOI_start = "10."
+        if DOI_start in property_value:
+            # split on this marker and look for more clues
+            partitioned = property_value.partition(DOI_start)
+            possible_DOI_preamble = partitioned[0]
+            if "doi" in possible_DOI_preamble.lower():
+                # yes, this looks like a DOI in URL form
+                # toss the preamble and keep the rest
+                property_value = "".join(partitioned[1:])
+            # else it's probably a publication URL with no DOI
+        # add leading wildcard to property_value (and trim any trailing whitespace)
+        property_value = '%'+property_value.rstrip()
         filtered = query_obj.filter(
             Study.data[
                 (property_type,'@href')
-            ].astext.rstrip().ilike(property_value)
+            ].astext.ilike(property_value)
             )
 
         # a faster alternative?
         #filtered = query_obj.filter(
         #    Study.data[
         #        (property_type,'@href')
-        #    ].astext.rstrip().endswith(property_value)
+        #    ].astext.endswith(property_value)
         #    )
 
     elif property_type == "ot:studyPublicationReference" or property_type == "ot:comment":
