@@ -1,0 +1,8 @@
+pyyaml
+simplejson
+psycopg2
+sqlalchemy
+pyramid
+waitress
+paste
+db

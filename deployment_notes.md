@@ -43,7 +43,7 @@ Run the peyotl tests:
 Clone and setup the otindex repo
     $ git clone https://github.com/OpenTreeOfLife/otindex.git
     $ cd otindex
-    $ pip install -r requirements.txt
+    $ pip install -r requirements.in
     $ python setup.py install
 
 Edit the otindex `development.yml` file for the local setup

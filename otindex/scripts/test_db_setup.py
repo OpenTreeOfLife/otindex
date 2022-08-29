@@ -2,7 +2,11 @@
 import psycopg2 as psy
 import simplejson as json
 import datetime as dt
-import setup_db
+# other database functions
+if __name__ == "__main__":
+    import setup_db
+else:
+    from . import setup_db
 import unittest
 
 class TestDatabaseSetup():

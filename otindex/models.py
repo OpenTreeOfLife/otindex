@@ -19,9 +19,12 @@ from sqlalchemy.orm import (
     relationship,
     )
 
-from zope.sqlalchemy import ZopeTransactionExtension
+# Update for breaking changes in zope.sqlalchemy 1.2, see details at
+# <https://github.com/zopefoundation/zope.sqlalchemy/blob/master/CHANGES.rst#12-2019-10-17>
+from zope.sqlalchemy import register
+DBSession = scoped_session(sessionmaker())
+register(DBSession)
 
-DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
 ################################################################

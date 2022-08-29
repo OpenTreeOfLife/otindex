@@ -5,13 +5,13 @@
 # Changes to table structure must be replicated in ../models.py
 
 import argparse
-import ConfigParser
+import configparser
 import psycopg2 as psy
 import simplejson as json
 import pdb
 
 def clear_gin_index(connection,cursor):
-    print 'clearing GIN indexes'
+    print('clearing GIN indexes')
     # study table
     sqlstring = "DROP INDEX IF EXISTS study_ix_jsondata_gin;"
     cursor.execute(sqlstring)
@@ -22,12 +22,12 @@ def clear_gin_index(connection,cursor):
     connection.commit()
 
 def clear_single_table(connection,cursor,tablename):
-    print 'clearing table',tablename
+    print(('clearing table',tablename))
     sqlstring=('TRUNCATE {t} CASCADE;').format(t=tablename)
     cursor.execute(sqlstring)
 
 def clear_tables(connection,cursor,config_obj):
-    print 'clearing tables'
+    print('clearing tables')
     # tree linked to study via foreign key, so cascade removes both
     tabledict = dict(config_obj.items('database_tables'))
     for table in tabledict:
@@ -62,26 +62,26 @@ def connect(config_obj):
                 )
         conn = psy.connect(connectionstring)
         cursor = conn.cursor()
-    except ConfigParser.NoSectionError as e:
-        print "Error reading config file; {m}".format(m=e.Error)
+    except configparser.NoSectionError as e:
+        print(("Error reading config file; {m}".format(m=e.Error)))
     except KeyboardInterrupt:
-        print "Shutdown requested because could not connect to DB"
+        print("Shutdown requested because could not connect to DB")
     except psy.Error as e:
-        print e
+        print(e)
         # print e.pgerror
     return (conn,cursor)
 
 def create_table(connection,cursor,tablename,tablestring):
     try:
         if (table_exists(cursor,tablename)):
-            print '{table} table exists'.format(table=tablename)
+            print(('{table} table exists'.format(table=tablename)))
         else:
-            print 'creating table',tablename
+            print(('creating table',tablename))
             cursor.execute(tablestring)
             connection.commit()
     except psy.Error as e:
-        print 'Error creating table {name}'.format(name=tablename)
-        print e.pgerror
+        print(('Error creating table {name}'.format(name=tablename)))
+        print((e.pgerror))
 
 # Function to create all database tables
 # Any changes made to the tablestring should also be reflected in
@@ -180,11 +180,11 @@ def delete_table(connection,cursor,tablename):
             )
         cursor.execute(sqlstring)
         connection.commit()
-    except psy.ProgrammingError, ex:
-        print 'Error deleting table {name}'.format(name=tablename)
+    except psy.ProgrammingError as ex:
+        print(('Error deleting table {name}'.format(name=tablename)))
 
 def delete_all_tables(connection,cursor,config_obj):
-    print 'deleting tables'
+    print('deleting tables')
     tabledict = dict(config_obj.items('database_tables'))
     for table in tabledict:
         name = tabledict[table]
@@ -207,8 +207,8 @@ def index_json_columns(connection,cursor,config_obj):
             .format(tablename=TREETABLE,column='data'))
         cursor.execute(sqlstring)
         connection.commit()
-    except psy.ProgrammingError, ex:
-        print 'Error creating GIN index'
+    except psy.ProgrammingError as ex:
+        print('Error creating GIN index')
 
 # Imports csv data into the database using the (faster) bulk copy method
 # used to load otu_tree_map table and taxonomy tables
@@ -217,7 +217,7 @@ def import_csv_file(connection,cursor,table,filename):
     if not table_exists(cursor,table):
         raise psy.ProgrammingError("Table {t} does not exist".format(t=table))
     clear_single_table(connection,cursor,table)
-    print "copying {f} into {t} table".format(f=filename,t=table)
+    print(("copying {f} into {t} table".format(f=filename,t=table)))
     with open (filename,'r') as f:
         copystring="COPY {t}  FROM STDIN WITH CSV HEADER".format(t=table)
         cursor.copy_expert(copystring,f)
@@ -227,7 +227,7 @@ def import_csv_file(connection,cursor,table,filename):
 #  connection_info
 #  tables
 def read_config(configfile):
-    config_obj = ConfigParser.SafeConfigParser()
+    config_obj = configparser.SafeConfigParser()
     config_obj.read(configfile)
     return config_obj
 
@@ -268,6 +268,6 @@ if __name__ == "__main__":
             else:
                 clear_tables(connection,cursor,config_obj)
         except psy.Error as e:
-            print e.pgerror
+            print((e.pgerror))
 
         connection.close()

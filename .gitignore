@@ -7,3 +7,5 @@ otindex.egg-info/
 .out*
 opentreetesting.py
 peyotl
+venv/
+otindex.log
