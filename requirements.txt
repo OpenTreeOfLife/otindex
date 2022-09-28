@@ -25,7 +25,7 @@ MarkupSafe==2.0.1
 nexson==0.0.4
 -e git+https://github.com/OpenTreeOfLife/otindex.git@3d6bde410a099f0b7870b9415e9bfd40d3ad4bf9#egg=otindex
 PasteDeploy==2.1.1
--e git+https://github.com/OpenTreeOfLife/peyotl.git@fac1789c3a9d7b0609a329f70e3b4bf1f1005615#egg=peyotl
+-e git+https://github.com/OpenTreeOfLife/peyotl.git@pyramid-adjacent-changes#egg=peyotl
 peyutil==0.0.4
 pipdeptree==2.0.0
 plaster==1.0
