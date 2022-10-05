@@ -188,7 +188,7 @@ def add_update_studies(request):
             except Exception as e:
                 failed_studies.append(study)
                 _LOG.debug('failed to update study {s}'.format(s=study))
-                _LOG.debug(e.message)
+                _LOG.debug(str(e))
             else:
                 updated_studies.append(study)
                 _LOG.debug('updated study {s}'.format(s=study))

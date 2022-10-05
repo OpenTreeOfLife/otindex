@@ -55,7 +55,7 @@ def add_study(study_id):
     c = nexml.get('^ot:curatorName')
     # create list of curator objects
     curator_list=[]
-    if (isinstance(c,basestring)):
+    if (isinstance(c,str)):
         curator_list.append(c)
     else:
         curator_list = c
