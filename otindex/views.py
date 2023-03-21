@@ -31,10 +31,6 @@ from otindex.models import (
 
 _LOG = logging.getLogger(__name__)
 
-@exception_view_config(HTTPException, renderer='json')
-def exc_view_exception(message, request):
-    return {'error': str(message)}
-
 
 @exception_view_config(HTTPBadRequest, renderer='json')
 # Exception 400 bad request
