@@ -17,6 +17,14 @@ from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 from .util import clean_dict_values, get_study_parameters
 
 _LOG = logging.getLogger(__name__)
+# Either convert a string to unicode, or returns an
+# already-unicode string. Used for curator names.
+def to_unicode(text):
+    try:
+        text = str(text, 'utf-8')
+        return text
+    except TypeError:
+        return text
 
 # get all trees, no filtering
 # returns them grouped by study

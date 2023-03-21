@@ -4,7 +4,7 @@
 ##################################################
 
 from pyramid.response import Response
-from pyramid.view import view_config
+from pyramid.view import view_config, exception_view_config
 from pyramid.url import route_url
 from pyramid.httpexceptions import HTTPNotFound, HTTPBadRequest
 
@@ -32,6 +32,25 @@ from otindex.models import (
 _LOG = logging.getLogger(__name__)
 
 
+@exception_view_config(HTTPBadRequest, renderer='json')
+# Exception 400 bad request
+def exc_view_bad_request(message, request):
+    body = {
+        "message": str(message),
+        "status": 400
+    }
+    request.response.status = 400
+    return body
+
+@exception_view_config(HTTPNotFound, renderer='json')
+# Exception 400 bad request
+def exc_view_bad_request(message, request):
+    body = {
+        "message": str(message),
+        "status": 404
+    }
+    request.response.status = 404
+    return body
 
 @view_config(route_name='home', renderer='json')
 def index(request):
