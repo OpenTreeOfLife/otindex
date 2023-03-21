@@ -57,7 +57,7 @@ def get_ott_id(ottname):
     n_rows = query_obj.count()
     if n_rows == 0:
         raise HTTPNotFound(
-            "Could not find ott id for taxon name '{n}'".format(n=ottname).decode("utf-8", "strict")
+            "Could not find ott id for taxon name '{n}'".format(n=ottname)
             )
     if n_rows > 1:
         raise HTTPNotFound(
