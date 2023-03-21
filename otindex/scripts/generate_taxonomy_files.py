@@ -32,6 +32,15 @@ def create_phylesystem_obj():
     phylesystem = phylesystem_api_wrapper.phylesystem_obj
     return phylesystem
 
+# Either convert a string to unicode, or returns an
+# already-unicode string. Used for curator names.
+def to_unicode(text):
+    try:
+        text = str(text, 'utf-8')
+        return text
+    except TypeError:
+        return text
+
 # return the (internal) integer tree id from the phylesystem study and tree id
 def getTreeID(cursor,study_id,tree_id):
     sqlstring = ('SELECT id FROM {tablename} '
@@ -156,16 +165,17 @@ def prepare_taxonomy_files(taxonomy):
                 # and the others are synonyms
                 if (isinstance(name,tuple)):
                     synonyms = name[1:]
-                    name = name[0]
+                    name = to_unicode(name[0])
                 parent_id = ott_parents[ott_id]
                 # if this is the root, use -1 as the parent
                 if parent_id == None:
                     parent_id = -1
-                ofwriter.writerow((ott_id,name.encode('utf-8'),parent_id))
+                ofwriter.writerow((ott_id,name,parent_id))
 
                 # print synonym data
                 for s in synonyms:
-                    sfwriter.writerow((synonym_id,ott_id,s.encode('utf-8')))
+                    s = to_unicode(s)
+                    sfwriter.writerow((synonym_id,ott_id,s))
                     synonym_id+=1
 
                 counter+=1
