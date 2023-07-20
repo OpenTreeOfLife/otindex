@@ -245,8 +245,9 @@ def remove_studies(request):
         _msg="No payload provided"
         raise HTTPBadRequest(body=_msg)
 
+
 @view_config(route_name='parse_webhook', renderer='json', request_method='POST')
-def parse_webhook(request):
+def parse_phylesystem_webhook(request):
     if (request.body):
         payload = request.json_body
 
@@ -318,10 +319,10 @@ def parse_webhook(request):
 
     github_webhook_url = "%s/settings/hooks" % opentree_docstore_url
     full_msg = """This URL should be called by a webhook set in the docstore repo:
-    <br /><br />
-    <a href="%s">%s</a><br />
-    <pre>%s</pre>
-    """ % (github_webhook_url, github_webhook_url, msg,)
+                <br /><br />
+                <a href="%s">%s</a><br />
+                <pre>%s</pre>
+                """ % (github_webhook_url, github_webhook_url, msg,)
     if msg == '':
         return full_msg
     else:
@@ -332,21 +333,19 @@ def parse_webhook(request):
 
 
 
-# #--------------------------- This is from web2py phylesystemapi--------
-# def nudgeTaxonIndexOnUpdates():
+# def parse_amendment_webhook(request):
 #     """"Support method to update taxon index (taxomachine) in response to GitHub webhooks
 
-# This examines the JSON payload of a GitHub webhook to see which taxa have
-# been added, modified, or removed. Then it calls the appropriate index service to
-# (re)index these taxa, or to delete a taxon's information if it was deleted in
-# an amendment.
+#     This examines the JSON payload of a GitHub webhook to see which taxa have
+#     been added, modified, or removed. Then it calls the appropriate index service to
+#     (re)index these taxa, or to delete a taxon's information if it was deleted in
+#     an amendment.
 
-# TODO: Clear any cached taxon list.
+#     TODO: Clear any cached taxon list.
 
-# N.B. This depends on a GitHub webhook on the taxonomic-amendments docstore!
-# """
-#     if not check_not_read_only():
-#         raise HTTP(500, "should raise from check_not_read_only")
+#     N.B. This depends on a GitHub webhook on the taxonomic-amendments docstore!
+#     """
+
 #     amendments_repo_url = _read_from_local_config(request, "apis", "amendments_repo_url")
 #     payload = request.vars
 #     if payload['repository']['url'] != amendments_repo_url:
