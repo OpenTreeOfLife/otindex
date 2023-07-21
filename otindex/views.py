@@ -246,7 +246,7 @@ def remove_studies(request):
         raise HTTPBadRequest(body=_msg)
 
 
-@view_config(route_name='parse_webhook', renderer='json', request_method='POST')
+@view_config(route_name='parse_phylesystem_webhook', renderer='json', request_method='POST')
 def parse_phylesystem_webhook(request):
     if (request.body):
         payload = request.json_body
