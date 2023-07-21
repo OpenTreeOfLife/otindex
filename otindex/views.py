@@ -270,11 +270,12 @@ def parse_phylesystem_webhook(request):
         remove_ids = list(set(removed_study_ids))
 
     except:
-        raise HTTP(400,json.dumps({"error":1, "description":"malformed GitHub payload"}))
+        _msg = "description":"malformed GitHub payload"
+        raise HTTPBadRequest(body=_msg)
 
     if payload['repository']['url'] != opentree_docstore_url:
-        raise HTTP(400,json.dumps({"error":1, "description":"wrong repo for this API instance"}))
-
+        _msg = "description":"wrong repo for this API instance"
+        raise HTTPBadRequest(body=_msg)
     
     msg = ''
     if len(add_or_update_ids) > 0:
@@ -326,7 +327,8 @@ def parse_phylesystem_webhook(request):
     if msg == '':
         return full_msg
     else:
-        raise HTTP(500, full_msg)
+        _LOG.exception("HTTPBadRequest: {m}".format(m=_msg))
+        raise HTTPBadRequest(body=_msg)
 
 
 
