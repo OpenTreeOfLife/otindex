@@ -274,9 +274,9 @@ def parse_phylesystem_webhook(request):
         _msg = "malformed GitHub payload"
         raise HTTPBadRequest(body=_msg)
 
-    if payload['repository']['url'] != opentree_docstore_url:
-        _msg = "wrong repo for this API instance"
-        raise HTTPBadRequest(body=_msg)
+#    if payload['repository']['url'] != opentree_docstore_url:
+#        _msg = "wrong repo for this API instance"
+#        raise HTTPBadRequest(body=_msg)
     
     msg = ''
     if len(add_or_update_ids) > 0:
