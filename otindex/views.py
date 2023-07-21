@@ -335,21 +335,20 @@ def parse_phylesystem_webhook(request):
 
 
 
+#@view_config(route_name='parse_amendment_webhook', renderer='json', request_method='POST')
+#def parse_amendment_webhook(request):
+     """"Support method to update taxon index (otindex) in response to GitHub webhooks
 
-# def parse_amendment_webhook(request):
-#     """"Support method to update taxon index (taxomachine) in response to GitHub webhooks
-
-#     This examines the JSON payload of a GitHub webhook to see which taxa have
-#     been added, modified, or removed. Then it calls the appropriate index service to
-#     (re)index these taxa, or to delete a taxon's information if it was deleted in
-#     an amendment.
+     This examines the JSON payload of a GitHub webhook to see which taxa have
+     been added, modified, or removed. Then it calls the appropriate index service to
+     (re)index these taxa, or to delete a taxon's information if it was deleted in
+     an amendment.
 
 #     TODO: Clear any cached taxon list.
 
-#     N.B. This depends on a GitHub webhook on the taxonomic-amendments docstore!
-#     """
+     N.B. This depends on a GitHub webhook on the taxonomic-amendments docstore!
+     """
 
-#     amendments_repo_url = _read_from_local_config(request, "apis", "amendments_repo_url")
 #     payload = request.vars
 #     if payload['repository']['url'] != amendments_repo_url:
 #         raise HTTP(400,json.dumps({"error":1, "description":"wrong repo for this API instance"}))

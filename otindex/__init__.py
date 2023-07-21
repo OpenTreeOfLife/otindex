@@ -46,6 +46,7 @@ def main(global_config, **settings):
     config.add_route('remove','{v}/studies/remove'.format(v=v))
     config.add_route('about','{v}/studies/about'.format(v=v))
     config.add_route('parse_phylesystem_webhook','{v}/studies/phylesystem_webhook'.format(v=v), request_method="POST")
+ #   config.add_route('parse_amendment_webhook','{v}/studies/amendment_webhook'.format(v=v), request_method="POST")
 
     config.scan()
     return config.make_wsgi_app()
