@@ -250,7 +250,8 @@ def remove_studies(request):
 def parse_phylesystem_webhook(request):
     if (request.body):
         payload = request.json_body
-
+        _LOG.debug("running parse_phylesystem_webhook")
+        _LOG.debug(request.json_body)
     # get list of study ids to be added / modified / removed
     try:
         # how we nudge the index depends on which studies are new, changed, or deleted
@@ -262,11 +263,11 @@ def parse_phylesystem_webhook(request):
             _harvest_study_ids_from_paths( commit['added'], added_study_ids )
             _harvest_study_ids_from_paths( commit['modified'], modified_study_ids )
             _harvest_study_ids_from_paths( commit['removed'], removed_study_ids )
-
         # add and update treated the same, so merge
         # also "flatten" each list to remove duplicates
         add_or_update_ids = added_study_ids + modified_study_ids
         add_or_update_ids = list(set(add_or_update_ids))
+        _LOG.debug("add_or_update_ids"+ ",".join(add_or_update_ids))
         remove_ids = list(set(removed_study_ids))
 
     except:
@@ -455,20 +456,20 @@ def parse_phylesystem_webhook(request):
 #         conf.read("%s/applications/%s/private/config" % (os.path.abspath('.'), app_name,))
 #     return conf.get(section_name, key_name)
 
-# def _harvest_study_ids_from_paths( path_list, target_array ):
-#     for path in path_list:
-#         path_parts = path.split('/')
-#         if path_parts[0] == "study":
-#             # skip any intermediate directories in docstore repo
-#             study_id = path_parts[ len(path_parts) - 2 ]
-#             target_array.append(study_id)
+def _harvest_study_ids_from_paths( path_list, target_array ):
+    for path in path_list:
+        path_parts = path.split('/')
+        if path_parts[0] == "study":
+            # skip any intermediate directories in docstore repo
+            study_id = path_parts[ len(path_parts) - 2 ]
+            target_array.append(study_id)
 
-# def _harvest_ott_ids_from_paths( path_list, target_array ):
-#     for path in path_list:
-#         path_parts = path.split('/')
-#         # ignore changes to counter file, other directories, etc.
-#         if path_parts[0] == "amendments":
-#             # skip intermediate directories in docstore repo
-#             amendment_file_name = path_parts.pop()
-#             ott_id = amendment_file_name[:-5]
-#             target_array.append(ott_id)
+def _harvest_ott_ids_from_paths( path_list, target_array ):
+    for path in path_list:
+         path_parts = path.split('/')
+         # ignore changes to counter file, other directories, etc.
+         if path_parts[0] == "amendments":
+             # skip intermediate directories in docstore repo
+             amendment_file_name = path_parts.pop()
+             ott_id = amendment_file_name[:-5]
+             target_array.append(ott_id)
