@@ -278,8 +278,8 @@ def parse_phylesystem_webhook(request):
     
     msg = ''
     if len(add_or_update_ids) > 0:
-            failed_studies = []
-            updated_studies = []
+        failed_studies = []
+        updated_studies = []
         for study in add_or_update_ids:
             try:
                 aus.update_study(study)
